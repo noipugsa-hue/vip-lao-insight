@@ -5,7 +5,24 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss','@nuxt/eslint',],
   css: ['~/assets/css/main.css'],
-  ssr: false,
+
+  // ใช้ SSR mode สำหรับ server API endpoints
+  // Pages จะ render เป็น SPA ตาม routeRules
+  ssr: true,
+
+  // ตั้งค่า route rules: pages เป็น client-side (SPA), API endpoints เป็น server-side
+  routeRules: {
+    // API endpoints ทำงานบน server
+    '/api/**': { cors: true },
+    // Pages ทั้งหมด render แบบ client-side (SPA)
+    '/**': { ssr: false },
+  },
+
+  // ตั้งค่า Nitro สำหรับ Vercel
+  nitro: {
+    preset: 'vercel',
+  },
+
   srcDir: 'src/',
   components: [
     {

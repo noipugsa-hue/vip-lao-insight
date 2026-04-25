@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".output/public",
+  "framework": "nuxtjs",
+  "regions": ["sin1"],
+  "env": {
+    "NODE_VERSION": "20"
+  }
+}
