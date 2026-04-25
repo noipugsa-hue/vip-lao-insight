@@ -7,7 +7,7 @@
         <!-- Logo -->
         <div>
           <h1 class="text-2xl font-black text-gray-800 tracking-tight">LOTTOAI</h1>
-          <p class="text-xs text-gray-600">แนวทางล่ำหรับหวยรัฐบาล</p>
+          <p class="text-xs text-gray-600">แนวทางสำหรับหวยออนไลน์</p>
         </div>
 
         <!-- User Info & Sign Out -->
