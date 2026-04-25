@@ -27,13 +27,25 @@
    - **Project support email**: อีเมลของคุณ (เลือกจาก dropdown)
 6. คลิก **Save**
 
-### ขั้นตอนที่ 3: (Optional) เพิ่ม Authorized Domains
-ถ้า deploy บน Vercel หรือ custom domain ต้องเพิ่ม domain:
-1. ไปที่ **Authentication > Settings > Authorized domains**
-2. คลิก **Add domain**
-3. เพิ่ม domain เช่น:
-   - `vip-lao-insight.vercel.app`
-   - `yourdomain.com` (ถ้ามี custom domain)
+### ขั้นตอนที่ 3: ⚠️ เพิ่ม Authorized Domains (สำคัญมาก!)
+**จำเป็นสำหรับ Production!** ต้องเพิ่ม domain ของ Vercel:
+1. ไปที่ **Authentication** (เมนูซ้าย)
+2. คลิกแท็บ **Settings** (บนสุด)
+3. เลื่อนลงมาหา section **Authorized domains**
+4. คลิก **Add domain**
+5. ใส่: `vip-lao-insight.vercel.app`
+6. คลิก **Add**
+
+**ถ้าไม่ทำขั้นตอนนี้:**
+- Google Sign-In จะใช้งานไม่ได้บน production
+- จะเห็น error: "The current domain is not authorized for OAuth operations"
+
+**Domains ที่ควรเพิ่ม:**
+   - ✅ `vip-lao-insight.vercel.app` (Vercel deployment)
+   - ✅ `yourdomain.com` (ถ้ามี custom domain)
+   - ✅ `localhost` (มีอยู่แล้ว default)
+
+📖 **ดูคำแนะนำละเอียด:** อ่าน `OAUTH_DOMAIN_FIX.md`
 
 ---
 
