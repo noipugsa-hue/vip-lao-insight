@@ -31,6 +31,7 @@ const {
   lastResult,
   fetchAndSave,
   fetchDemoAndSave,
+  fetchScraperAndSave,
   getLatestFromFirestore,
   getAllFromFirestore,
   manualAddResult
@@ -128,6 +129,16 @@ const fetchDemoNow = async () => {
   }
 }
 
+const fetchScraperNow = async () => {
+  const success = await fetchScraperAndSave()
+  if (success) {
+    showPopup('✅ ดึงข้อมูลด้วย Puppeteer สำเร็จ!', 'success', 3000)
+    await loadLotteryResults()
+  } else {
+    showPopup(`❌ ${fetchError.value || 'เกิดข้อผิดพลาด'}`, 'error', 5000)
+  }
+}
+
 const loadLotteryResults = async () => {
   lotteryResults.value = await getAllFromFirestore(10)
 }
@@ -219,6 +230,14 @@ onMounted(() => {
               </span>
             </button>
             <button
+              @click="fetchScraperNow"
+              :disabled="isFetching"
+              class="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span v-if="!isFetching">🤖 ดึงด้วย Puppeteer (Auto)</span>
+              <span v-else>กำลัง scrape...</span>
+            </button>
+            <button
               @click="fetchDemoNow"
               :disabled="isFetching"
               class="w-full bg-cyan-400 hover:bg-cyan-500 disabled:bg-gray-400 text-black py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -228,7 +247,7 @@ onMounted(() => {
             </button>
           </div>
           <p class="text-xs mt-2 opacity-70 text-center">
-            💡 ถ้าดึงจริงไม่ได้ ให้ใช้ปุ่มทดสอบเพื่อลองระบบ
+            💡 Puppeteer: local only | Demo: ทุกที่ | Manual: แนะนำสำหรับ production
           </p>
         </div>
 

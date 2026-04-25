@@ -259,16 +259,75 @@ export const useLotteryFetcher = () => {
     return await saveToFirestore(result)
   }
 
+  /**
+   * fetchFromScraper
+   * ดึงข้อมูลจาก Puppeteer scraper (local development only)
+   */
+  const fetchFromScraper = async (): Promise<LotteryResult | null> => {
+    try {
+      isFetching.value = true
+      error.value = null
+
+      const response = await fetch('/api/lottery/scrape')
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.message || 'ไม่สามารถดึงข้อมูลได้')
+      }
+
+      const result: LotteryResult = {
+        date: data.data.date,
+        period: data.data.period,
+        threeDigit: data.data.threeDigit,
+        twoDigit: data.data.twoDigit,
+        fourDigit: data.data.fourDigit,
+        source: data.data.source,
+        fetchedAt: new Date(data.data.fetchedAt)
+      }
+
+      lastResult.value = result
+      return result
+
+    } catch (e: any) {
+      error.value = e.message || 'เกิดข้อผิดพลาดในการ scrape ข้อมูล'
+      console.error('Error scraping lottery:', e)
+      return null
+    } finally {
+      isFetching.value = false
+    }
+  }
+
+  /**
+   * fetchScraperAndSave
+   * ดึงข้อมูลจาก scraper และบันทึกลง Firestore
+   */
+  const fetchScraperAndSave = async (): Promise<boolean> => {
+    const result = await fetchFromScraper()
+
+    if (!result) {
+      return false
+    }
+
+    return await saveToFirestore(result)
+  }
+
   return {
     isFetching,
     error,
     lastResult,
     fetchFromRachaLotto,
     fetchDemo,
+    fetchFromScraper,
     fetchWithCustomAPI,
     saveToFirestore,
     fetchAndSave,
     fetchDemoAndSave,
+    fetchScraperAndSave,
     getLatestFromFirestore,
     getAllFromFirestore,
     manualAddResult

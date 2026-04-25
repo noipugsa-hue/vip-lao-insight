@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@nuxt/scripts": "^0.13.2",
+    "chrome-aws-lambda": "^10.1.0",
     "firebase": "^12.7.0",
     "nuxt": "^4.2.2",
+    "puppeteer-core": "^24.42.0",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
