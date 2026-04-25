@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // Login History Collection
+    // ========================================
+    match /login_history/{document=**} {
+      // อนุญาตให้ user ที่ authenticate แล้วเขียนข้อมูลได้
+      allow create: if request.auth != null;
+
+      // อนุญาตให้ admin อ่านข้อมูลได้
+      allow read: if request.auth != null &&
+                     request.auth.token.email == 'noipugsa@gmail.com';
+    }
+
+    // ========================================
+    // Lottery Results Collection
+    // ========================================
+    match /lotteryResults/{document=**} {
+      // อนุญาตให้ user ที่ authenticate แล้วอ่านและเขียนได้
+      allow read, write: if request.auth != null;
+    }
+
+    // ========================================
+    // Default: Block all other access
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

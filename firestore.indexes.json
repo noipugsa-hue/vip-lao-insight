@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "login_history",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "lotteryResults",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "lotteryType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fetchedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
