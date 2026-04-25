@@ -8,16 +8,18 @@ const hotNumbers = ref<string[]>([])
 const twoDigits = ref<string[]>([])
 const threeDigits = ref<string[]>([])
 const calculatedAt = ref<string | null>(null)
+const lotteryType = ref<string | null>(null)
 
 export const useVipResult = () => {
   /**
    * setResult
    * อัปเดตเลข VIP และเวลาคำนวณล่าสุด
    */
-  const setResult = (hot: string[], two: string[], three: string[]) => {
+  const setResult = (hot: string[], two: string[], three: string[], lottery?: string) => {
     hotNumbers.value = hot
     twoDigits.value = two
     threeDigits.value = three
+    lotteryType.value = lottery || null
     calculatedAt.value = new Date().toLocaleString('th-TH', {
       hour12: false,
       year: 'numeric',
@@ -33,22 +35,30 @@ export const useVipResult = () => {
       hot,
       two,
       three,
+      lotteryType: lottery || null,
       calculatedAt: calculatedAt.value
     }))
   }
 
   /**
    * loadResult
-   * โหลดเลข VIP จาก localStorage
+   * โหลดเลข VIP จาก localStorage (กรองตามประเภทหวย)
    */
-  const loadResult = () => {
+  const loadResult = (lottery?: string) => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
         const data = JSON.parse(saved)
+        // ถ้าระบุประเภทหวย ให้ตรวจสอบว่าตรงกันไหม
+        if (lottery && data.lotteryType !== lottery) {
+          // ถ้าไม่ตรงกัน ให้ล้างข้อมูล
+          clearResult()
+          return
+        }
         hotNumbers.value = data.hot || []
         twoDigits.value = data.two || []
         threeDigits.value = data.three || []
+        lotteryType.value = data.lotteryType || null
         calculatedAt.value = data.calculatedAt || null
       } catch (e) {
         console.error('Failed to load VIP result', e)
@@ -64,6 +74,7 @@ export const useVipResult = () => {
     hotNumbers.value = []
     twoDigits.value = []
     threeDigits.value = []
+    lotteryType.value = null
     calculatedAt.value = null
     localStorage.removeItem(STORAGE_KEY)
   }
@@ -72,6 +83,7 @@ export const useVipResult = () => {
     hotNumbers,
     twoDigits,
     threeDigits,
+    lotteryType,
     calculatedAt,
     setResult,
     loadResult,

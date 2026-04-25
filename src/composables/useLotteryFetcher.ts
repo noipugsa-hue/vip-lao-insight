@@ -10,6 +10,7 @@ export interface LotteryResult {
   fourDigit?: string // เลข 4 ตัว (ถ้ามี)
   source: string
   fetchedAt: Date
+  lotteryType?: string // ประเภทหวย (government, savings, baac, etc.)
 }
 
 export const useLotteryFetcher = () => {
@@ -149,12 +150,13 @@ export const useLotteryFetcher = () => {
    * saveToFirestore
    * บันทึกผลหวยลง Firestore
    */
-  const saveToFirestore = async (result: LotteryResult): Promise<boolean> => {
+  const saveToFirestore = async (result: LotteryResult, lotteryType?: string): Promise<boolean> => {
     try {
       const lotteriesRef = collection(db, 'lotteryResults')
 
       await addDoc(lotteriesRef, {
         ...result,
+        lotteryType: lotteryType || result.lotteryType || 'lao-dev',
         createdAt: new Date(),
         updatedAt: new Date()
       })
@@ -184,12 +186,19 @@ export const useLotteryFetcher = () => {
 
   /**
    * getLatestFromFirestore
-   * ดึงผลหวยล่าสุดจาก Firestore
+   * ดึงผลหวยล่าสุดจาก Firestore (กรองตามประเภทหวย)
    */
-  const getLatestFromFirestore = async (): Promise<LotteryResult | null> => {
+  const getLatestFromFirestore = async (lotteryType?: string): Promise<LotteryResult | null> => {
     try {
       const lotteriesRef = collection(db, 'lotteryResults')
-      const q = query(lotteriesRef, orderBy('fetchedAt', 'desc'), limit(1))
+      let q = query(lotteriesRef, orderBy('fetchedAt', 'desc'), limit(1))
+
+      // ถ้ามีการระบุประเภทหวย ให้กรองตามประเภท
+      if (lotteryType) {
+        const { where } = await import('firebase/firestore')
+        q = query(lotteriesRef, where('lotteryType', '==', lotteryType), orderBy('fetchedAt', 'desc'), limit(1))
+      }
+
       const querySnapshot = await getDocs(q)
 
       if (querySnapshot.empty) {
@@ -206,12 +215,19 @@ export const useLotteryFetcher = () => {
 
   /**
    * getAllFromFirestore
-   * ดึงผลหวยทั้งหมดจาก Firestore
+   * ดึงผลหวยทั้งหมดจาก Firestore (กรองตามประเภทหวย)
    */
-  const getAllFromFirestore = async (limitCount: number = 50): Promise<LotteryResult[]> => {
+  const getAllFromFirestore = async (limitCount: number = 50, lotteryType?: string): Promise<LotteryResult[]> => {
     try {
       const lotteriesRef = collection(db, 'lotteryResults')
-      const q = query(lotteriesRef, orderBy('fetchedAt', 'desc'), limit(limitCount))
+      let q = query(lotteriesRef, orderBy('fetchedAt', 'desc'), limit(limitCount))
+
+      // ถ้ามีการระบุประเภทหวย ให้กรองตามประเภท
+      if (lotteryType) {
+        const { where } = await import('firebase/firestore')
+        q = query(lotteriesRef, where('lotteryType', '==', lotteryType), orderBy('fetchedAt', 'desc'), limit(limitCount))
+      }
+
       const querySnapshot = await getDocs(q)
 
       return querySnapshot.docs.map(doc => doc.data() as LotteryResult)
@@ -227,6 +243,7 @@ export const useLotteryFetcher = () => {
    */
   const manualAddResult = async (
     threeDigit: string,
+    lotteryType: string,
     date?: string,
     period?: string,
     twoDigit?: string,
@@ -236,13 +253,14 @@ export const useLotteryFetcher = () => {
       date: date || new Date().toISOString().split('T')[0],
       period: period || 'manual',
       threeDigit,
-      twoDigit,
-      fourDigit,
+      twoDigit: twoDigit || undefined,
+      fourDigit: fourDigit || undefined,
       source: 'manual',
-      fetchedAt: new Date()
+      fetchedAt: new Date(),
+      lotteryType
     }
 
-    return await saveToFirestore(result)
+    return await saveToFirestore(result, lotteryType)
   }
 
   /**

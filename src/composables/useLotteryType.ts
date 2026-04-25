@@ -12,19 +12,24 @@ export const lotteryTypes: LotteryType[] = [
   { id: 'savings', name: 'savings', displayName: 'ออมสิน' },
   { id: 'baac', name: 'baac', displayName: 'ธกส.' },
   { id: 'lao-dev', name: 'lao-dev', displayName: 'ลาวพัฒนา' },
-  { id: 'lao-ex', name: 'lao-ex', displayName: 'ลาวEx' },
+  { id: 'lao-vip', name: 'lao-vip', displayName: 'ลาวVIP' },
+  { id: 'lao-special', name: 'lao-special', displayName: 'ลาวพิเศษ' },
   { id: 'nikkei-vip-morning', name: 'nikkei-vip-morning', displayName: 'นิเคอิVIPเช้า' },
-  { id: 'hanoi-star', name: 'hanoi-star', displayName: 'ฮานอยดาวเซียน' },
-  { id: 'nikkei-morning', name: 'nikkei-morning', displayName: 'นิเคอิเช้า' },
-  { id: 'china-vip-morning', name: 'china-vip-morning', displayName: 'จีนVIPเช้า' },
-  { id: 'china-morning', name: 'china-morning', displayName: 'จีนเช้า' },
-  { id: 'lao-tv', name: 'lao-tv', displayName: 'ลาวTV' },
+  { id: 'dow-jones', name: 'dow-jones', displayName: 'ดาวโจนส์อเมริกา' },
+  { id: 'hanoi', name: 'hanoi', displayName: 'ฮานอย' },
+  { id: 'hanoi-vip', name: 'hanoi-vip', displayName: 'ฮานอยVIP' },
+  { id: 'hanoi-special', name: 'hanoi-special', displayName: 'ฮานอยพิเศษ' },
+  { id: 'hanoi-chaiyo', name: 'hanoi-chaiyo', displayName: 'ฮานอยไชโย' },
 ]
 
 const STORAGE_KEY = 'selected_lottery_type'
 
 // ประเภทหวยที่เลือกอยู่ (default: ลาวพัฒนา)
-const selectedLotteryType = ref<LotteryType>(lotteryTypes[3]) // ลาวพัฒนา
+const defaultLotteryType = lotteryTypes.find(t => t.id === 'lao-dev') || lotteryTypes[0]
+if (!defaultLotteryType) {
+  throw new Error('No lottery types available')
+}
+const selectedLotteryType = ref<LotteryType>(defaultLotteryType)
 
 export const useLotteryType = () => {
   // โหลดประเภทหวยจาก localStorage

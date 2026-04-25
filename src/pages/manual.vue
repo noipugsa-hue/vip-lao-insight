@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router'
 import { useLotteryType } from '../composables/useLotteryType'
 
 const router = useRouter()
-const STORAGE_KEY = 'vip_lao_history'
 const { selectedLotteryType } = useLotteryType()
 const showLotterySelector = ref(false)
 
@@ -15,18 +14,44 @@ const input = ref('')
 const showSuccess = ref(false)
 
 const { getHotNumbers, cutColdNumbers, mixFormula, generateThreeDigits } = useLaoFormula()
-const { setResult } = useVipResult()
+const { setResult, clearResult } = useVipResult()
+
+// สร้าง storage key แบบ dynamic ตามประเภทหวย
+const getStorageKey = (lotteryId: string) => `vip_lao_history_${lotteryId}`
 
 /* โหลดข้อมูลที่เคยเพิ่มไว้ */
 onMounted(() => {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const storageKey = getStorageKey(selectedLotteryType.value.id)
+  const saved = localStorage.getItem(storageKey)
   if (saved) history.value = JSON.parse(saved)
 })
 
 /* บันทึกทุกครั้งที่ history เปลี่ยน */
 watch(history, (val) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
+  const storageKey = getStorageKey(selectedLotteryType.value.id)
+  localStorage.setItem(storageKey, JSON.stringify(val))
 }, { deep: true })
+
+/* เคลียร์ข้อมูลเมื่อเปลี่ยนประเภทหวย */
+watch(() => selectedLotteryType.value.id, (newType, oldType) => {
+  if (oldType && newType !== oldType) {
+    // เคลียร์ history ของประเภทเก่า
+    history.value = []
+
+    // เคลียร์ผลลัพธ์การคำนวณเก่า
+    clearResult()
+
+    // โหลด history ของประเภทใหม่
+    const storageKey = getStorageKey(newType)
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      history.value = JSON.parse(saved)
+    }
+
+    // แจ้งเตือนผู้ใช้
+    console.log(`เปลี่ยนจาก ${oldType} เป็น ${newType} - ล้างข้อมูลเก่าแล้ว`)
+  }
+})
 
 const addHistory = () => {
   const value = input.value.trim()
@@ -49,7 +74,9 @@ const calculate = async () => {
   const cut = cutColdNumbers(history.value)
   const two = mixFormula(hot, cut)
   const three = generateThreeDigits(hot, cut)
-  setResult(hot, two, three)
+
+  // เก็บผลลัพธ์พร้อมประเภทหวย
+  setResult(hot, two, three, selectedLotteryType.value.id)
 
   // แสดง success message
   showSuccess.value = true
@@ -66,7 +93,8 @@ const calculate = async () => {
 const clearHistory = () => {
   if (!confirm('ต้องการล้างเลขย้อนหลังทั้งหมดใช่หรือไม่?')) return
   history.value = []
-  localStorage.removeItem(STORAGE_KEY)
+  const storageKey = getStorageKey(selectedLotteryType.value.id)
+  localStorage.removeItem(storageKey)
 }
 </script>
 

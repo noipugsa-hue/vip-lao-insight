@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useVipResult } from '../composables/useVipResult'
@@ -11,13 +11,30 @@ import { useAccuracyTracking } from '../composables/useAccuracyTracking'
 const router = useRouter()
 const { waitForAuth } = useAuth()
 
-const STORAGE_KEY = 'vip_lao_history'
 const history = ref<string[]>([])
 
-const { hotNumbers, twoDigits, threeDigits, calculatedAt, loadResult } = useVipResult()
+const { hotNumbers, twoDigits, threeDigits, lotteryType, calculatedAt, loadResult } = useVipResult()
 const { selectedLotteryType } = useLotteryType()
 const { settings } = useEngineSettings()
 const { accuracyStats } = useAccuracyTracking()
+
+// สร้าง storage key แบบ dynamic ตามประเภทหวย
+const getStorageKey = (lotteryId: string) => `vip_lao_history_${lotteryId}`
+
+// โหลดข้อมูลตามประเภทหวย
+const loadDataForLotteryType = (lotteryId: string) => {
+  // โหลด history สำหรับประเภทหวยนี้
+  const storageKey = getStorageKey(lotteryId)
+  const saved = localStorage.getItem(storageKey)
+  if (saved) {
+    history.value = JSON.parse(saved)
+  } else {
+    history.value = []
+  }
+
+  // โหลดผลลัพธ์การคำนวณสำหรับประเภทหวยนี้
+  loadResult(lotteryId)
+}
 
 onMounted(async () => {
   // ตรวจสอบ authentication ก่อน
@@ -28,13 +45,14 @@ onMounted(async () => {
     return
   }
 
-  // โหลดข้อมูลปกติ
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved) history.value = JSON.parse(saved)
+  // โหลดข้อมูลสำหรับประเภทหวยที่เลือกอยู่
+  loadDataForLotteryType(selectedLotteryType.value.id)
 })
 
-// โหลดผลลัพธ์
-loadResult()
+// Watch lottery type changes
+watch(() => selectedLotteryType.value.id, (newType) => {
+  loadDataForLotteryType(newType)
+})
 
 const todayStr = computed(() => {
   const now = new Date()
