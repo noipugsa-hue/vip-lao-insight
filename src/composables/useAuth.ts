@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, type User } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, type User } from 'firebase/auth'
 import { useNuxtApp } from '#app'
 
 const user = ref<User | null>(null)
@@ -34,6 +34,16 @@ export const useAuth = () => {
     user.value = null
   }
 
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    })
+    const cred = await signInWithPopup(auth, provider)
+    user.value = cred.user
+    return cred.user
+  }
+
   // รอให้ auth พร้อม
   const waitForAuth = () => {
     return new Promise<User | null>((resolve) => {
@@ -50,5 +60,5 @@ export const useAuth = () => {
     })
   }
 
-  return { user, isAuthReady, login, register, logout, waitForAuth }
+  return { user, isAuthReady, login, register, logout, loginWithGoogle, waitForAuth }
 }
