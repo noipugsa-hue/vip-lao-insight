@@ -144,6 +144,34 @@ const todayStr = computed(() => {
           🎯 {{ n }}
         </span>
       </div>
+
+      <!-- ปุ่มสมัครซื้อเลข -->
+      <div class="mt-8 p-6 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-2xl">
+        <div class="text-center mb-4">
+          <h3 class="text-2xl font-black text-white mb-2 drop-shadow-lg">
+            🎰 พร้อมลุ้นรางวัลใหญ่?
+          </h3>
+          <p class="text-white/90 text-sm font-semibold">
+            สมัครซื้อเลขออนไลน์ได้แล้ววันนี้!
+          </p>
+        </div>
+
+        <a
+          href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block w-full py-4 px-6 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-black text-xl rounded-xl shadow-2xl transform transition-all hover:scale-105 active:scale-95 text-center animate-pulse-button"
+        >
+          <span class="mr-2">🚀</span>
+          คลิกสมัครซื้อเลขที่นี่
+          <span class="ml-2">💰</span>
+        </a>
+
+        <div class="mt-4 flex items-center justify-center gap-2 text-white/80 text-xs">
+          <span>✅</span>
+          <span>ปลอดภัย | รวดเร็ว | ถอนง่าย</span>
+        </div>
+      </div>
     </div>
 
     <p v-else class="opacity-50 text-center text-lg mt-6">
@@ -179,4 +207,13 @@ const todayStr = computed(() => {
 /* Transition smooth */
 .vip-popup-enter-active, .vip-popup-leave-active {transition: opacity 0.5s, transform 0.5s;}
 .vip-popup-enter-from, .vip-popup-leave-to {opacity:0; transform:translateY(-10px);}
+
+/* Pulse animation สำหรับปุ่มซื้อเลข */
+@keyframes pulse-button {
+  0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(234, 179, 8, 0.5); }
+  50% { transform: scale(1.02); box-shadow: 0 15px 60px rgba(234, 179, 8, 0.7); }
+}
+.animate-pulse-button {
+  animation: pulse-button 2s ease-in-out infinite;
+}
 </style>

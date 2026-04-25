@@ -10,21 +10,20 @@
           <p class="text-xs text-gray-600">แนวทางล่ำหรับหวยรัฐบาล</p>
         </div>
 
-        <!-- Top Right Icons -->
+        <!-- User Info & Sign Out -->
         <div class="flex items-center gap-3">
-          <!-- Lock Icon -->
-          <button class="w-10 h-10 rounded-full bg-green-500 shadow-lg flex items-center justify-center hover:bg-green-600 transition">
-            <span class="text-white text-lg">🔒</span>
-          </button>
+          <!-- User Email -->
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/80 rounded-full shadow">
+            <span class="text-gray-600 text-xs">👤</span>
+            <span class="text-gray-800 text-xs font-semibold">{{ user?.email }}</span>
+          </div>
 
-          <!-- Coin Icon -->
-          <button class="w-10 h-10 rounded-full bg-yellow-400 shadow-lg flex items-center justify-center hover:bg-yellow-500 transition">
-            <span class="text-white text-lg">🪙</span>
-          </button>
-
-          <!-- PRO Badge -->
-          <button class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg flex items-center gap-2 hover:from-purple-600 hover:to-pink-600 transition">
-            <span class="text-white text-xs font-bold">👤 PRO</span>
+          <!-- Sign Out Button -->
+          <button
+            @click="handleSignOut"
+            class="px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-700 shadow-lg flex items-center gap-2 hover:from-red-700 hover:to-red-800 transition transform hover:scale-105 active:scale-95"
+          >
+            <span class="text-white text-xs font-bold">🚪 ออกจากระบบ</span>
           </button>
         </div>
       </div>
@@ -77,10 +76,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
+import { useAdmin } from '../composables/useAdmin'
 
 const route = useRoute()
+const router = useRouter()
 const currentPath = computed(() => route.path)
+const { user, logout } = useAuth()
+const { isAdmin } = useAdmin()
+
+// Sign out function
+const handleSignOut = async () => {
+  if (confirm('ต้องการออกจากระบบใช่หรือไม่?')) {
+    await logout()
+    await router.push('/login')
+  }
+}
 
 // Top Navigation Tabs
 const topTabs = [
@@ -92,12 +104,17 @@ const topTabs = [
   { path: '/backup', icon: '📊', label: 'Back' },
 ]
 
-// Bottom Tab Bar
-const bottomTabs = [
-  { path: '/analyze', icon: '🔍', label: 'วิเคราะห์' },
-  { path: '/compare', icon: '⚖️', label: 'เปรียบ' },
-  { path: '/accuracy', icon: '📊', label: 'ความแม่น' },
-  { path: '/claude', icon: '🤖', label: 'Claude' },
-  { path: '/calendar', icon: '📅', label: 'ปฏิทิน' },
+// Bottom Tab Bar (กรองแสดงเฉพาะเมนูที่ user มีสิทธิ์เข้าถึง)
+const bottomTabsAll = [
+  { path: '/analyze', icon: '🔍', label: 'วิเคราะห์', adminOnly: false },
+  { path: '/compare', icon: '⚖️', label: 'เปรียบ', adminOnly: false },
+  { path: '/stats', icon: '📊', label: 'สถิติ', adminOnly: true }, // เฉพาะ admin
+  { path: '/accuracy', icon: '📈', label: 'ความแม่น', adminOnly: false },
+  { path: '/calendar', icon: '📅', label: 'ปฏิทิน', adminOnly: false },
 ]
+
+// กรองเมนูตามสิทธิ์
+const bottomTabs = computed(() => {
+  return bottomTabsAll.filter(tab => !tab.adminOnly || isAdmin.value)
+})
 </script>

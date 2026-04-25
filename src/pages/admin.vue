@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
-import { useLaoFormula } from '../composables/useLaoFormula'
+import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
 import { useVipResult } from '../composables/useVipResult'
 import { useRouter } from 'vue-router'
 import { useVipPopup } from '../composables/useVipPopup'
@@ -18,8 +18,9 @@ const showLotterySelector = ref(false)
 
 const history = ref<string[]>([])
 const input = ref('')
+const confidence = ref(0)
 
-const { getHotNumbers, cutColdNumbers, mixFormula, generateThreeDigits } = useLaoFormula()
+const { calculateAdvanced } = useLaoFormulaAdvanced()
 const { setResult } = useVipResult()
 
 /* ✅ โหลดข้อมูลที่เคยเพิ่มไว้ */
@@ -44,23 +45,23 @@ const addHistory = () => {
 }
 
 const calculate = async () => {
-  if (history.value.length < 3) {
-    alert('กรุณาใส่เลขย้อนหลังอย่างน้อย 3 งวด')
+  if (history.value.length < 5) {
+    alert('กรุณาใส่เลขย้อนหลังอย่างน้อย 5 งวด สำหรับความแม่นยำสูง')
     return
   }
 
-  // 1. คำนวณเลข
-  const hot = getHotNumbers(history.value)
-  const cut = cutColdNumbers(history.value)
-  const two = mixFormula(hot, cut)
-  const three = generateThreeDigits(hot, cut)
-  setResult(hot, two, three)
+  // 1. คำนวณเลขด้วยสูตรขั้นสูง
+  const result = calculateAdvanced(history.value)
+  confidence.value = result.confidence
 
-  // 2. แสดง popup VIP ผลลัพธ์ก่อน
+  setResult(result.hot, result.twoDigits, result.threeDigits)
+
+  // 2. แสดง popup VIP ผลลัพธ์พร้อมความมั่นใจ
   showPopup(
-  `🎯 Hot: ${hot.join(', ')}
-   2 ตัว: ${two.join(', ')}
-   3 ตัว: ${three.join(', ')}`,
+  `🎯 Hot Numbers: ${result.hot.join(', ')}
+   💎 ความมั่นใจ: ${result.confidence}%
+   2 ตัว: ${result.twoDigits.slice(0, 6).join(', ')}
+   3 ตัว: ${result.threeDigits.slice(0, 4).join(', ')}`,
   'info',
   20000 // popup แสดง 20 วินาที
 )
@@ -68,8 +69,8 @@ const calculate = async () => {
   // ✅ ให้ Vue re-render ก่อนหน่วงเวลา
   await nextTick()
 
-  // 3. หน่วงเวลา 3 นาที
-  await new Promise(resolve => setTimeout(resolve, 20000)) // 20000 ms =  20 วินาที
+  // 3. หน่วงเวลา 20 วินาที
+  await new Promise(resolve => setTimeout(resolve, 20000))
 
   // 4. ไปหน้า VIP
   await router.push('/vip')
@@ -113,9 +114,15 @@ const clearHistory = () => {
         <span class="text-sm opacity-80">(คลิกเพื่อเปลี่ยน)</span>
       </button>
 
-      <h1 class="text-2xl font-bold text-vipGreen mb-4">
-        Admin – คำนวณสูตร{{ selectedLotteryType.displayName }} VIP
+      <h1 class="text-2xl font-bold text-vipGreen mb-2">
+        Admin – สูตรขั้นสูง {{ selectedLotteryType.displayName }} VIP
       </h1>
+
+      <!-- Confidence Badge -->
+      <div v-if="confidence > 0" class="mb-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg">
+        <span class="text-xl">💎</span>
+        <span class="text-white font-bold text-sm">ความมั่นใจ: {{ confidence }}%</span>
+      </div>
 
       <!-- Input + เพิ่มเลข -->
       <div class="flex gap-2 mb-4 items-center">

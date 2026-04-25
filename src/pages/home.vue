@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
 import { useVipResult } from '../composables/useVipResult'
 import { useLotteryType } from '../composables/useLotteryType'
 import { useEngineSettings } from '../composables/useEngineSettings'
 import { usePatternRecognition } from '../composables/usePatternRecognition'
 import { useAccuracyTracking } from '../composables/useAccuracyTracking'
+
+const router = useRouter()
+const { waitForAuth } = useAuth()
 
 const STORAGE_KEY = 'vip_lao_history'
 const history = ref<string[]>([])
@@ -14,7 +19,16 @@ const { selectedLotteryType } = useLotteryType()
 const { settings } = useEngineSettings()
 const { accuracyStats } = useAccuracyTracking()
 
-onMounted(() => {
+onMounted(async () => {
+  // ตรวจสอบ authentication ก่อน
+  const currentUser = await waitForAuth()
+  if (!currentUser) {
+    // ถ้ายังไม่ได้ login ให้ไปหน้า login
+    await router.push('/login')
+    return
+  }
+
+  // โหลดข้อมูลปกติ
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved) history.value = JSON.parse(saved)
 })
@@ -228,6 +242,35 @@ const getConfidenceBarColor = (confidence: number) => {
         <!-- Calculation Info -->
         <div v-if="calculatedAt" class="text-center text-xs text-gray-500">
           คำนวณล่าสุด: {{ calculatedAt }}
+        </div>
+
+        <!-- Buy Numbers CTA -->
+        <div class="mt-8 p-6 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-2xl">
+          <div class="text-center mb-4">
+            <h3 class="text-2xl font-black text-white mb-2 drop-shadow-lg">
+              🎰 พร้อมลุ้นรางวัลใหญ่?
+            </h3>
+            <p class="text-white/90 text-sm font-semibold">
+              สมัครซื้อเลขออนไลน์ได้แล้ววันนี้!
+            </p>
+          </div>
+
+          <a
+            href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full py-4 px-6 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-black text-xl rounded-xl shadow-2xl transform transition-all hover:scale-105 active:scale-95 text-center"
+            style="animation: pulse-button 2s ease-in-out infinite;"
+          >
+            <span class="mr-2">🚀</span>
+            คลิกสมัครซื้อเลขที่นี่
+            <span class="ml-2">💰</span>
+          </a>
+
+          <div class="mt-4 flex items-center justify-center gap-2 text-white/80 text-xs">
+            <span>✅</span>
+            <span>ปลอดภัย | รวดเร็ว | ถอนง่าย</span>
+          </div>
         </div>
       </div>
 
