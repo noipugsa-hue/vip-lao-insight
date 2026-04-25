@@ -5,6 +5,7 @@ import { useVipResult } from '../composables/useVipResult'
 import { useRouter } from 'vue-router'
 import { useVipPopup } from '../composables/useVipPopup'
 import { useLotteryType } from '../composables/useLotteryType'
+import { useLotteryFetcher, type LotteryResult } from '../composables/useLotteryFetcher'
 
 definePageMeta({
   layout: false // ปิด layout เพราะหน้านี้เป็นหน้าเก่า
@@ -23,10 +24,34 @@ const confidence = ref(0)
 const { calculateAdvanced } = useLaoFormulaAdvanced()
 const { setResult } = useVipResult()
 
+// Lottery Fetcher
+const {
+  isFetching,
+  error: fetchError,
+  lastResult,
+  fetchAndSave,
+  fetchDemoAndSave,
+  getLatestFromFirestore,
+  getAllFromFirestore,
+  manualAddResult
+} = useLotteryFetcher()
+
+const lotteryResults = ref<LotteryResult[]>([])
+const manualInput = ref({
+  threeDigit: '',
+  date: new Date().toISOString().split('T')[0],
+  period: ''
+})
+const autoFetchEnabled = ref(false)
+const autoFetchInterval = ref<NodeJS.Timeout | null>(null)
+
 /* ✅ โหลดข้อมูลที่เคยเพิ่มไว้ */
-onMounted(() => {
+onMounted(async () => {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved) history.value = JSON.parse(saved)
+
+  // โหลดข้อมูลหวยจาก Firestore
+  await loadLotteryResults()
 })
 
 /* ✅ บันทึกทุกครั้งที่ history เปลี่ยน */
@@ -81,15 +106,216 @@ const clearHistory = () => {
   history.value = []
   localStorage.removeItem(STORAGE_KEY)
 }
+
+// ฟังก์ชันสำหรับดึงข้อมูลหวย
+const fetchLotteryNow = async () => {
+  const success = await fetchAndSave()
+  if (success) {
+    showPopup('✅ ดึงข้อมูลหวยสำเร็จ!', 'success', 3000)
+    await loadLotteryResults()
+  } else {
+    showPopup(`❌ ${fetchError.value || 'เกิดข้อผิดพลาด'}`, 'error', 5000)
+  }
+}
+
+const fetchDemoNow = async () => {
+  const success = await fetchDemoAndSave()
+  if (success) {
+    showPopup('✅ ดึงข้อมูล Demo สำเร็จ! (ข้อมูลทดสอบ)', 'success', 3000)
+    await loadLotteryResults()
+  } else {
+    showPopup(`❌ ${fetchError.value || 'เกิดข้อผิดพลาด'}`, 'error', 5000)
+  }
+}
+
+const loadLotteryResults = async () => {
+  lotteryResults.value = await getAllFromFirestore(10)
+}
+
+const addManualLottery = async () => {
+  if (!/^\d{3}$/.test(manualInput.value.threeDigit)) {
+    showPopup('❌ กรุณาใส่เลข 3 ตัวที่ถูกต้อง', 'error', 3000)
+    return
+  }
+
+  const success = await manualAddResult(
+    manualInput.value.threeDigit,
+    manualInput.value.date,
+    manualInput.value.period || 'manual'
+  )
+
+  if (success) {
+    showPopup('✅ เพิ่มผลหวยสำเร็จ!', 'success', 3000)
+    manualInput.value.threeDigit = ''
+    manualInput.value.period = ''
+    await loadLotteryResults()
+  } else {
+    showPopup('❌ เกิดข้อผิดพลาดในการเพิ่มข้อมูล', 'error', 3000)
+  }
+}
+
+const toggleAutoFetch = () => {
+  autoFetchEnabled.value = !autoFetchEnabled.value
+
+  if (autoFetchEnabled.value) {
+    // ดึงข้อมูลทุก 1 ชั่วโมง
+    autoFetchInterval.value = setInterval(async () => {
+      console.log('🔄 Auto-fetching lottery data...')
+      await fetchLotteryNow()
+    }, 60 * 60 * 1000) // 1 hour
+    showPopup('✅ เปิดการดึงข้อมูลอัตโนมัติแล้ว (ทุก 1 ชั่วโมง)', 'success', 3000)
+  } else {
+    if (autoFetchInterval.value) {
+      clearInterval(autoFetchInterval.value)
+      autoFetchInterval.value = null
+    }
+    showPopup('⏸️ ปิดการดึงข้อมูลอัตโนมัติแล้ว', 'info', 3000)
+  }
+}
+
+// Cleanup interval on unmount
+onMounted(() => {
+  return () => {
+    if (autoFetchInterval.value) {
+      clearInterval(autoFetchInterval.value)
+    }
+  }
+})
 </script>
 
 <template>
-<div class="max-w-5xl mx-auto p-6">
+<div class="max-w-7xl mx-auto p-6 space-y-6">
   <!-- Lottery Type Selector Modal -->
   <LotteryTypeSelector
     :show="showLotterySelector"
     @close="showLotterySelector = false"
   />
+
+  <!-- ส่วนดึงข้อมูลหวยอัตโนมัติ -->
+  <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-2xl p-6 text-white">
+    <h2 class="text-3xl font-bold mb-4 flex items-center gap-2">
+      <span>🤖</span>
+      <span>ระบบดึงข้อมูลหวยอัตโนมัติ</span>
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- ฝั่งซ้าย: ควบคุมการดึงข้อมูล -->
+      <div class="space-y-4">
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-semibold mb-3 text-xl">⚡ ดึงข้อมูลทันที</h3>
+          <div class="space-y-2">
+            <button
+              @click="fetchLotteryNow"
+              :disabled="isFetching"
+              class="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-400 text-black py-3 rounded-lg font-bold text-lg shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span v-if="!isFetching">🎯 ดึงจาก racha-lotto.net</span>
+              <span v-else class="flex items-center gap-2">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังดึงข้อมูล...
+              </span>
+            </button>
+            <button
+              @click="fetchDemoNow"
+              :disabled="isFetching"
+              class="w-full bg-cyan-400 hover:bg-cyan-500 disabled:bg-gray-400 text-black py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span v-if="!isFetching">🧪 ทดสอบระบบ (Demo)</span>
+              <span v-else>กำลังทดสอบ...</span>
+            </button>
+          </div>
+          <p class="text-xs mt-2 opacity-70 text-center">
+            💡 ถ้าดึงจริงไม่ได้ ให้ใช้ปุ่มทดสอบเพื่อลองระบบ
+          </p>
+        </div>
+
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-semibold mb-3 text-xl">⏰ ดึงอัตโนมัติ (ทุก 1 ชั่วโมง)</h3>
+          <button
+            @click="toggleAutoFetch"
+            :class="[
+              'w-full py-3 rounded-lg font-bold text-lg shadow transition-all active:scale-95',
+              autoFetchEnabled
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-green-500 hover:bg-green-600'
+            ]"
+          >
+            <span v-if="!autoFetchEnabled">▶️ เปิดใช้งาน</span>
+            <span v-else>⏸️ ปิดใช้งาน</span>
+          </button>
+          <p class="text-sm mt-2 text-center opacity-80">
+            สถานะ: <strong>{{ autoFetchEnabled ? '🟢 เปิดอยู่' : '🔴 ปิดอยู่' }}</strong>
+          </p>
+        </div>
+
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+          <h3 class="font-semibold mb-3 text-xl">✏️ เพิ่มเลขด้วยตัวเอง</h3>
+          <div class="space-y-2">
+            <input
+              v-model="manualInput.threeDigit"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="3"
+              placeholder="เลข 3 ตัว"
+              @input="manualInput.threeDigit = manualInput.threeDigit.replace(/\D/g, '')"
+              class="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400"
+            />
+            <input
+              v-model="manualInput.date"
+              type="date"
+              class="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400"
+            />
+            <input
+              v-model="manualInput.period"
+              type="text"
+              placeholder="งวด (ไม่บังคับ)"
+              class="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400"
+            />
+            <button
+              @click="addManualLottery"
+              class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95"
+            >
+              ➕ เพิ่มผลหวย
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ฝั่งขวา: แสดงผลหวยที่บันทึกไว้ -->
+      <div class="bg-white/10 backdrop-blur rounded-lg p-4">
+        <h3 class="font-semibold mb-3 text-xl">📋 ผลหวยที่บันทึกไว้ (10 งวดล่าสุด)</h3>
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <div
+            v-for="(result, index) in lotteryResults"
+            :key="index"
+            class="bg-white/20 backdrop-blur rounded-lg p-3 border border-white/30"
+          >
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-bold text-2xl text-yellow-300">{{ result.threeDigit }}</p>
+                <p class="text-sm opacity-80">{{ result.date }} • {{ result.period }}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs bg-white/20 px-2 py-1 rounded">{{ result.source }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="lotteryResults.length === 0" class="text-center py-8 opacity-60">
+            ยังไม่มีข้อมูลหวย
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- แสดง error ถ้ามี -->
+    <div v-if="fetchError" class="mt-4 bg-red-500/20 border border-red-500 rounded-lg p-3 text-center">
+      ⚠️ {{ fetchError }}
+    </div>
+  </div>
 
   <div class="flex gap-6 bg-white/80 backdrop-blur rounded-xl shadow-lg p-6 items-stretch">
 
