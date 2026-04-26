@@ -98,6 +98,7 @@ const handleSignOut = async () => {
 const topTabs = [
   { path: '/home', icon: '🏠', label: 'หลัก' },
   { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง' },
+  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว' },
   { path: '/dream', icon: '💭', label: 'ทำนายฝัน' },
   { path: '/win5', icon: '🏆', label: 'วิน5รวม' },
   { path: '/range', icon: '🎯', label: '00-99' },

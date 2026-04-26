@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { useVipPopup } from '../composables/useVipPopup'
 import { useLotteryType } from '../composables/useLotteryType'
 import { useLotteryFetcher, type LotteryResult } from '../composables/useLotteryFetcher'
+import { useBalance } from '../composables/useBalance'
 
 definePageMeta({
   layout: false // ปิด layout เพราะหน้านี้เป็นหน้าเก่า
@@ -46,6 +47,16 @@ const manualInput = ref({
 const autoFetchEnabled = ref(false)
 const autoFetchInterval = ref<NodeJS.Timeout | null>(null)
 
+// Balance Management
+const {
+  isFetching: isFetchingBalance,
+  error: balanceError,
+  balanceData,
+  fetchBalance,
+  getCachedBalance,
+  formatBalance
+} = useBalance()
+
 /* ✅ โหลดข้อมูลที่เคยเพิ่มไว้ */
 onMounted(async () => {
   const saved = localStorage.getItem(STORAGE_KEY)
@@ -53,6 +64,13 @@ onMounted(async () => {
 
   // โหลดข้อมูลหวยจาก Firestore
   await loadLotteryResults()
+
+  // โหลดยอดเงินจาก cache
+  const cached = getCachedBalance()
+  if (!cached) {
+    // ถ้าไม่มี cache ให้ดึงใหม่
+    await fetchBalance()
+  }
 })
 
 /* ✅ บันทึกทุกครั้งที่ history เปลี่ยน */
@@ -181,6 +199,40 @@ const toggleAutoFetch = () => {
       autoFetchInterval.value = null
     }
     showPopup('⏸️ ปิดการดึงข้อมูลอัตโนมัติแล้ว', 'info', 3000)
+  }
+}
+
+// Balance functions
+const refreshBalance = async (useMock: boolean = false) => {
+  const result = await fetchBalance(undefined, undefined, useMock)
+  if (result) {
+    if (useMock) {
+      showPopup('✅ สร้างข้อมูลจำลองสำเร็จ!', 'info', 3000)
+    } else {
+      showPopup('✅ อัปเดตยอดเงินสำเร็จ!', 'success', 3000)
+    }
+  } else {
+    showPopup(`❌ ${balanceError.value || 'ไม่สามารถดึงยอดเงินได้'}`, 'error', 5000)
+  }
+}
+
+const testLogin = async () => {
+  try {
+    showPopup('🔍 กำลังทดสอบการ login... (จะเปิด browser ให้ดู)', 'info', 5000)
+
+    const response = await fetch('/api/balance/test-login')
+    const data = await response.json()
+
+    if (data.success) {
+      showPopup(`✅ ทดสอบเสร็จสิ้น!\nยอดเงิน: ${formatBalance(data.data.balance)} บาท\nดูรายละเอียดใน Console`, 'success', 10000)
+      console.log('Test result:', data)
+    } else {
+      showPopup(`❌ ทดสอบล้มเหลว: ${data.message}`, 'error', 10000)
+      console.error('Test error:', data)
+    }
+  } catch (error: any) {
+    showPopup(`❌ เกิดข้อผิดพลาด: ${error.message}`, 'error', 5000)
+    console.error('Test error:', error)
   }
 }
 
@@ -333,6 +385,86 @@ onMounted(() => {
     <!-- แสดง error ถ้ามี -->
     <div v-if="fetchError" class="mt-4 bg-red-500/20 border border-red-500 rounded-lg p-3 text-center">
       ⚠️ {{ fetchError }}
+    </div>
+  </div>
+
+  <!-- ส่วนแสดงยอดเงิน -->
+  <div class="bg-gradient-to-r from-green-600 to-emerald-800 rounded-xl shadow-2xl p-6 text-white">
+    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+      <span>💰</span>
+      <span>ยอดเงินคงเหลือ</span>
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <!-- ยอดเงิน -->
+      <div class="bg-white/10 backdrop-blur rounded-lg p-6 text-center">
+        <p class="text-sm opacity-80 mb-2">ยอดเงินปัจจุบัน</p>
+        <div v-if="balanceData" class="space-y-2">
+          <p class="text-5xl font-bold text-yellow-300 animate-pulse">
+            {{ formatBalance(balanceData.balance) }}
+          </p>
+          <p class="text-xl font-semibold">บาท</p>
+          <p class="text-xs opacity-70 mt-2">
+            อัปเดตเมื่อ: {{ new Date(balanceData.fetchedAt).toLocaleString('th-TH') }}
+          </p>
+        </div>
+        <div v-else-if="isFetchingBalance" class="py-8">
+          <div class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>กำลังดึงยอดเงิน...</span>
+          </div>
+        </div>
+        <div v-else class="py-8 text-center opacity-60">
+          <p>ยังไม่มีข้อมูล</p>
+          <p class="text-sm mt-2">คลิกปุ่มรีเฟรชเพื่อดึงข้อมูล</p>
+        </div>
+      </div>
+
+      <!-- ควบคุม -->
+      <div class="space-y-3">
+        <button
+          @click="refreshBalance(false)"
+          :disabled="isFetchingBalance"
+          class="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-400 text-black py-3 rounded-lg font-bold text-lg shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span v-if="!isFetchingBalance">🔄 รีเฟรชยอดเงิน (จริง)</span>
+          <span v-else>กำลังดึงข้อมูล...</span>
+        </button>
+
+        <button
+          @click="refreshBalance(true)"
+          :disabled="isFetchingBalance"
+          class="w-full bg-cyan-400 hover:bg-cyan-500 disabled:bg-gray-400 text-black py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span v-if="!isFetchingBalance">🧪 ใช้ข้อมูลจำลอง (Mock)</span>
+          <span v-else>กำลังสร้างข้อมูล...</span>
+        </button>
+
+        <button
+          @click="testLogin"
+          class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          🔍 ทดสอบการ Login (Debug Mode)
+        </button>
+
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4 text-sm">
+          <p class="font-semibold mb-2">ℹ️ ข้อมูล</p>
+          <ul class="space-y-1 opacity-80">
+            <li v-if="balanceData">• Username: {{ balanceData.username }}</li>
+            <li v-if="balanceData">• แหล่งข้อมูล: {{ balanceData.source }}</li>
+            <li>• ระบบจะพยายามดึงผ่าน HTTP → Puppeteer → Mock</li>
+            <li>• ข้อมูลจะถูก cache เป็นเวลา 5 นาที</li>
+            <li class="text-yellow-300">• แนะนำ: ใช้ Mock Data ถ้า Puppeteer มีปัญหา</li>
+          </ul>
+        </div>
+
+        <div v-if="balanceError" class="bg-orange-500/20 border border-orange-500 rounded-lg p-3 text-sm">
+          ⚠️ {{ balanceError }}
+        </div>
+      </div>
     </div>
   </div>
 
