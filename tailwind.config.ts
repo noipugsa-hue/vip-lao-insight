@@ -1,4 +1,5 @@
 export default {
+  darkMode: 'class', // เปิดใช้งาน dark mode ด้วย class
   content: [
     './app.vue',
     './pages/**/*.{vue,js,ts}',

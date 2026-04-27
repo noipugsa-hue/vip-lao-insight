@@ -24,6 +24,19 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Purchases Collection (เลขที่ซื้อ)
+    // ========================================
+    match /purchases/{purchaseId} {
+      // อนุญาตให้ user อ่านและเขียนเฉพาะข้อมูลของตัวเอง
+      allow read, write: if request.auth != null &&
+                            request.auth.uid == resource.data.userId;
+
+      // อนุญาตให้สร้างเอกสารใหม่ได้ถ้า userId ตรงกับ auth.uid
+      allow create: if request.auth != null &&
+                       request.auth.uid == request.resource.data.userId;
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {
