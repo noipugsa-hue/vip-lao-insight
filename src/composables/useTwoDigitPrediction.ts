@@ -103,7 +103,75 @@ export const useTwoDigitPrediction = () => {
   }
 
   /**
-   * ทำนายเลข 2 ตัวงวดถัดไป
+   * วิเคราะห์ Gap - เลขที่ไม่ได้ออกนาน
+   * เลขที่ไม่ได้ออกนาน 3-7 งวด มีโอกาสออกสูง
+   */
+  const analyzeGap = (history: string[]): Record<string, number> => {
+    const lastSeen: Record<string, number> = {}
+    const gapScore: Record<string, number> = {}
+
+    // หาว่าแต่ละเลขออกครั้งล่าสุดเมื่อไหร่
+    history.forEach((num, index) => {
+      if (!lastSeen[num]) {
+        lastSeen[num] = index
+      }
+    })
+
+    // คำนวณ gap score สำหรับทุกเลข 00-99
+    for (let i = 0; i < 100; i++) {
+      const num = i.toString().padStart(2, '0')
+      const gap = lastSeen[num] !== undefined
+        ? lastSeen[num]
+        : history.length
+
+      // Gap 3-7 งวด = โอกาสสูงสุด
+      if (gap >= 3 && gap <= 7) {
+        gapScore[num] = 5
+      } else if (gap >= 8 && gap <= 12) {
+        gapScore[num] = 3
+      } else if (gap >= 1 && gap <= 2) {
+        gapScore[num] = 2
+      } else if (gap > 12) {
+        gapScore[num] = 1
+      } else {
+        gapScore[num] = 0
+      }
+    }
+
+    return gapScore
+  }
+
+  /**
+   * สร้างเลขจาก Sequential Pattern (เลขติดกัน)
+   */
+  const generateSequentialNumbers = (history: string[], count: number): string[] => {
+    const results: string[] = []
+
+    if (history.length === 0) return results
+
+    const lastNumber = parseInt(history[0], 10)
+
+    // สร้างเลขติดกันกับเลขงวดล่าสุด
+    const sequences = [
+      ((lastNumber + 1) % 100).toString().padStart(2, '0'),
+      ((lastNumber - 1 + 100) % 100).toString().padStart(2, '0'),
+      ((lastNumber + 10) % 100).toString().padStart(2, '0'),
+      ((lastNumber - 10 + 100) % 100).toString().padStart(2, '0'),
+      ((lastNumber + 11) % 100).toString().padStart(2, '0'),
+      ((lastNumber - 11 + 100) % 100).toString().padStart(2, '0'),
+    ]
+
+    sequences.forEach(num => {
+      if (results.length < count && !results.includes(num)) {
+        results.push(num)
+      }
+    })
+
+    return results
+  }
+
+  /**
+   * ทำนายเลข 2 ตัวงวดถัดไป (ปรับปรุงใหม่)
    * @param history - Array ของเลข 2 ตัวย้อนหลัง
    * @param predictionCount - จำนวนเลขที่ต้องการทำนาย (default: 8)
    * @returns Object ที่มีเลขทำนายและข้อมูลวิเคราะห์
@@ -120,18 +188,33 @@ export const useTwoDigitPrediction = () => {
       }
     }
 
-    // วิเคราะห์ความถี่
+    // วิเคราะห์ทุกมิติ
     const frequency = analyzeFrequency(history)
     const hotNumbers = getHotNumbers(history, 5)
     const coldNumbers = getColdNumbers(history, 5)
     const pattern = analyzePattern(history)
+    const gapScores = analyzeGap(history)
 
-    // สร้างเลขทำนาย โดยใช้ Algorithm แบบผสม
+    // สร้างเลขผสมจากหลายวิธี
     const predictions: string[] = []
     const usedNumbers = new Set<string>()
 
-    // 1. เอาเลข Hot Numbers (40%)
-    const hotCount = Math.ceil(predictionCount * 0.4)
+    // 1. Gap Numbers - เลขที่ไม่ได้ออกนาน 3-7 งวด (30%)
+    const gapNumbers = Object.entries(gapScores)
+      .filter(([num, score]) => score >= 3)
+      .sort((a, b) => b[1] - a[1])
+      .map(([num]) => num)
+
+    const gapCount = Math.ceil(predictionCount * 0.3)
+    for (let i = 0; i < gapCount && i < gapNumbers.length; i++) {
+      if (!usedNumbers.has(gapNumbers[i])) {
+        predictions.push(gapNumbers[i])
+        usedNumbers.add(gapNumbers[i])
+      }
+    }
+
+    // 2. Hot Numbers เลขที่ออกบ่อย (25%)
+    const hotCount = Math.ceil(predictionCount * 0.25)
     for (let i = 0; i < hotCount && i < hotNumbers.length; i++) {
       if (!usedNumbers.has(hotNumbers[i])) {
         predictions.push(hotNumbers[i])
@@ -139,9 +222,18 @@ export const useTwoDigitPrediction = () => {
       }
     }
 
-    // 2. วิเคราะห์รูปแบบล่าสุด (30%)
+    // 3. Sequential Numbers - เลขติดกับงวดล่าสุด (20%)
+    const sequential = generateSequentialNumbers(history, Math.ceil(predictionCount * 0.2))
+    sequential.forEach(num => {
+      if (!usedNumbers.has(num) && predictions.length < predictionCount) {
+        predictions.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 4. Pattern Based - วิเคราะห์รูปแบบล่าสุด (15%)
     const recentPattern = history.slice(0, 3)
-    const patternBased = generatePatternBasedNumbers(recentPattern, Math.ceil(predictionCount * 0.3))
+    const patternBased = generatePatternBasedNumbers(recentPattern, Math.ceil(predictionCount * 0.15))
     patternBased.forEach(num => {
       if (!usedNumbers.has(num) && predictions.length < predictionCount) {
         predictions.push(num)
@@ -149,8 +241,8 @@ export const useTwoDigitPrediction = () => {
       }
     })
 
-    // 3. เลขจากการผสมตัวเลขในประวัติ (20%)
-    const mixedNumbers = generateMixedNumbers(history, Math.ceil(predictionCount * 0.2))
+    // 5. Mixed Numbers - ผสมตัวเลข (10%)
+    const mixedNumbers = generateMixedNumbers(history, Math.ceil(predictionCount * 0.1))
     mixedNumbers.forEach(num => {
       if (!usedNumbers.has(num) && predictions.length < predictionCount) {
         predictions.push(num)
@@ -158,13 +250,17 @@ export const useTwoDigitPrediction = () => {
       }
     })
 
-    // 4. Cold Numbers ที่อาจจะมีโอกาส (10%)
-    const coldCount = Math.ceil(predictionCount * 0.1)
-    for (let i = 0; i < coldCount && predictions.length < predictionCount; i++) {
-      if (coldNumbers[i] && !usedNumbers.has(coldNumbers[i])) {
-        predictions.push(coldNumbers[i])
-        usedNumbers.add(coldNumbers[i])
-      }
+    // 6. เติมเลขสุ่มจากเลขที่มี gap score ปานกลาง
+    while (predictions.length < predictionCount) {
+      const remaining = Object.entries(gapScores)
+        .filter(([num]) => !usedNumbers.has(num))
+        .sort((a, b) => b[1] - a[1])
+
+      if (remaining.length === 0) break
+
+      const randomPick = remaining[Math.floor(Math.random() * Math.min(10, remaining.length))][0]
+      predictions.push(randomPick)
+      usedNumbers.add(randomPick)
     }
 
     // คำนวณ Confidence Score (0-100)
@@ -298,6 +394,8 @@ export const useTwoDigitPrediction = () => {
     getColdNumbers,
     analyzePattern,
     predictNextNumbers,
-    analyzeStreak
+    analyzeStreak,
+    analyzeGap,
+    generateSequentialNumbers
   }
 }

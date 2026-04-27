@@ -133,70 +133,330 @@ export const useLaoFormulaAdvanced = () => {
   }
 
   /**
-   * สร้างเลข 2 ตัวแบบอัจฉริยะ
-   * ใช้การวิเคราะห์คู่ที่ออกด้วยกันบ่อย
+   * วิเคราะห์ Gap สำหรับเลข 2 ตัว
    */
-  const generateSmartTwoDigits = (history: string[], hot: string[]) => {
-    const pairAnalysis = analyzePairs(history)
-    const results: Array<{ number: string; score: number }> = []
+  const analyzeTwoDigitGap = (history: string[]): Record<string, number> => {
+    const lastSeen: Record<string, number> = {}
+    const gapScore: Record<string, number> = {}
 
-    // สร้างคู่จาก hot numbers
-    for (let i = 0; i < hot.length; i++) {
-      for (let j = 0; j < hot.length; j++) {
-        const pair = hot[i] + hot[j]
-        const pairKey = [hot[i], hot[j]].sort().join('')
-        const pairScore = pairAnalysis[pairKey] || 0
+    // หาเลข 2 ตัวจากประวัติ (เอา 2 ตัวท้าย)
+    history.forEach((num, index) => {
+      if (num.length >= 2) {
+        const twoDigit = num.slice(-2)
+        if (!lastSeen[twoDigit]) {
+          lastSeen[twoDigit] = index
+        }
+      }
+    })
 
-        results.push({
-          number: pair,
-          score: pairScore
-        })
+    // คำนวณ gap score สำหรับทุกเลข 00-99
+    for (let i = 0; i < 100; i++) {
+      const num = i.toString().padStart(2, '0')
+      const gap = lastSeen[num] !== undefined
+        ? lastSeen[num]
+        : history.length
+
+      // Gap 3-7 งวด = โอกาสสูงสุด
+      if (gap >= 3 && gap <= 7) {
+        gapScore[num] = 5
+      } else if (gap >= 8 && gap <= 12) {
+        gapScore[num] = 3
+      } else if (gap >= 1 && gap <= 2) {
+        gapScore[num] = 2
+      } else if (gap > 12) {
+        gapScore[num] = 1
+      } else {
+        gapScore[num] = 0
       }
     }
 
-    // เรียงตาม score และเอา 8 คู่แรก
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
-      .map(r => r.number)
+    return gapScore
   }
 
   /**
-   * สร้างเลข 3 ตัวแบบอัจฉริยะ
-   * ใช้การวิเคราะห์ตำแหน่งและความถี่
+   * สร้างเลข 2 ตัวแบบอัจฉริยะ (ปรับปรุงใหม่)
+   * ใช้การวิเคราะห์หลายมิติ
+   */
+  const generateSmartTwoDigits = (history: string[], hot: string[]) => {
+    const gapScores = analyzeTwoDigitGap(history)
+    const results: string[] = []
+    const usedNumbers = new Set<string>()
+
+    // 1. Gap Numbers - เลขที่ไม่ได้ออกนาน 3-7 งวด (3 ชุด)
+    const highGapNumbers = Object.entries(gapScores)
+      .filter(([_num, score]) => score === 5)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+      .map(([num]) => num)
+
+    highGapNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 8) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 2. Sequential - เลข 2 ตัวที่ติดกับงวดล่าสุด (2 ชุด)
+    if (history.length > 0 && history[0] && history[0].length >= 2) {
+      const lastTwoDigit = parseInt(history[0].slice(-2), 10)
+      const sequential = [
+        ((lastTwoDigit + 1) % 100).toString().padStart(2, '0'),
+        ((lastTwoDigit - 1 + 100) % 100).toString().padStart(2, '0'),
+      ]
+
+      sequential.forEach(num => {
+        if (!usedNumbers.has(num) && results.length < 8) {
+          results.push(num)
+          usedNumbers.add(num)
+        }
+      })
+    }
+
+    // 3. Medium Gap Numbers (2 ชุด)
+    const mediumGapNumbers = Object.entries(gapScores)
+      .filter(([_num, score]) => score === 3)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2)
+      .map(([num]) => num)
+
+    mediumGapNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 8) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 4. Hot Number Pairs (1 ชุด)
+    let pairCount = 0
+    for (let i = 0; i < hot.length && pairCount < 1 && results.length < 8; i++) {
+      for (let j = 0; j < hot.length && pairCount < 1 && results.length < 8; j++) {
+        const digit1 = hot[i]
+        const digit2 = hot[j]
+        if (!digit1 || !digit2) continue
+
+        const pair = digit1 + digit2
+        if (usedNumbers.has(pair)) continue
+
+        results.push(pair)
+        usedNumbers.add(pair)
+        pairCount++
+      }
+    }
+
+    // 5. เติมเลขเพิ่มจาก gap numbers อื่นๆ
+    if (results.length < 8) {
+      const remainingGaps = Object.entries(gapScores)
+        .filter(([num]) => !usedNumbers.has(num))
+        .filter(([_num, score]) => score >= 2)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 8 - results.length)
+        .map(([num]) => num)
+
+      remainingGaps.forEach(num => {
+        if (results.length < 8) {
+          results.push(num)
+          usedNumbers.add(num)
+        }
+      })
+    }
+
+    // 6. ถ้ายังไม่ครบ 8 ให้สุ่มเลขที่ยังไม่เคยใช้
+    if (results.length < 8) {
+      const allPossible = Array.from({ length: 100 }, (_, i) => i.toString().padStart(2, '0'))
+        .filter(num => !usedNumbers.has(num))
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 8 - results.length)
+
+      allPossible.forEach(num => {
+        if (results.length < 8) {
+          results.push(num)
+          usedNumbers.add(num)
+        }
+      })
+    }
+
+    return results.slice(0, 8)
+  }
+
+  /**
+   * วิเคราะห์ Gap สำหรับเลข 3 ตัว
+   * เลขที่ไม่ได้ออกนาน 3-7 งวด มีโอกาสสูง
+   */
+  const analyzeThreeDigitGap = (history: string[]): Record<string, number> => {
+    const lastSeen: Record<string, number> = {}
+    const gapScore: Record<string, number> = {}
+
+    // หาว่าแต่ละเลขออกครั้งล่าสุดเมื่อไหร่
+    history.forEach((num, index) => {
+      if (!lastSeen[num]) {
+        lastSeen[num] = index
+      }
+    })
+
+    // คำนวณ gap score สำหรับทุกเลข 000-999
+    for (let i = 0; i < 1000; i++) {
+      const num = i.toString().padStart(3, '0')
+      const gap = lastSeen[num] !== undefined
+        ? lastSeen[num]
+        : history.length
+
+      // Gap 3-8 งวด = โอกาสสูงสุด
+      if (gap >= 3 && gap <= 8) {
+        gapScore[num] = 5
+      } else if (gap >= 9 && gap <= 15) {
+        gapScore[num] = 3
+      } else if (gap >= 1 && gap <= 2) {
+        gapScore[num] = 2
+      } else if (gap > 15) {
+        gapScore[num] = 1
+      } else {
+        gapScore[num] = 0
+      }
+    }
+
+    return gapScore
+  }
+
+  /**
+   * สร้างเลขจาก Sequential Pattern สำหรับเลข 3 ตัว
+   */
+  const generateSequentialThreeDigits = (history: string[], count: number): string[] => {
+    const results: string[] = []
+
+    if (history.length === 0 || !history[0]) return results
+
+    const lastNumber = parseInt(history[0], 10)
+
+    // สร้างเลขติดกันกับเลขงวดล่าสุด
+    const sequences = [
+      ((lastNumber + 1) % 1000).toString().padStart(3, '0'),
+      ((lastNumber - 1 + 1000) % 1000).toString().padStart(3, '0'),
+      ((lastNumber + 10) % 1000).toString().padStart(3, '0'),
+      ((lastNumber - 10 + 1000) % 1000).toString().padStart(3, '0'),
+      ((lastNumber + 100) % 1000).toString().padStart(3, '0'),
+      ((lastNumber - 100 + 1000) % 1000).toString().padStart(3, '0'),
+      ((lastNumber + 11) % 1000).toString().padStart(3, '0'),
+      ((lastNumber - 11 + 1000) % 1000).toString().padStart(3, '0'),
+      ((lastNumber + 111) % 1000).toString().padStart(3, '0'),
+      ((lastNumber - 111 + 1000) % 1000).toString().padStart(3, '0'),
+    ]
+
+    sequences.forEach(num => {
+      if (results.length < count && !results.includes(num)) {
+        results.push(num)
+      }
+    })
+
+    return results
+  }
+
+  /**
+   * สร้างเลข 3 ตัวแบบอัจฉริยะ (ปรับปรุงใหม่)
+   * ใช้การวิเคราะห์หลายมิติ
    */
   const generateSmartThreeDigits = (history: string[], hot: string[]) => {
-    const positions = analyzePositions(history)
-    const results: Array<{ number: string; score: number }> = []
+    const gapScores = analyzeThreeDigitGap(history)
+    const sequential = generateSequentialThreeDigits(history, 10)
+    const results: string[] = []
+    const usedNumbers = new Set<string>()
 
-    // สร้างชุด 3 ตัวจาก hot numbers
-    for (let i = 0; i < hot.length; i++) {
-      for (let j = 0; j < hot.length; j++) {
-        for (let k = 0; k < hot.length; k++) {
-          // ไม่เอาเลขซ้ำทั้งหมด
-          if (hot[i] === hot[j] && hot[j] === hot[k]) continue
+    // 1. Gap Numbers - เลขที่ไม่ได้ออกนาน 3-8 งวด (2 ชุด)
+    const highGapNumbers = Object.entries(gapScores)
+      .filter(([_num, score]) => score === 5) // เฉพาะที่มี gap 3-8 งวด
+      .sort((a, b) => {
+        // เรียงตาม gap score และ random เพื่อความหลากหลาย
+        if (b[1] === a[1]) {
+          return Math.random() - 0.5
+        }
+        return b[1] - a[1]
+      })
+      .slice(0, 2)
+      .map(([num]) => num)
 
-          const number = hot[i] + hot[j] + hot[k]
+    highGapNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 6) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
 
-          // คำนวณ position score
-          const pos0 = positions[hot[i]]?.[0] || 0
-          const pos1 = positions[hot[j]]?.[1] || 0
-          const pos2 = positions[hot[k]]?.[2] || 0
-          const positionScore = pos0 + pos1 + pos2
+    // 2. Sequential Numbers - เลขติดกับงวดล่าสุด (2 ชุด)
+    sequential.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 6) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
 
-          results.push({
-            number,
-            score: positionScore
-          })
+    // 3. Medium Gap Numbers - เลขที่ไม่ได้ออก 9-15 งวด (1 ชุด)
+    const mediumGapNumbers = Object.entries(gapScores)
+      .filter(([_num, score]) => score === 3) // gap 9-15 งวด
+      .sort(() => Math.random() - 0.5) // random
+      .slice(0, 1)
+      .map(([num]) => num)
+
+    mediumGapNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 6) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 4. Position-based - จาก hot numbers (1 ชุด)
+    let positionCount = 0
+    for (let i = 0; i < hot.length && positionCount < 1 && results.length < 6; i++) {
+      for (let j = 0; j < hot.length && positionCount < 1 && results.length < 6; j++) {
+        for (let k = 0; k < hot.length && positionCount < 1 && results.length < 6; k++) {
+          const digit1 = hot[i]
+          const digit2 = hot[j]
+          const digit3 = hot[k]
+
+          if (!digit1 || !digit2 || !digit3) continue
+          if (digit1 === digit2 && digit2 === digit3) continue
+
+          const number = digit1 + digit2 + digit3
+          if (usedNumbers.has(number)) continue
+
+          results.push(number)
+          usedNumbers.add(number)
+          positionCount++
         }
       }
     }
 
-    // เรียงตาม score และเอา 6 ชุดแรก
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map(r => r.number)
+    // 5. เติมเลขเพิ่มจาก gap numbers อื่นๆ ถ้ายังไม่ครบ 6
+    if (results.length < 6) {
+      const remainingGaps = Object.entries(gapScores)
+        .filter(([num]) => !usedNumbers.has(num))
+        .filter(([_num, score]) => score >= 2) // เอาที่มี gap score อย่างน้อย 2
+        .sort(() => Math.random() - 0.5) // random เพื่อความหลากหลาย
+        .slice(0, 6 - results.length)
+        .map(([num]) => num)
+
+      remainingGaps.forEach(num => {
+        if (results.length < 6) {
+          results.push(num)
+          usedNumbers.add(num)
+        }
+      })
+    }
+
+    // 6. ถ้ายังไม่ครบ 6 ให้สุ่มเลขที่ยังไม่เคยใช้
+    if (results.length < 6) {
+      const allPossible = Array.from({ length: 1000 }, (_, i) => i.toString().padStart(3, '0'))
+        .filter(num => !usedNumbers.has(num))
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 6 - results.length)
+
+      allPossible.forEach(num => {
+        if (results.length < 6) {
+          results.push(num)
+          usedNumbers.add(num)
+        }
+      })
+    }
+
+    return results.slice(0, 6)
   }
 
   /**
@@ -270,6 +530,9 @@ export const useLaoFormulaAdvanced = () => {
     analyzeFrequencyWithWeight,
     analyzePairs,
     analyzePositions,
-    analyzeGaps
+    analyzeGaps,
+    analyzeThreeDigitGap,
+    generateSequentialThreeDigits,
+    analyzeTwoDigitGap
   }
 }
