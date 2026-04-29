@@ -174,7 +174,7 @@ const switchMode = () => {
             <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 drop-shadow-lg mb-2 animate-gradient">
               LOTTOAI
             </h1>
-            <p class="text-gray-800 font-bold text-lg">
+            <p class="text-white font-bold text-lg drop-shadow-lg">
               {{ isLoginMode ? 'เข้าสู่ระบบเพื่อใช้งาน' : 'สมัครสมาชิกใหม่' }}
             </p>
           </div>
