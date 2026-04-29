@@ -20,6 +20,38 @@
           >
             <span class="text-xl">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
+
+          <!-- VIP Badge / Upgrade Button -->
+          <NuxtLink
+            v-if="isVIP"
+            to="/subscription"
+            class="hidden sm:flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full shadow-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
+          >
+            <span class="text-xs">⭐</span>
+            <span class="text-white text-xs font-bold">{{ currentPlan.toUpperCase() }}</span>
+            <!-- Notification Badge -->
+            <span
+              v-if="isExpiringSoon"
+              class="absolute -top-1 -right-1 flex h-3 w-3"
+            >
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </span>
+            <span
+              v-if="isExpiringSoon && daysRemaining <= 3"
+              class="absolute -top-2 -right-2 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full"
+            >
+              {{ daysRemaining }}
+            </span>
+          </NuxtLink>
+          <NuxtLink
+            v-else
+            to="/pricing"
+            class="hidden sm:flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full shadow-lg hover:from-purple-600 hover:to-indigo-700 transition"
+          >
+            <span class="text-white text-xs font-bold">⬆️ อัพเกรด VIP</span>
+          </NuxtLink>
+
           <!-- User Email -->
           <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/80 dark:bg-gray-700 rounded-full shadow">
             <span class="text-gray-600 dark:text-gray-300 text-xs">👤</span>
@@ -57,6 +89,41 @@
       </nav>
     </header>
 
+    <!-- Expiration Warning Banner -->
+    <div
+      v-if="isExpiringSoon"
+      :class="[
+        'mx-4 mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
+        urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-600 to-red-700 animate-pulse' :
+        urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+        'bg-gradient-to-r from-yellow-500 to-yellow-600'
+      ]"
+    >
+      <div class="flex items-center gap-3 flex-1">
+        <span class="text-2xl">
+          {{ urgencyLevel === 'critical' ? '🚨' : '⏰' }}
+        </span>
+        <div>
+          <p class="text-white font-bold text-sm md:text-base">
+            {{ expirationMessage }}
+          </p>
+          <p class="text-white/90 text-xs mt-1">
+            คลิกเพื่อต่ออายุและใช้งานต่อได้ไม่มีสะดุด
+          </p>
+        </div>
+      </div>
+      <NuxtLink
+        :to="`/payment?plan=${currentPlan}&action=renew`"
+        :class="[
+          'px-6 py-2 rounded-lg font-bold shadow-lg transition-all hover:scale-105',
+          urgencyLevel === 'critical' ? 'bg-white text-red-600 animate-bounce' :
+          'bg-white text-orange-600'
+        ]"
+      >
+        ต่ออายุเลย
+      </NuxtLink>
+    </div>
+
     <!-- Page Content -->
     <main class="container mx-auto px-4 py-6">
       <slot />
@@ -83,11 +150,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
 import { useDarkMode } from '../composables/useDarkMode'
+import { useSubscription } from '../composables/useSubscription'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,6 +163,14 @@ const currentPath = computed(() => route.path)
 const { user, logout } = useAuth()
 const { isAdmin } = useAdmin()
 const { isDark, toggleDarkMode } = useDarkMode()
+const { isVIP, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
+
+// Load subscription on mount
+onMounted(async () => {
+  if (user.value) {
+    await fetchSubscription()
+  }
+})
 
 // Sign out function
 const handleSignOut = async () => {
@@ -104,19 +180,24 @@ const handleSignOut = async () => {
   }
 }
 
-// Top Navigation Tabs
-const topTabs = [
-  { path: '/home', icon: '🏠', label: 'หลัก' },
-  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล' },
-  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ' },
-  { path: '/statistics', icon: '📊', label: 'กราฟสถิติ' },
-  { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง' },
-  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว' },
-  { path: '/dream', icon: '💭', label: 'ทำนายฝัน' },
-  { path: '/win5', icon: '🏆', label: 'วิน5รวม' },
-  { path: '/range', icon: '🎯', label: '00-99' },
-  { path: '/backup', icon: '📊', label: 'Back' },
+// Top Navigation Tabs (กรองตามสิทธิ์ admin)
+const allTopTabs = [
+  { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
+  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
+  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
+  { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false },
+  { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false },
+  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false },
+  { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false },
+  { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false },
+  { path: '/range', icon: '🎯', label: '00-99', adminOnly: false },
+  { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true },
+  { path: '/admin', icon: '⚙️', label: 'Admin', adminOnly: true },
 ]
+
+const topTabs = computed(() => {
+  return allTopTabs.filter(tab => !tab.adminOnly || isAdmin.value)
+})
 
 // Bottom Tab Bar (กรองแสดงเฉพาะเมนูที่ user มีสิทธิ์เข้าถึง)
 const bottomTabsAll = [
@@ -124,7 +205,7 @@ const bottomTabsAll = [
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
   { path: '/statistics', icon: '📊', label: 'กราฟ', adminOnly: false },
-  { path: '/accuracy', icon: '📈', label: 'ความแม่น', adminOnly: false },
+  { path: '/pricing', icon: '⭐', label: 'VIP', adminOnly: false },
 ]
 
 // กรองเมนูตามสิทธิ์

@@ -37,6 +37,41 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Subscriptions Collection (สมาชิก VIP)
+    // ========================================
+    match /subscriptions/{userId} {
+      // อนุญาตให้ user อ่านและเขียนเฉพาะข้อมูลของตัวเอง
+      allow read: if request.auth != null &&
+                     request.auth.uid == userId;
+
+      // อนุญาตให้สร้างและอัพเดทเฉพาะข้อมูลของตัวเอง
+      allow create, update: if request.auth != null &&
+                               request.auth.uid == userId &&
+                               request.auth.uid == request.resource.data.userId;
+
+      // อนุญาตให้ admin อ่านและจัดการได้ทั้งหมด
+      allow read, write: if request.auth != null &&
+                            request.auth.token.email == 'noipugsa@gmail.com';
+    }
+
+    // ========================================
+    // Payments Collection (ประวัติการชำระเงิน)
+    // ========================================
+    match /payments/{paymentId} {
+      // อนุญาตให้ user อ่านเฉพาะข้อมูลของตัวเอง
+      allow read: if request.auth != null &&
+                     request.auth.uid == resource.data.userId;
+
+      // อนุญาตให้สร้างเฉพาะข้อมูลของตัวเอง
+      allow create: if request.auth != null &&
+                       request.auth.uid == request.resource.data.userId;
+
+      // อนุญาตให้ admin อ่านและจัดการได้ทั้งหมด
+      allow read, write: if request.auth != null &&
+                            request.auth.token.email == 'noipugsa@gmail.com';
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {

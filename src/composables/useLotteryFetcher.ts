@@ -238,6 +238,47 @@ export const useLotteryFetcher = () => {
   }
 
   /**
+   * testEndpoint
+   * ทดสอบ endpoint แต่ละตัวเพื่อดูรายละเอียดการเชื่อมต่อ
+   */
+  const testEndpoint = async (url: string): Promise<any> => {
+    try {
+      const response = await fetch(`/api/lottery/test-endpoint?url=${encodeURIComponent(url)}`)
+      const data = await response.json()
+      return data
+    } catch (e: any) {
+      console.error('Error testing endpoint:', e)
+      return {
+        success: false,
+        error: e.message || 'เกิดข้อผิดพลาด'
+      }
+    }
+  }
+
+  /**
+   * testAllEndpoints
+   * ทดสอบ endpoints ทั้งหมดและส่งคืนรายงานสถานะ
+   */
+  const testAllEndpoints = async (): Promise<any[]> => {
+    const endpoints = [
+      'https://www.racha-lotto.net/api/result-product/LA',
+      'https://api.racha-lotto.net/result-product/LA',
+      'https://www.racha-lotto.net/api/results/LA',
+      'https://api.racha-lotto.net/results/LA',
+      'https://www.racha-lotto.net/api/lao/latest',
+      'https://api.racha-lotto.net/lao/latest'
+    ]
+
+    const results = []
+    for (const endpoint of endpoints) {
+      const result = await testEndpoint(endpoint)
+      results.push({ endpoint, ...result })
+    }
+
+    return results
+  }
+
+  /**
    * manualAddResult
    * เพิ่มผลหวยด้วยตัวเองแบบ manual
    */
@@ -348,6 +389,8 @@ export const useLotteryFetcher = () => {
     fetchScraperAndSave,
     getLatestFromFirestore,
     getAllFromFirestore,
-    manualAddResult
+    manualAddResult,
+    testEndpoint,
+    testAllEndpoints
   }
 }

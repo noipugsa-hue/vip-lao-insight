@@ -77,8 +77,9 @@ export default defineEventHandler(async (event) => {
       return {
         success: false,
         error: 'ไม่สามารถดึงข้อมูลจาก API ใดๆ ได้',
-        message: 'ลอง endpoints ทั้งหมดแล้วแต่ไม่สำเร็จ กรุณาลองใส่เลขด้วยตัวเองหรือใช้ custom URL',
-        triedEndpoints: endpoints
+        message: `ลอง endpoints ทั้งหมด (${endpoints.length} endpoints) แล้วแต่ไม่สำเร็จ\n\n💡 แนะนำ:\n• ใช้ปุ่ม "✏️ เพิ่มเลขด้วยตัวเอง" ด้านล่าง\n• ลองใช้ "🧪 ทดสอบระบบ (Demo)" เพื่อทดสอบ\n• หรือติดต่อผู้ดูแลเว็บ racha-lotto.net`,
+        triedEndpoints: endpoints,
+        suggestion: 'manual-entry'
       }
     }
 

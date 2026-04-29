@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VIP Lao Insight is a Nuxt 4 (Vue 3) lottery analysis and prediction application for Lao lottery. It uses Firebase for authentication and data storage, with server-side API endpoints for web scraping lottery results from racha-lotto.net. The app features AI-powered predictions, dream interpretation, and accuracy tracking.
 
+**⚠️ Note:** VIP subscription payment system is currently in testing phase and NOT yet active for real transactions.
+
 **Key Technologies:**
 - Nuxt 4 with Vue 3 and TypeScript
 - Tailwind CSS for styling

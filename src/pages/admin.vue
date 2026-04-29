@@ -7,13 +7,17 @@ import { useVipPopup } from '../composables/useVipPopup'
 import { useLotteryType } from '../composables/useLotteryType'
 import { useLotteryFetcher, type LotteryResult } from '../composables/useLotteryFetcher'
 import { useBalance } from '../composables/useBalance'
+import { useAuth } from '../composables/useAuth'
+import { useAdmin } from '../composables/useAdmin'
 
 definePageMeta({
   layout: false // ปิด layout เพราะหน้านี้เป็นหน้าเก่า
 })
 
-const { vipPopup, showPopup } = useVipPopup()
 const router = useRouter()
+const { waitForAuth } = useAuth()
+const { isAdmin } = useAdmin()
+const { vipPopup, showPopup } = useVipPopup()
 const STORAGE_KEY = 'vip_lao_history'
 const { selectedLotteryType } = useLotteryType()
 const showLotterySelector = ref(false)
@@ -35,7 +39,9 @@ const {
   fetchScraperAndSave,
   getLatestFromFirestore,
   getAllFromFirestore,
-  manualAddResult
+  manualAddResult,
+  testEndpoint,
+  testAllEndpoints
 } = useLotteryFetcher()
 
 const lotteryResults = ref<LotteryResult[]>([])
@@ -46,6 +52,13 @@ const manualInput = ref({
 })
 const autoFetchEnabled = ref(false)
 const autoFetchInterval = ref<NodeJS.Timeout | null>(null)
+
+// Endpoint Testing
+const showEndpointTest = ref(false)
+const testingEndpoints = ref(false)
+const endpointTestResults = ref<any[]>([])
+const customUrlInput = ref('')
+const customUrlTestResult = ref<any>(null)
 
 // Balance Management
 const {
@@ -59,6 +72,20 @@ const {
 
 /* ✅ โหลดข้อมูลที่เคยเพิ่มไว้ */
 onMounted(async () => {
+  // 🔒 ตรวจสอบ authentication และ admin ก่อน
+  const currentUser = await waitForAuth()
+  if (!currentUser) {
+    await router.push('/login')
+    return
+  }
+
+  // 🔒 เช็คว่าเป็น admin หรือไม่
+  if (!isAdmin.value) {
+    alert('⛔ คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (Admin เท่านั้น)')
+    await router.push('/home')
+    return
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved) history.value = JSON.parse(saved)
 
@@ -236,6 +263,53 @@ const testLogin = async () => {
   }
 }
 
+// Endpoint testing functions
+const runEndpointTests = async () => {
+  testingEndpoints.value = true
+  endpointTestResults.value = []
+
+  try {
+    showPopup('🔍 กำลังทดสอบ endpoints ทั้งหมด...', 'info', 3000)
+    const results = await testAllEndpoints()
+    endpointTestResults.value = results
+
+    const successCount = results.filter(r => r.success).length
+    showPopup(`✅ ทดสอบเสร็จ: ${successCount}/${results.length} endpoints ใช้งานได้`, 'success', 5000)
+  } catch (error: any) {
+    showPopup(`❌ เกิดข้อผิดพลาด: ${error.message}`, 'error', 5000)
+  } finally {
+    testingEndpoints.value = false
+  }
+}
+
+const testCustomUrl = async () => {
+  if (!customUrlInput.value.trim()) {
+    showPopup('❌ กรุณาใส่ URL ที่ต้องการทดสอบ', 'error', 3000)
+    return
+  }
+
+  testingEndpoints.value = true
+  customUrlTestResult.value = null
+
+  try {
+    showPopup('🔍 กำลังทดสอบ URL...', 'info', 2000)
+    const result = await testEndpoint(customUrlInput.value)
+    customUrlTestResult.value = result
+
+    if (result.success && result.isValidJson) {
+      showPopup('✅ URL นี้ใช้งานได้และส่งคืน JSON!', 'success', 5000)
+    } else if (result.success) {
+      showPopup('⚠️ URL นี้ใช้งานได้แต่ไม่ใช่ JSON', 'info', 5000)
+    } else {
+      showPopup(`❌ URL นี้ไม่สามารถใช้งานได้: ${result.error || result.message}`, 'error', 5000)
+    }
+  } catch (error: any) {
+    showPopup(`❌ เกิดข้อผิดพลาด: ${error.message}`, 'error', 5000)
+  } finally {
+    testingEndpoints.value = false
+  }
+}
+
 // Cleanup interval on unmount
 onMounted(() => {
   return () => {
@@ -385,6 +459,149 @@ onMounted(() => {
     <!-- แสดง error ถ้ามี -->
     <div v-if="fetchError" class="mt-4 bg-red-500/20 border border-red-500 rounded-lg p-3 text-center">
       ⚠️ {{ fetchError }}
+    </div>
+
+    <!-- ปุ่มเปิด/ปิดส่วนทดสอบ endpoints -->
+    <div class="mt-4">
+      <button
+        @click="showEndpointTest = !showEndpointTest"
+        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95 flex items-center justify-center gap-2"
+      >
+        <span v-if="!showEndpointTest">🔧 เปิดเครื่องมือทดสอบ Endpoints</span>
+        <span v-else>▼ ซ่อนเครื่องมือทดสอบ</span>
+      </button>
+    </div>
+
+    <!-- ส่วนทดสอบ endpoints -->
+    <div v-if="showEndpointTest" class="mt-4 bg-white/10 backdrop-blur rounded-lg p-4 space-y-4">
+      <h3 class="font-bold text-xl mb-3">🔧 เครื่องมือทดสอบ API Endpoints</h3>
+
+      <!-- ทดสอบ endpoints ทั้งหมด -->
+      <div class="bg-white/5 rounded-lg p-4">
+        <h4 class="font-semibold mb-2">📊 ทดสอบ Endpoints ทั้งหมด</h4>
+        <button
+          @click="runEndpointTests"
+          :disabled="testingEndpoints"
+          class="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95"
+        >
+          <span v-if="!testingEndpoints">🧪 ทดสอบทั้งหมด</span>
+          <span v-else>⏳ กำลังทดสอบ...</span>
+        </button>
+
+        <!-- ผลการทดสอบ -->
+        <div v-if="endpointTestResults.length > 0" class="mt-3 space-y-2 max-h-96 overflow-y-auto">
+          <div
+            v-for="(result, index) in endpointTestResults"
+            :key="index"
+            :class="[
+              'p-3 rounded-lg border text-sm',
+              result.success
+                ? 'bg-green-500/20 border-green-500'
+                : 'bg-red-500/20 border-red-500'
+            ]"
+          >
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex-1">
+                <p class="font-mono text-xs break-all">{{ result.endpoint }}</p>
+              </div>
+              <span :class="[
+                'ml-2 px-2 py-1 rounded text-xs font-bold',
+                result.success ? 'bg-green-500' : 'bg-red-500'
+              ]">
+                {{ result.success ? '✅ OK' : '❌ FAIL' }}
+              </span>
+            </div>
+
+            <div class="space-y-1 text-xs">
+              <p v-if="result.status">สถานะ: <strong>{{ result.status }} {{ result.statusText }}</strong></p>
+              <p v-if="result.responseTime">เวลา: <strong>{{ result.responseTime }}</strong></p>
+              <p v-if="result.contentType">Content-Type: <strong>{{ result.contentType }}</strong></p>
+              <p v-if="result.isHtml !== undefined">
+                <span :class="result.isHtml ? 'text-yellow-300' : 'text-green-300'">
+                  {{ result.isHtml ? '⚠️ ส่งคืน HTML' : '✅ ไม่ใช่ HTML' }}
+                </span>
+              </p>
+              <p v-if="result.isValidJson !== undefined">
+                <span :class="result.isValidJson ? 'text-green-300' : 'text-yellow-300'">
+                  {{ result.isValidJson ? '✅ JSON ถูกต้อง' : '⚠️ ไม่ใช่ JSON' }}
+                </span>
+              </p>
+              <p v-if="result.error" class="text-red-300">Error: {{ result.error }}</p>
+              <p v-if="result.message" class="opacity-80">{{ result.message }}</p>
+
+              <!-- แสดง preview data ถ้ามี -->
+              <details v-if="result.dataPreview" class="mt-2">
+                <summary class="cursor-pointer text-cyan-300">📄 ดูข้อมูล Preview</summary>
+                <pre class="mt-2 p-2 bg-black/30 rounded text-xs overflow-x-auto">{{ JSON.stringify(result.dataPreview, null, 2) }}</pre>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ทดสอบ custom URL -->
+      <div class="bg-white/5 rounded-lg p-4">
+        <h4 class="font-semibold mb-2">🌐 ทดสอบ Custom URL</h4>
+        <div class="space-y-2">
+          <input
+            v-model="customUrlInput"
+            type="url"
+            placeholder="https://api.example.com/lottery"
+            class="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:border-orange-400 focus:ring-2 focus:ring-orange-400 font-mono text-sm"
+          />
+          <button
+            @click="testCustomUrl"
+            :disabled="testingEndpoints"
+            class="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white py-2 rounded-lg font-semibold shadow transition-all active:scale-95"
+          >
+            <span v-if="!testingEndpoints">🧪 ทดสอบ URL นี้</span>
+            <span v-else>⏳ กำลังทดสอบ...</span>
+          </button>
+        </div>
+
+        <!-- ผลการทดสอบ custom URL -->
+        <div v-if="customUrlTestResult" class="mt-3">
+          <div :class="[
+            'p-3 rounded-lg border text-sm',
+            customUrlTestResult.success
+              ? 'bg-green-500/20 border-green-500'
+              : 'bg-red-500/20 border-red-500'
+          ]">
+            <div class="space-y-1 text-xs">
+              <p class="font-bold mb-2">
+                {{ customUrlTestResult.success ? '✅ ทดสอบสำเร็จ' : '❌ ทดสอบล้มเหลว' }}
+              </p>
+              <p v-if="customUrlTestResult.status">สถานะ: <strong>{{ customUrlTestResult.status }} {{ customUrlTestResult.statusText }}</strong></p>
+              <p v-if="customUrlTestResult.responseTime">เวลา: <strong>{{ customUrlTestResult.responseTime }}</strong></p>
+              <p v-if="customUrlTestResult.contentType">Content-Type: <strong>{{ customUrlTestResult.contentType }}</strong></p>
+              <p v-if="customUrlTestResult.isValidJson !== undefined">
+                <span :class="customUrlTestResult.isValidJson ? 'text-green-300' : 'text-yellow-300'">
+                  {{ customUrlTestResult.isValidJson ? '✅ JSON ถูกต้อง' : '⚠️ ไม่ใช่ JSON' }}
+                </span>
+              </p>
+              <p v-if="customUrlTestResult.error" class="text-red-300">Error: {{ customUrlTestResult.error }}</p>
+              <p v-if="customUrlTestResult.message">{{ customUrlTestResult.message }}</p>
+
+              <!-- แสดง preview data -->
+              <details v-if="customUrlTestResult.dataPreview" class="mt-2">
+                <summary class="cursor-pointer text-cyan-300">📄 ดูข้อมูล Preview</summary>
+                <pre class="mt-2 p-2 bg-black/30 rounded text-xs overflow-x-auto">{{ JSON.stringify(customUrlTestResult.dataPreview, null, 2) }}</pre>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- คำแนะนำ -->
+      <div class="bg-blue-500/20 border border-blue-500 rounded-lg p-3 text-sm">
+        <p class="font-semibold mb-2">💡 วิธีใช้งาน</p>
+        <ul class="space-y-1 opacity-90">
+          <li>• คลิก "ทดสอบทั้งหมด" เพื่อดูว่า endpoints ไหนใช้งานได้บ้าง</li>
+          <li>• ถ้าเจอ endpoint ที่ส่งคืน JSON ให้บันทึก URL ไว้</li>
+          <li>• สามารถทดสอบ URL ที่คุณหามาเองได้ในช่อง Custom URL</li>
+          <li>• หาก endpoint ที่ทดสอบใช้งานได้ แต่ปุ่มดึงข้อมูลไม่ทำงาน ให้ติดต่อผู้พัฒนา</li>
+        </ul>
+      </div>
     </div>
   </div>
 
