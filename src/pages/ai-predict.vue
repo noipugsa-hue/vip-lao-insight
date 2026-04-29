@@ -14,11 +14,26 @@ const router = useRouter()
 const { waitForAuth } = useAuth()
 const { canUse, useOnce, remainingUses, usageText, usagePercentage, timeUntilReset, isVIP } = useUsageLimit()
 const { selectedType } = useLotteryType()
-const { calculateAdvanced, getHistoryForType } = useLaoFormulaAdvanced()
+const { calculateAdvanced } = useLaoFormulaAdvanced()
 
 const loading = ref(false)
 const showResult = ref(false)
 const prediction = ref<any>(null)
+
+// Helper function to get storage key
+const getStorageKey = (lotteryId: string) => `vip_lao_history_${lotteryId}`
+
+// Helper function to get history for lottery type
+const getHistoryForType = (lotteryId: string): string[] => {
+  if (import.meta.client) {
+    const storageKey = getStorageKey(lotteryId)
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  }
+  return []
+}
 
 // Alert state
 const alert = ref({
