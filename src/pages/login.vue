@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useLoginStats } from '../composables/useLoginStats'
+import { useLotteryHistory, type LotteryResult } from '../composables/useLotteryHistory'
 
 definePageMeta({
   layout: false
@@ -15,6 +16,22 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const isLoginMode = ref(true)
+
+// Lottery popup state
+const showLotteryPopup = ref(false)
+const { results, loading: lotteryLoading, error: lotteryError, fetchMultipleResults } = useLotteryHistory()
+
+// Load lottery results when popup opens
+const openLotteryPopup = async () => {
+  showLotteryPopup.value = true
+  if (results.value.length === 0) {
+    await fetchMultipleResults(1)
+  }
+}
+
+const closeLotteryPopup = () => {
+  showLotteryPopup.value = false
+}
 
 const alert = ref({
   show: false,
@@ -276,18 +293,158 @@ const switchMode = () => {
 
           <!-- View Lottery Results (No Login Required) -->
           <div class="mt-6 text-center">
-            <NuxtLink
-              to="/lottery-history"
+            <button
+              @click="openLotteryPopup"
               class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
             >
               <span class="text-xl">🎫</span>
               <span>ดูผลหวยย้อนหลัง</span>
-            </NuxtLink>
+            </button>
             <p class="text-xs text-gray-500 mt-2">ไม่ต้อง Login</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Lottery Popup Modal -->
+    <transition name="modal-fade">
+      <div
+        v-if="showLotteryPopup"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        @click.self="closeLotteryPopup"
+      >
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-red-600 to-red-700 p-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-4xl">🎫</span>
+              <div>
+                <h2 class="text-2xl font-black text-white">ผลหวยรัฐบาลงวดล่าสุด</h2>
+                <p class="text-red-100 text-sm">ตรวจผลรางวัลหวยรัฐบาลไทย</p>
+              </div>
+            </div>
+            <button
+              @click="closeLotteryPopup"
+              class="text-white hover:bg-white/20 rounded-full p-2 transition"
+            >
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto p-6">
+            <!-- Loading State -->
+            <div v-if="lotteryLoading && results.length === 0" class="text-center py-12">
+              <div class="text-6xl mb-4 animate-spin">⚙️</div>
+              <p class="text-xl text-gray-600 dark:text-gray-400">กำลังโหลดข้อมูล...</p>
+            </div>
+
+            <!-- Error State -->
+            <div v-else-if="lotteryError && results.length === 0" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 rounded-xl p-6 text-center">
+              <div class="text-5xl mb-3">❌</div>
+              <h3 class="text-xl font-bold text-red-800 dark:text-red-300 mb-2">เกิดข้อผิดพลาด</h3>
+              <p class="text-red-600 dark:text-red-400">{{ lotteryError }}</p>
+            </div>
+
+            <!-- Results -->
+            <div v-else-if="results.length > 0" class="space-y-6">
+              <div
+                v-for="result in results"
+                :key="result.date"
+                class="space-y-4"
+              >
+                <!-- Date Header -->
+                <div class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl p-4">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-xl font-black text-gray-800 dark:text-gray-100">งวดประจำวันที่ {{ result.date }}</h3>
+                      <p class="text-gray-600 dark:text-gray-300 text-sm">งวดที่ {{ result.period || result.date }}</p>
+                    </div>
+                    <div class="text-3xl">🎰</div>
+                  </div>
+                </div>
+
+                <!-- รางวัลที่ 1 -->
+                <div class="text-center p-6 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-300 dark:border-yellow-700">
+                  <div class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-2">🏆 รางวัลที่ 1</div>
+                  <div class="text-4xl md:text-5xl font-black text-yellow-600 dark:text-yellow-400 mb-2 tracking-wider">
+                    {{ result.first }}
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400">6,000,000 บาท</div>
+                </div>
+
+                <!-- รางวัลใกล้เคียงรางวัลที่ 1 -->
+                <div v-if="result.firstNear && result.firstNear.length > 0" class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                  <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <span>🎯</span>
+                    รางวัลใกล้เคียงรางวัลที่ 1
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <div v-for="num in result.firstNear" :key="num" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg">
+                      <div class="text-xl font-black text-orange-600 dark:text-orange-400">{{ num }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">100,000 ฿</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- รางวัลท้าย 2 ตัว -->
+                <div v-if="result.runningNumberBack2 && result.runningNumberBack2.length > 0" class="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
+                  <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🎯 เลขท้าย 2 ตัว</div>
+                  <div class="flex flex-wrap gap-2">
+                    <div v-for="num in result.runningNumberBack2" :key="num" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg font-black text-xl text-teal-600 dark:text-teal-400">
+                      {{ num }}
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">รางวัลละ 2,000 บาท</div>
+                </div>
+
+                <!-- เลขท้าย 3 ตัว -->
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div v-if="result.runningNumberFront && result.runningNumberFront.length > 0" class="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border border-cyan-200 dark:border-cyan-800">
+                    <div class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">🔢 เลขหน้า 3 ตัว</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div v-for="num in result.runningNumberFront" :key="num" class="px-3 py-1 bg-white dark:bg-gray-800 rounded font-bold text-cyan-600 dark:text-cyan-400">
+                        {{ num }}
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">4,000 ฿</div>
+                  </div>
+
+                  <div v-if="result.runningNumberBack && result.runningNumberBack.length > 0" class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                    <div class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">🔢 เลขท้าย 3 ตัว</div>
+                    <div class="flex flex-wrap gap-2">
+                      <div v-for="num in result.runningNumberBack" :key="num" class="px-3 py-1 bg-white dark:bg-gray-800 rounded font-bold text-indigo-600 dark:text-indigo-400">
+                        {{ num }}
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">4,000 ฿</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-12">
+              <div class="text-6xl mb-4">📭</div>
+              <h3 class="text-2xl font-black text-gray-800 dark:text-gray-100 mb-2">ไม่มีข้อมูล</h3>
+              <p class="text-gray-600 dark:text-gray-400">ไม่พบข้อมูลผลหวย กรุณาลองใหม่อีกครั้ง</p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+            <button
+              @click="closeLotteryPopup"
+              class="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -384,5 +541,25 @@ const switchMode = () => {
   50% {
     box-shadow: 0 15px 60px currentColor, 0 0 50px currentColor;
   }
+}
+
+/* Modal Transitions */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-active .bg-white,
+.modal-fade-leave-active .bg-white {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-fade-enter-from .bg-white,
+.modal-fade-leave-to .bg-white {
+  transform: scale(0.9);
+  opacity: 0;
 }
 </style>
