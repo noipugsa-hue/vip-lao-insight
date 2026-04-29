@@ -24,6 +24,73 @@ export const useLotteryHistory = () => {
   const error = ref<string | null>(null)
 
   /**
+   * บันทึกงวดหวยลง Firestore
+   */
+  const saveResultToFirestore = async (result: LotteryResult) => {
+    if (import.meta.client) {
+      try {
+        const { $db } = useNuxtApp()
+        const { collection, doc, setDoc } = await import('firebase/firestore')
+
+        // ใช้ period เป็น document ID
+        const docRef = doc(collection($db, 'governmentLottery'), result.period)
+        await setDoc(docRef, {
+          ...result,
+          createdAt: new Date().toISOString()
+        })
+
+        console.log('Saved lottery result to Firestore:', result.period)
+      } catch (err) {
+        console.error('Error saving to Firestore:', err)
+      }
+    }
+  }
+
+  /**
+   * ดึงรายการงวดย้อนหลังจาก Firestore
+   */
+  const fetchResultsFromFirestore = async (limit: number = 10) => {
+    if (import.meta.client) {
+      try {
+        const { $db } = useNuxtApp()
+        const { collection, query, orderBy, getDocs, limit: firestoreLimit } = await import('firebase/firestore')
+
+        const q = query(
+          collection($db, 'governmentLottery'),
+          orderBy('period', 'desc'),
+          firestoreLimit(limit)
+        )
+
+        const querySnapshot = await getDocs(q)
+        const savedResults: LotteryResult[] = []
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data()
+          savedResults.push({
+            date: data.date,
+            period: data.period,
+            first: data.first,
+            firstNear: data.firstNear || [],
+            second: data.second || [],
+            third: data.third || [],
+            fourth: data.fourth || [],
+            fifth: data.fifth || [],
+            runningNumberFront: data.runningNumberFront || [],
+            runningNumberBack: data.runningNumberBack || [],
+            runningNumberBack2: data.runningNumberBack2 || []
+          })
+        })
+
+        return savedResults
+      } catch (err) {
+        console.error('Error fetching from Firestore:', err)
+        return []
+      }
+    }
+    return []
+  }
+
+  /**
    * ดึงผลหวยงวดล่าสุด
    */
   const fetchLatestResult = async () => {
@@ -36,6 +103,10 @@ export const useLotteryHistory = () => {
 
       if (data.success && data.data) {
         currentResult.value = data.data
+
+        // บันทึกลง Firestore
+        await saveResultToFirestore(data.data)
+
         return data.data
       } else {
         error.value = data.error || 'ไม่สามารถดึงข้อมูลได้'
@@ -78,8 +149,7 @@ export const useLotteryHistory = () => {
   }
 
   /**
-   * ดึงผลหวยล่าสุด (Rayriffy API รองรับแค่งวดล่าสุด)
-   * @param count ไม่ใช้แล้ว - เก็บไว้เพื่อความเข้ากันได้
+   * ดึงผลหวยหลายงวด (รวมงวดล่าสุด + ย้อนหลังจาก Firestore)
    */
   const fetchMultipleResults = async (count: number = 10) => {
     try {
@@ -87,14 +157,32 @@ export const useLotteryHistory = () => {
       error.value = null
       results.value = []
 
-      // ดึงงวดล่าสุด (API รองรับแค่ latest เท่านั้น)
+      // ดึงงวดล่าสุดจาก API
       const latest = await fetchLatestResult()
+
+      // ดึงงวดย้อนหลังจาก Firestore
+      const savedResults = await fetchResultsFromFirestore(count)
+
+      // รวมผลลัพธ์ (ไม่ซ้ำกัน)
+      const allResults: LotteryResult[] = []
+      const periodSet = new Set<string>()
+
+      // เพิ่มงวดล่าสุดก่อน
       if (latest) {
-        results.value = [latest]
-        return [latest]
+        allResults.push(latest)
+        periodSet.add(latest.period)
       }
 
-      return []
+      // เพิ่มงวดย้อนหลัง (ไม่ซ้ำ)
+      for (const result of savedResults) {
+        if (!periodSet.has(result.period)) {
+          allResults.push(result)
+          periodSet.add(result.period)
+        }
+      }
+
+      results.value = allResults
+      return allResults
 
     } catch (err: any) {
       error.value = err.message || 'เกิดข้อผิดพลาด'
@@ -170,6 +258,8 @@ export const useLotteryHistory = () => {
     fetchLatestResult,
     fetchResultByDate,
     fetchMultipleResults,
+    fetchResultsFromFirestore,
+    saveResultToFirestore,
     checkNumber
   }
 }

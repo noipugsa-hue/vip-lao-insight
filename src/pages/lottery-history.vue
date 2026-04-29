@@ -32,7 +32,7 @@ onMounted(async () => {
 })
 
 const loadResults = async () => {
-  await fetchMultipleResults(10)
+  await fetchMultipleResults(20) // ดึง 20 งวดย้อนหลัง
   if (results.value.length > 0) {
     selectedResult.value = results.value[0]
   }
@@ -138,14 +138,14 @@ const formatCurrency = (amount: number) => {
         <div class="flex flex-col md:flex-row gap-4">
           <div class="flex-1">
             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              เลือกงวด
+              เลือกงวด (มี {{ results.length }} งวด)
             </label>
             <select
               v-model="selectedResult"
               class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 font-semibold"
             >
-              <option v-for="result in results" :key="result.date" :value="result">
-                งวดวันที่ {{ result.date }}
+              <option v-for="result in results" :key="result.period" :value="result">
+                งวดวันที่ {{ result.date }} (งวดที่ {{ result.period }})
               </option>
             </select>
           </div>
@@ -199,19 +199,15 @@ const formatCurrency = (amount: number) => {
         </transition>
       </div>
 
-      <!-- Results List -->
-      <div class="grid gap-6">
-        <div
-          v-for="result in results"
-          :key="result.date"
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700"
-        >
+      <!-- Results Display -->
+      <div v-if="selectedResult" class="grid gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700">
           <!-- Header -->
           <div class="bg-gradient-to-r from-red-600 to-red-700 p-4">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-2xl font-black text-white">งวดประจำวันที่ {{ result.date }}</h3>
-                <p class="text-red-100">งวดที่ {{ result.period || result.date }}</p>
+                <h3 class="text-2xl font-black text-white">งวดประจำวันที่ {{ selectedResult.date }}</h3>
+                <p class="text-red-100">งวดที่ {{ selectedResult.period || selectedResult.date }}</p>
               </div>
               <div class="text-4xl">🎰</div>
             </div>
@@ -223,19 +219,19 @@ const formatCurrency = (amount: number) => {
             <div class="text-center p-6 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-300 dark:border-yellow-700">
               <div class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">🏆 รางวัลที่ 1</div>
               <div class="text-5xl md:text-6xl font-black text-yellow-600 dark:text-yellow-400 mb-2 tracking-wider">
-                {{ result.first }}
+                {{ selectedResult.first }}
               </div>
               <div class="text-sm text-gray-600 dark:text-gray-400">รางวัลละ 6,000,000 บาท</div>
             </div>
 
             <!-- รางวัลใกล้เคียงรางวัลที่ 1 -->
-            <div v-if="result.firstNear && result.firstNear.length > 0" class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+            <div v-if="selectedResult.firstNear && selectedResult.firstNear.length > 0" class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
               <div class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <span>🎯</span>
                 รางวัลใกล้เคียงรางวัลที่ 1
               </div>
               <div class="grid grid-cols-2 gap-3">
-                <div v-for="num in result.firstNear" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
+                <div v-for="num in selectedResult.firstNear" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
                   <div class="text-2xl font-black text-orange-600 dark:text-orange-400">{{ num }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">100,000 ฿</div>
                 </div>
@@ -243,13 +239,13 @@ const formatCurrency = (amount: number) => {
             </div>
 
             <!-- รางวัลที่ 2 -->
-            <div v-if="result.second && result.second.length > 0" class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+            <div v-if="selectedResult.second && selectedResult.second.length > 0" class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
               <div class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <span>🥈</span>
                 รางวัลที่ 2
               </div>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div v-for="num in result.second" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
+                <div v-for="num in selectedResult.second" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
                   <div class="text-xl font-black text-purple-600 dark:text-purple-400">{{ num }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">200,000 ฿</div>
                 </div>
@@ -257,13 +253,13 @@ const formatCurrency = (amount: number) => {
             </div>
 
             <!-- รางวัลที่ 3 -->
-            <div v-if="result.third && result.third.length > 0" class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div v-if="selectedResult.third && selectedResult.third.length > 0" class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
               <div class="text-lg font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                 <span>🥉</span>
                 รางวัลที่ 3
               </div>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div v-for="num in result.third" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
+                <div v-for="num in selectedResult.third" :key="num" class="text-center p-3 bg-white dark:bg-gray-800 rounded-lg">
                   <div class="text-xl font-black text-blue-600 dark:text-blue-400">{{ num }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">80,000 ฿</div>
                 </div>
@@ -273,10 +269,10 @@ const formatCurrency = (amount: number) => {
             <!-- รางวัลที่ 4 และ 5 -->
             <div class="grid md:grid-cols-2 gap-4">
               <!-- รางวัลที่ 4 -->
-              <div v-if="result.fourth && result.fourth.length > 0" class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+              <div v-if="selectedResult.fourth && selectedResult.fourth.length > 0" class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
                 <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🎖️ รางวัลที่ 4</div>
                 <div class="grid grid-cols-2 gap-2">
-                  <div v-for="num in result.fourth" :key="num" class="text-center p-2 bg-white dark:bg-gray-800 rounded">
+                  <div v-for="num in selectedResult.fourth" :key="num" class="text-center p-2 bg-white dark:bg-gray-800 rounded">
                     <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ num }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">40,000 ฿</div>
                   </div>
@@ -284,10 +280,10 @@ const formatCurrency = (amount: number) => {
               </div>
 
               <!-- รางวัลที่ 5 -->
-              <div v-if="result.fifth && result.fifth.length > 0" class="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-200 dark:border-pink-800">
+              <div v-if="selectedResult.fifth && selectedResult.fifth.length > 0" class="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-200 dark:border-pink-800">
                 <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🏅 รางวัลที่ 5</div>
                 <div class="grid grid-cols-2 gap-2">
-                  <div v-for="num in result.fifth" :key="num" class="text-center p-2 bg-white dark:bg-gray-800 rounded">
+                  <div v-for="num in selectedResult.fifth" :key="num" class="text-center p-2 bg-white dark:bg-gray-800 rounded">
                     <div class="text-lg font-bold text-pink-600 dark:text-pink-400">{{ num }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">20,000 ฿</div>
                   </div>
@@ -298,10 +294,10 @@ const formatCurrency = (amount: number) => {
             <!-- เลขหน้า 3 ตัว และ เลขท้าย 3 ตัว -->
             <div class="grid md:grid-cols-2 gap-4">
               <!-- เลขหน้า 3 ตัว -->
-              <div v-if="result.runningNumberFront && result.runningNumberFront.length > 0" class="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border border-cyan-200 dark:border-cyan-800">
+              <div v-if="selectedResult.runningNumberFront && selectedResult.runningNumberFront.length > 0" class="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl border border-cyan-200 dark:border-cyan-800">
                 <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🔢 เลขหน้า 3 ตัว</div>
                 <div class="flex flex-wrap gap-2">
-                  <div v-for="num in result.runningNumberFront" :key="num" class="px-3 py-2 bg-white dark:bg-gray-800 rounded font-bold text-cyan-600 dark:text-cyan-400">
+                  <div v-for="num in selectedResult.runningNumberFront" :key="num" class="px-3 py-2 bg-white dark:bg-gray-800 rounded font-bold text-cyan-600 dark:text-cyan-400">
                     {{ num }}
                   </div>
                 </div>
@@ -309,10 +305,10 @@ const formatCurrency = (amount: number) => {
               </div>
 
               <!-- เลขท้าย 3 ตัว -->
-              <div v-if="result.runningNumberBack && result.runningNumberBack.length > 0" class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800">
+              <div v-if="selectedResult.runningNumberBack && selectedResult.runningNumberBack.length > 0" class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800">
                 <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🔢 เลขท้าย 3 ตัว</div>
                 <div class="flex flex-wrap gap-2">
-                  <div v-for="num in result.runningNumberBack" :key="num" class="px-3 py-2 bg-white dark:bg-gray-800 rounded font-bold text-indigo-600 dark:text-indigo-400">
+                  <div v-for="num in selectedResult.runningNumberBack" :key="num" class="px-3 py-2 bg-white dark:bg-gray-800 rounded font-bold text-indigo-600 dark:text-indigo-400">
                     {{ num }}
                   </div>
                 </div>
@@ -321,10 +317,10 @@ const formatCurrency = (amount: number) => {
             </div>
 
             <!-- เลขท้าย 2 ตัว -->
-            <div v-if="result.runningNumberBack2 && result.runningNumberBack2.length > 0" class="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
+            <div v-if="selectedResult.runningNumberBack2 && selectedResult.runningNumberBack2.length > 0" class="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
               <div class="text-base font-bold text-gray-700 dark:text-gray-300 mb-3">🎯 เลขท้าย 2 ตัว</div>
               <div class="flex flex-wrap gap-2">
-                <div v-for="num in result.runningNumberBack2" :key="num" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg font-black text-xl text-teal-600 dark:text-teal-400">
+                <div v-for="num in selectedResult.runningNumberBack2" :key="num" class="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg font-black text-xl text-teal-600 dark:text-teal-400">
                   {{ num }}
                 </div>
               </div>
