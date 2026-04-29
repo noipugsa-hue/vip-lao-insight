@@ -273,6 +273,18 @@ const switchMode = () => {
               <span class="text-white font-bold text-sm">VIP EXCLUSIVE ACCESS</span>
             </div>
           </div>
+
+          <!-- View Lottery Results (No Login Required) -->
+          <div class="mt-6 text-center">
+            <NuxtLink
+              to="/lottery-history"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+            >
+              <span class="text-xl">🎫</span>
+              <span>ดูผลหวยย้อนหลัง</span>
+            </NuxtLink>
+            <p class="text-xs text-gray-500 mt-2">ไม่ต้อง Login</p>
+          </div>
         </div>
       </div>
     </div>

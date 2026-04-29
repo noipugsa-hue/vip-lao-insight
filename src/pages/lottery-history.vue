@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '../composables/useAuth'
 import { useLotteryHistory, type LotteryResult } from '../composables/useLotteryHistory'
 
 definePageMeta({
   layout: 'main'
 })
 
-const router = useRouter()
-const { waitForAuth } = useAuth()
 const { results, currentResult, loading, error, fetchLatestResult, fetchMultipleResults, checkNumber } = useLotteryHistory()
 
 const selectedResult = ref<LotteryResult | null>(null)
@@ -29,15 +25,9 @@ const showAlert = (message: string, type: 'success' | 'error' | 'warning' = 'suc
   setTimeout(() => { alert.value.show = false }, 4000)
 }
 
-// Check authentication and load data on mount
+// Load data on mount (no login required)
 onMounted(async () => {
-  const user = await waitForAuth()
-  if (!user) {
-    await router.push('/login')
-    return
-  }
-
-  // โหลดงวดล่าสุดและย้อนหลัง 10 งวด
+  // โหลดงวดล่าสุด (ไม่ต้อง login)
   await loadResults()
 })
 
@@ -106,9 +96,16 @@ const formatCurrency = (amount: number) => {
       <h1 class="text-4xl md:text-5xl font-black text-gray-800 dark:text-gray-100 mb-3">
         ผลหวยรัฐบาลงวดล่าสุด
       </h1>
-      <p class="text-lg text-gray-600 dark:text-gray-300">
+      <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
         ตรวจผลรางวัลหวยรัฐบาลไทยงวดล่าสุด
       </p>
+      <NuxtLink
+        to="/login"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+      >
+        <span class="text-xl">🔑</span>
+        <span>เข้าสู่ระบบเพื่อใช้งานเพิ่มเติม</span>
+      </NuxtLink>
     </div>
 
     <!-- Loading State -->
