@@ -149,7 +149,7 @@ const switchMode = () => {
               <div class="text-6xl animate-bounce-slow">🎰</div>
             </div>
             <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-yellow-500 to-green-600 drop-shadow-lg mb-2 animate-gradient">
-              VIP LAO INSIGHT
+              LOTTOAI
             </h1>
             <p class="text-gray-600 font-semibold">
               {{ isLoginMode ? 'เข้าสู่ระบบเพื่อใช้งาน' : 'สมัครสมาชิกใหม่' }}
