@@ -52,14 +52,14 @@ export const useLotteryHistory = () => {
 
   /**
    * ดึงผลหวยตามวันที่
-   * @param date วันที่ในรูปแบบ DD/MM/YYYY เช่น 16/04/2025
+   * @param id ID ในรูปแบบ DD-MM-YYYY เช่น 16-04-2025
    */
-  const fetchResultByDate = async (date: string) => {
+  const fetchResultByDate = async (id: string) => {
     try {
       loading.value = true
       error.value = null
 
-      const response = await fetch(`/api/lottery/glo?date=${encodeURIComponent(date)}`)
+      const response = await fetch(`/api/lottery/glo?id=${encodeURIComponent(id)}`)
       const data = await response.json()
 
       if (data.success && data.data) {
@@ -118,12 +118,16 @@ export const useLotteryHistory = () => {
           checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 16)
         }
 
-        const dateStr = `${String(checkDate.getDate()).padStart(2, '0')}/${String(checkDate.getMonth() + 1).padStart(2, '0')}/${checkDate.getFullYear()}`
+        // แปลงเป็นรูปแบบ DD-MM-YYYY สำหรับ rayriffy API
+        const dateId = `${String(checkDate.getDate()).padStart(2, '0')}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${checkDate.getFullYear()}`
+
+        // รูปแบบวันที่แสดงผล DD/MM/YYYY
+        const dateDisplay = `${String(checkDate.getDate()).padStart(2, '0')}/${String(checkDate.getMonth() + 1).padStart(2, '0')}/${checkDate.getFullYear()}`
 
         // เช็คว่าได้ดึงวันนี้ไปแล้วหรือยัง
-        const alreadyFetched = fetchedResults.find(r => r.date === dateStr)
+        const alreadyFetched = fetchedResults.find(r => r.date === dateDisplay || r.period === dateId)
         if (!alreadyFetched) {
-          const result = await fetchResultByDate(dateStr)
+          const result = await fetchResultByDate(dateId)
           if (result) {
             fetchedResults.push(result)
             fetched++

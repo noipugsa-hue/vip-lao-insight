@@ -1,49 +1,79 @@
 import { defineEventHandler, getQuery } from 'h3'
 
 /**
- * Server API endpoint สำหรับดึงข้อมูลหวยรัฐบาลจาก glo.or.th
+ * Server API endpoint สำหรับดึงข้อมูลหวยรัฐบาลจาก rayriffy API
  *
- * API: https://www.glo.or.th/api/checking/getLotteryResult
+ * API: https://lotto.api.rayriffy.com
+ * - /latest - งวดล่าสุด
+ * - /list - รายการงวดทั้งหมด
+ * - /:id - งวดเฉพาะ (เช่น 16-04-2025)
  *
  * Query Parameters:
- * - date: วันที่ในรูปแบบ DD/MM/YYYY (ถ้าไม่ระบุจะดึงงวดล่าสุด)
+ * - id: ID ของงวด (รูปแบบ DD-MM-YYYY เช่น 16-04-2025)
  */
 
-interface GLOLotteryResult {
+interface RayriffyLotteryResult {
   success: boolean
   data?: {
+    id: string // รูปแบบ DD-MM-YYYY
     date: string // วันที่ออกรางวัล
-    period: string // งวดที่
-    first: string // รางวัลที่ 1 (6 หลัก)
-    firstNear: string[] // รางวัลใกล้เคียงรางวัลที่ 1
-    second: string[] // รางวัลที่ 2
-    third: string[] // รางวัลที่ 3
-    fourth: string[] // รางวัลที่ 4
-    fifth: string[] // รางวัลที่ 5
-    runningNumberFront: string[] // เลขหน้า 3 ตัว
-    runningNumberBack: string[] // เลขท้าย 3 ตัว
-    runningNumberBack2: string[] // เลขท้าย 2 ตัว
+    endpoint: string
+    prizes: {
+      first?: { id: string, number: string }[]
+      last2?: { number: string }[]
+      last3back?: { number: string }[]
+      last3front?: { number: string }[]
+      near1?: { id: string, number: string }[]
+      second?: { id: string, number: string }[]
+      third?: { id: string, number: string }[]
+      fourth?: { id: string, number: string }[]
+      fifth?: { id: string, number: string }[]
+    }
   }
   message?: string
   error?: string
 }
 
-export default defineEventHandler(async (event): Promise<GLOLotteryResult> => {
+// แปลงข้อมูลจาก rayriffy format เป็น format เดิมของเรา
+const transformData = (rawData: any) => {
+  if (!rawData) return null
+
+  const prizes = rawData.prizes || {}
+
+  return {
+    date: rawData.date || rawData.id?.split('-').join('/') || '',
+    period: rawData.id || '',
+    first: prizes.first?.[0]?.number || '',
+    firstNear: prizes.near1?.map((p: any) => p.number) || [],
+    second: prizes.second?.map((p: any) => p.number) || [],
+    third: prizes.third?.map((p: any) => p.number) || [],
+    fourth: prizes.fourth?.map((p: any) => p.number) || [],
+    fifth: prizes.fifth?.map((p: any) => p.number) || [],
+    runningNumberFront: prizes.last3front?.map((p: any) => p.number) || [],
+    runningNumberBack: prizes.last3back?.map((p: any) => p.number) || [],
+    runningNumberBack2: prizes.last2?.map((p: any) => p.number) || []
+  }
+}
+
+export default defineEventHandler(async (event): Promise<RayriffyLotteryResult> => {
   try {
     const query = getQuery(event)
-    const date = query.date as string | undefined
+    const id = query.id as string | undefined
 
     // สร้าง URL สำหรับเรียก API
-    let apiUrl = 'https://www.glo.or.th/api/checking/getLotteryResult'
+    let apiUrl = 'https://lotto.api.rayriffy.com'
 
-    // ถ้ามีการระบุวันที่ ให้เพิ่ม parameter
-    if (date) {
-      apiUrl += `?date=${encodeURIComponent(date)}`
+    if (id) {
+      // ถ้ามี id ให้เรียกงวดเฉพาะ (รูปแบบ DD-MM-YYYY)
+      apiUrl += `/${id}`
+    } else {
+      // ถ้าไม่มี id ให้เรียกงวดล่าสุด
+      apiUrl += '/latest'
     }
 
-    console.log('[GLO API] Fetching from:', apiUrl)
+    console.log('[Rayriffy API] Fetching from:', apiUrl)
 
-    // เรียก API จาก glo.or.th
+    // เรียก API จาก rayriffy
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
@@ -53,7 +83,7 @@ export default defineEventHandler(async (event): Promise<GLOLotteryResult> => {
     })
 
     if (!response.ok) {
-      console.error('[GLO API] HTTP Error:', response.status, response.statusText)
+      console.error('[Rayriffy API] HTTP Error:', response.status, response.statusText)
       return {
         success: false,
         error: `HTTP ${response.status}: ${response.statusText}`
@@ -62,24 +92,28 @@ export default defineEventHandler(async (event): Promise<GLOLotteryResult> => {
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
-      console.error('[GLO API] Invalid content type:', contentType)
+      console.error('[Rayriffy API] Invalid content type:', contentType)
       return {
         success: false,
         error: 'Invalid response format (not JSON)'
       }
     }
 
-    const data = await response.json()
+    const rawData = await response.json()
+    console.log('[Rayriffy API] Raw data:', rawData)
 
-    console.log('[GLO API] Success:', data)
+    // แปลงข้อมูลเป็น format ของเรา
+    const transformedData = transformData(rawData)
+
+    console.log('[Rayriffy API] Transformed data:', transformedData)
 
     return {
       success: true,
-      data
+      data: transformedData
     }
 
   } catch (error: any) {
-    console.error('[GLO API] Error:', error)
+    console.error('[Rayriffy API] Error:', error)
     return {
       success: false,
       error: error.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล',
