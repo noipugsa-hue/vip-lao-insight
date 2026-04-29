@@ -52,7 +52,7 @@ export const useLotteryHistory = () => {
 
   /**
    * ดึงผลหวยตามวันที่
-   * @param id ID ในรูปแบบ DD-MM-YYYY เช่น 16-04-2025
+   * @param id ID ในรูปแบบ DDMMYYYY เช่น 16042569 (16/04/2569 พ.ศ.)
    */
   const fetchResultByDate = async (id: string) => {
     try {
@@ -118,10 +118,11 @@ export const useLotteryHistory = () => {
           checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 16)
         }
 
-        // แปลงเป็นรูปแบบ DD-MM-YYYY สำหรับ rayriffy API
-        const dateId = `${String(checkDate.getDate()).padStart(2, '0')}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${checkDate.getFullYear()}`
+        // แปลงเป็นรูปแบบ DDMMYYYY (พ.ศ.) สำหรับ rayriffy API
+        const thaiYear = checkDate.getFullYear() + 543 // แปลงเป็นปี พ.ศ.
+        const dateId = `${String(checkDate.getDate()).padStart(2, '0')}${String(checkDate.getMonth() + 1).padStart(2, '0')}${thaiYear}`
 
-        // รูปแบบวันที่แสดงผล DD/MM/YYYY
+        // รูปแบบวันที่แสดงผล DD/MM/YYYY (ค.ศ.)
         const dateDisplay = `${String(checkDate.getDate()).padStart(2, '0')}/${String(checkDate.getMonth() + 1).padStart(2, '0')}/${checkDate.getFullYear()}`
 
         // เช็คว่าได้ดึงวันนี้ไปแล้วหรือยัง
