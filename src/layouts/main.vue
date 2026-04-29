@@ -183,6 +183,7 @@ const handleSignOut = async () => {
 // Top Navigation Tabs (กรองตามสิทธิ์ admin)
 const allTopTabs = [
   { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
+  { path: '/ai-predict', icon: '🤖', label: 'AI Predict', adminOnly: false },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false },
@@ -202,9 +203,9 @@ const topTabs = computed(() => {
 // Bottom Tab Bar (กรองแสดงเฉพาะเมนูที่ user มีสิทธิ์เข้าถึง)
 const bottomTabsAll = [
   { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
+  { path: '/ai-predict', icon: '🤖', label: 'AI Predict', adminOnly: false },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
-  { path: '/statistics', icon: '📊', label: 'กราฟ', adminOnly: false },
   { path: '/pricing', icon: '⭐', label: 'VIP', adminOnly: false },
 ]
 
