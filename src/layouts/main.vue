@@ -1,136 +1,196 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-cyan-100 via-purple-50 to-blue-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-20">
-    <!-- Top Header -->
-    <header class="sticky top-0 z-40 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 shadow-md">
-      <!-- Logo & Icons Row -->
-      <div class="flex items-center justify-between px-4 py-3">
-        <!-- Logo -->
-        <div>
-          <h1 class="text-2xl font-black text-gray-800 dark:text-gray-100 tracking-tight">LOTTOAI</h1>
-          <p class="text-xs text-gray-600 dark:text-gray-300">แนวทางสำหรับหวยออนไลน์</p>
+  <div class="min-h-screen bg-gradient-to-b from-cyan-100 via-purple-50 to-blue-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <!-- Mobile Menu Overlay -->
+    <transition name="fade">
+      <div
+        v-if="isMobileMenuOpen"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+        @click="isMobileMenuOpen = false"
+      ></div>
+    </transition>
+
+    <!-- Sidebar Navigation -->
+    <aside
+      :class="[
+        'fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col',
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      ]"
+    >
+      <!-- Sidebar Header -->
+      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
+              LOTTOAI
+            </h1>
+            <p class="text-xs text-gray-600 dark:text-gray-400">แนวทางสำหรับหวยออนไลน์</p>
+          </div>
+          <!-- Close button (mobile only) -->
+          <button
+            @click="isMobileMenuOpen = false"
+            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        <!-- User Info & Sign Out -->
-        <div class="flex items-center gap-3">
-          <!-- Dark Mode Toggle -->
-          <button
-            @click="toggleDarkMode"
-            class="p-2 rounded-full bg-white/80 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 shadow transition"
-            :title="isDark ? 'เปิดโหมดกลางวัน' : 'เปิดโหมดกลางคืน'"
-          >
-            <span class="text-xl">{{ isDark ? '☀️' : '🌙' }}</span>
-          </button>
+        <!-- User Info Card -->
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-3">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
+              <span class="text-white text-lg">👤</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-500 dark:text-gray-400">ผู้ใช้งาน</p>
+              <p class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{{ user?.email }}</p>
+            </div>
+          </div>
 
-          <!-- VIP Badge / Upgrade Button -->
+          <!-- VIP Badge -->
           <NuxtLink
             v-if="isVIP"
             to="/subscription"
-            class="hidden sm:flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full shadow-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
+            class="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
           >
-            <span class="text-xs">⭐</span>
-            <span class="text-white text-xs font-bold">{{ currentPlan.toUpperCase() }}</span>
-            <!-- Notification Badge -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm">⭐</span>
+              <span class="text-white text-sm font-bold">{{ currentPlan.toUpperCase() }}</span>
+            </div>
             <span
               v-if="isExpiringSoon"
-              class="absolute -top-1 -right-1 flex h-3 w-3"
+              class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full"
             >
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
-            <span
-              v-if="isExpiringSoon && daysRemaining <= 3"
-              class="absolute -top-2 -right-2 px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full"
-            >
-              {{ daysRemaining }}
+              {{ daysRemaining }} วัน
             </span>
           </NuxtLink>
           <NuxtLink
             v-else
             to="/pricing"
-            class="hidden sm:flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full shadow-lg hover:from-purple-600 hover:to-indigo-700 transition"
+            class="flex items-center justify-center gap-2 p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition"
           >
-            <span class="text-white text-xs font-bold">⬆️ อัพเกรด VIP</span>
+            <span class="text-white text-sm font-bold">⬆️ อัพเกรด VIP</span>
           </NuxtLink>
+        </div>
+      </div>
 
-          <!-- User Email -->
-          <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/80 dark:bg-gray-700 rounded-full shadow">
-            <span class="text-gray-600 dark:text-gray-300 text-xs">👤</span>
-            <span class="text-gray-800 dark:text-gray-100 text-xs font-semibold">{{ user?.email }}</span>
-          </div>
-
-          <!-- Sign Out Button -->
-          <button
-            @click="handleSignOut"
-            class="px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-700 shadow-lg flex items-center gap-2 hover:from-red-700 hover:to-red-800 transition transform hover:scale-105 active:scale-95"
+      <!-- Navigation Menu -->
+      <nav class="flex-1 overflow-y-auto p-4">
+        <div class="space-y-1">
+          <NuxtLink
+            v-for="tab in allMenuItems"
+            :key="tab.path"
+            :to="tab.path"
+            @click="isMobileMenuOpen = false"
+            :class="[
+              'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all',
+              currentPath === tab.path
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ]"
           >
-            <span class="text-white text-xs font-bold">🚪 ออกจากระบบ</span>
+            <span class="text-2xl">{{ tab.icon }}</span>
+            <span class="text-sm">{{ tab.label }}</span>
+          </NuxtLink>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <!-- Dark Mode Toggle -->
+        <button
+          @click="toggleDarkMode"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <span class="text-2xl">{{ isDark ? '☀️' : '🌙' }}</span>
+          <span class="text-sm">{{ isDark ? 'โหมดกลางวัน' : 'โหมดกลางคืน' }}</span>
+        </button>
+
+        <!-- Sign Out Button -->
+        <button
+          @click="handleSignOut"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-lg"
+        >
+          <span class="text-2xl">🚪</span>
+          <span class="text-sm">ออกจากระบบ</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="lg:ml-72 min-h-screen flex flex-col">
+      <!-- Top Bar (Mobile) -->
+      <header class="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-800 shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+          <!-- Hamburger Menu -->
+          <button
+            @click="isMobileMenuOpen = true"
+            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <!-- Logo -->
+          <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
+            LOTTOAI
+          </h1>
+
+          <!-- Dark Mode Toggle -->
+          <button
+            @click="toggleDarkMode"
+            class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            <span class="text-xl">{{ isDark ? '☀️' : '🌙' }}</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      <!-- Top Navigation Tabs -->
-      <nav class="flex border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 overflow-x-auto">
-        <NuxtLink
-          v-for="tab in topTabs"
-          :key="tab.path"
-          :to="tab.path"
-          class="flex-shrink-0 px-6 py-3 text-sm font-semibold transition-colors relative"
-          :class="currentPath === tab.path
-            ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-gray-700'
-            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'"
-        >
-          <span class="mr-1">{{ tab.icon }}</span>
-          {{ tab.label }}
-          <div
-            v-if="currentPath === tab.path"
-            class="absolute bottom-0 left-0 right-0 h-1 bg-green-600 dark:bg-green-500"
-          ></div>
-        </NuxtLink>
-      </nav>
-    </header>
-
-    <!-- Expiration Warning Banner -->
-    <div
-      v-if="isExpiringSoon"
-      :class="[
-        'mx-4 mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
-        urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-600 to-red-700 animate-pulse' :
-        urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
-        'bg-gradient-to-r from-yellow-500 to-yellow-600'
-      ]"
-    >
-      <div class="flex items-center gap-3 flex-1">
-        <span class="text-2xl">
-          {{ urgencyLevel === 'critical' ? '🚨' : '⏰' }}
-        </span>
-        <div>
-          <p class="text-white font-bold text-sm md:text-base">
-            {{ expirationMessage }}
-          </p>
-          <p class="text-white/90 text-xs mt-1">
-            คลิกเพื่อต่ออายุและใช้งานต่อได้ไม่มีสะดุด
-          </p>
-        </div>
-      </div>
-      <NuxtLink
-        :to="`/payment?plan=${currentPlan}&action=renew`"
+      <!-- Expiration Warning Banner -->
+      <div
+        v-if="isExpiringSoon"
         :class="[
-          'px-6 py-2 rounded-lg font-bold shadow-lg transition-all hover:scale-105',
-          urgencyLevel === 'critical' ? 'bg-white text-red-600 animate-bounce' :
-          'bg-white text-orange-600'
+          'mx-4 mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
+          urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-600 to-red-700 animate-pulse' :
+          urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+          'bg-gradient-to-r from-yellow-500 to-yellow-600'
         ]"
       >
-        ต่ออายุเลย
-      </NuxtLink>
+        <div class="flex items-center gap-3 flex-1">
+          <span class="text-2xl">
+            {{ urgencyLevel === 'critical' ? '🚨' : '⏰' }}
+          </span>
+          <div>
+            <p class="text-white font-bold text-sm md:text-base">
+              {{ expirationMessage }}
+            </p>
+            <p class="text-white/90 text-xs mt-1">
+              คลิกเพื่อต่ออายุและใช้งานต่อได้ไม่มีสะดุด
+            </p>
+          </div>
+        </div>
+        <NuxtLink
+          :to="`/payment?plan=${currentPlan}&action=renew`"
+          :class="[
+            'px-6 py-2 rounded-lg font-bold shadow-lg transition-all hover:scale-105',
+            urgencyLevel === 'critical' ? 'bg-white text-red-600 animate-bounce' :
+            'bg-white text-orange-600'
+          ]"
+        >
+          ต่ออายุเลย
+        </NuxtLink>
+      </div>
+
+      <!-- Page Content -->
+      <main class="flex-1 container mx-auto px-4 py-6 pb-20 lg:pb-6">
+        <slot />
+      </main>
     </div>
 
-    <!-- Page Content -->
-    <main class="container mx-auto px-4 py-6">
-      <slot />
-    </main>
-
-    <!-- Bottom Tab Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl">
+    <!-- Bottom Tab Bar (Mobile only) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl">
       <div class="flex justify-around items-center h-16">
         <NuxtLink
           v-for="tab in bottomTabs"
@@ -150,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
@@ -164,6 +224,9 @@ const { user, logout } = useAuth()
 const { isAdmin } = useAdmin()
 const { isDark, toggleDarkMode } = useDarkMode()
 const { isVIP, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
+
+// Mobile menu state
+const isMobileMenuOpen = ref(false)
 
 // Load subscription on mount
 onMounted(async () => {
@@ -180,8 +243,8 @@ const handleSignOut = async () => {
   }
 }
 
-// Top Navigation Tabs (กรองตามสิทธิ์ admin)
-const allTopTabs = [
+// All menu items (for sidebar)
+const allMenuItemsList = [
   { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
   { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
@@ -192,25 +255,34 @@ const allTopTabs = [
   { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false },
   { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false },
   { path: '/range', icon: '🎯', label: '00-99', adminOnly: false },
+  { path: '/pricing', icon: '⭐', label: 'แพ็คเกจ VIP', adminOnly: false },
   { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true },
-  { path: '/admin', icon: '⚙️', label: 'Admin', adminOnly: true },
+  { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true },
 ]
 
-const topTabs = computed(() => {
-  return allTopTabs.filter(tab => !tab.adminOnly || isAdmin.value)
+const allMenuItems = computed(() => {
+  return allMenuItemsList.filter(tab => !tab.adminOnly || isAdmin.value)
 })
 
-// Bottom Tab Bar (กรองแสดงเฉพาะเมนูที่ user มีสิทธิ์เข้าถึง)
+// Bottom Tab Bar (Mobile - most important pages)
 const bottomTabsAll = [
-  { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
-  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
-  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
-  { path: '/lottery-history', icon: '🎫', label: 'ผลหวย', adminOnly: false },
-  { path: '/pricing', icon: '⭐', label: 'VIP', adminOnly: false },
+  { path: '/home', icon: '🏠', label: 'หลัก' },
+  { path: '/lottery-history', icon: '🎫', label: 'ผลหวย' },
+  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล' },
+  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ' },
+  { path: '/pricing', icon: '⭐', label: 'VIP' },
 ]
 
-// กรองเมนูตามสิทธิ์
-const bottomTabs = computed(() => {
-  return bottomTabsAll.filter(tab => !tab.adminOnly || isAdmin.value)
-})
+const bottomTabs = computed(() => bottomTabsAll)
 </script>
+
+<style scoped>
+/* Fade transition for overlay */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>
