@@ -78,8 +78,8 @@ export const useLotteryHistory = () => {
   }
 
   /**
-   * ดึงผลหวยย้อนหลังหลายงวด
-   * @param count จำนวนงวดที่ต้องการดึง (default: 10)
+   * ดึงผลหวยล่าสุด (Rayriffy API รองรับแค่งวดล่าสุด)
+   * @param count ไม่ใช้แล้ว - เก็บไว้เพื่อความเข้ากันได้
    */
   const fetchMultipleResults = async (count: number = 10) => {
     try {
@@ -87,71 +87,18 @@ export const useLotteryHistory = () => {
       error.value = null
       results.value = []
 
-      // วันนี้
-      const today = new Date()
-      const fetchedResults: LotteryResult[] = []
-
-      // ดึงงวดล่าสุดก่อน
+      // ดึงงวดล่าสุด (API รองรับแค่ latest เท่านั้น)
       const latest = await fetchLatestResult()
       if (latest) {
-        fetchedResults.push(latest)
+        results.value = [latest]
+        return [latest]
       }
 
-      // หวยออกวันที่ 1 และ 16 ของทุกเดือน
-      // ดึงย้อนหลังตามจำนวนที่ต้องการ
-      let currentDate = new Date(today)
-      let fetched = fetchedResults.length
-
-      while (fetched < count && currentDate.getFullYear() > 2020) {
-        // ถ้าวันนี้เกิน 16 ให้ลองวันที่ 16
-        // ถ้าวันนี้ระหว่าง 2-16 ให้ลองวันที่ 1
-        // ถ้าวันนี้วันที่ 1 ให้ลองวันที่ 16 เดือนก่อน
-        const day = currentDate.getDate()
-
-        let checkDate: Date
-        if (day >= 16) {
-          checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 16)
-        } else if (day >= 1) {
-          checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-        } else {
-          // ถอยไปเดือนก่อน วันที่ 16
-          checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 16)
-        }
-
-        // แปลงเป็นรูปแบบ DDMMYYYY (พ.ศ.) สำหรับ rayriffy API
-        const thaiYear = checkDate.getFullYear() + 543 // แปลงเป็นปี พ.ศ.
-        const dateId = `${String(checkDate.getDate()).padStart(2, '0')}${String(checkDate.getMonth() + 1).padStart(2, '0')}${thaiYear}`
-
-        // รูปแบบวันที่แสดงผล DD/MM/YYYY (ค.ศ.)
-        const dateDisplay = `${String(checkDate.getDate()).padStart(2, '0')}/${String(checkDate.getMonth() + 1).padStart(2, '0')}/${checkDate.getFullYear()}`
-
-        // เช็คว่าได้ดึงวันนี้ไปแล้วหรือยัง
-        const alreadyFetched = fetchedResults.find(r => r.date === dateDisplay || r.period === dateId)
-        if (!alreadyFetched) {
-          const result = await fetchResultByDate(dateId)
-          if (result) {
-            fetchedResults.push(result)
-            fetched++
-          }
-        }
-
-        // ถอยหลังไปงวดก่อนหน้า
-        if (checkDate.getDate() === 16) {
-          currentDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), 1)
-        } else {
-          currentDate = new Date(checkDate.getFullYear(), checkDate.getMonth() - 1, 16)
-        }
-
-        // เพิ่ม delay เล็กน้อยเพื่อไม่ให้โหลด API มากเกินไป
-        await new Promise(resolve => setTimeout(resolve, 300))
-      }
-
-      results.value = fetchedResults
-      return fetchedResults
+      return []
 
     } catch (err: any) {
       error.value = err.message || 'เกิดข้อผิดพลาด'
-      console.error('Error fetching multiple results:', err)
+      console.error('Error fetching results:', err)
       return []
     } finally {
       loading.value = false

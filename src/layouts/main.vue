@@ -184,7 +184,7 @@ const handleSignOut = async () => {
 const allTopTabs = [
   { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
   { path: '/ai-predict', icon: '🤖', label: 'AI Predict', adminOnly: false },
-  { path: '/lottery-history', icon: '🎫', label: 'หวยย้อนหลัง', adminOnly: false },
+  { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false },

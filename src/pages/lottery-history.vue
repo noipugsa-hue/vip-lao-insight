@@ -104,10 +104,10 @@ const formatCurrency = (amount: number) => {
         <div class="text-6xl animate-bounce-slow">🎫</div>
       </div>
       <h1 class="text-4xl md:text-5xl font-black text-gray-800 dark:text-gray-100 mb-3">
-        ผลหวยรัฐบาลย้อนหลัง
+        ผลหวยรัฐบาลงวดล่าสุด
       </h1>
       <p class="text-lg text-gray-600 dark:text-gray-300">
-        ตรวจผลรางวัลหวยรัฐบาลไทย
+        ตรวจผลรางวัลหวยรัฐบาลไทยงวดล่าสุด
       </p>
     </div>
 
