@@ -116,12 +116,13 @@ const switchMode = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center p-4 relative overflow-hidden">
+  <div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
     <!-- Animated Background Patterns -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-10 left-10 w-72 h-72 bg-yellow-400/10 rounded-full blur-3xl animate-float"></div>
-      <div class="absolute bottom-20 right-20 w-96 h-96 bg-green-400/10 rounded-full blur-3xl animate-float-delayed"></div>
-      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-yellow-300/5 rounded-full blur-2xl animate-pulse"></div>
+      <div class="absolute top-10 left-10 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl animate-float"></div>
+      <div class="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float-delayed"></div>
+      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-400/15 rounded-full blur-2xl animate-pulse"></div>
+      <div class="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-float-slow"></div>
     </div>
 
     <!-- VIP Alert -->
@@ -154,72 +155,79 @@ const switchMode = () => {
 
       <!-- Right: Login/Register Form -->
       <div class="flex-1 w-full max-w-md">
-        <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden border-4 border-yellow-400/30">
+        <div class="bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden border border-purple-200/30 ring-2 ring-purple-500/20">
 
           <!-- Decorative Corner -->
-          <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-400/20 to-transparent rounded-bl-full"></div>
-          <div class="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-green-400/20 to-transparent rounded-tr-full"></div>
+          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-400/15 to-transparent rounded-bl-full"></div>
+          <div class="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-400/15 to-transparent rounded-tr-full"></div>
+
+          <!-- Premium Glow Effects -->
+          <div class="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-500/30 rounded-full blur-3xl"></div>
 
           <!-- Header -->
           <div class="text-center mb-8 relative">
-            <div class="inline-block mb-4">
-              <div class="text-6xl animate-bounce-slow">🎰</div>
+            <div class="inline-block mb-4 relative">
+              <div class="absolute inset-0 bg-purple-500/30 blur-2xl rounded-full animate-pulse-slow"></div>
+              <div class="relative text-6xl animate-bounce-slow">🎰</div>
             </div>
-            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-yellow-500 to-green-600 drop-shadow-lg mb-2 animate-gradient">
+            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 drop-shadow-lg mb-2 animate-gradient">
               LOTTOAI
             </h1>
-            <p class="text-gray-600 font-semibold">
+            <p class="text-gray-600 font-semibold text-lg">
               {{ isLoginMode ? 'เข้าสู่ระบบเพื่อใช้งาน' : 'สมัครสมาชิกใหม่' }}
             </p>
           </div>
 
           <!-- Tab Switcher -->
-          <div class="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
+          <div class="flex gap-2 mb-6 p-1 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-inner">
             <button
               @click="isLoginMode = true"
               :class="[
-                'flex-1 py-3 rounded-lg font-bold transition-all duration-300',
+                'flex-1 py-3 rounded-lg font-bold transition-all duration-300 relative overflow-hidden',
                 isLoginMode
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg scale-105'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 text-white shadow-xl scale-105 shadow-purple-500/50'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
               ]"
             >
-              🔑 เข้าสู่ระบบ
+              <span class="relative z-10">🔑 เข้าสู่ระบบ</span>
+              <div v-if="isLoginMode" class="absolute inset-0 bg-gradient-to-r from-purple-400/50 to-blue-400/50 animate-pulse"></div>
             </button>
             <button
               @click="isLoginMode = false"
               :class="[
-                'flex-1 py-3 rounded-lg font-bold transition-all duration-300',
+                'flex-1 py-3 rounded-lg font-bold transition-all duration-300 relative overflow-hidden',
                 !isLoginMode
-                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg scale-105'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 text-white shadow-xl scale-105 shadow-pink-500/50'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
               ]"
             >
-              ✨ สมัครสมาชิก
+              <span class="relative z-10">✨ สมัครสมาชิก</span>
+              <div v-if="!isLoginMode" class="absolute inset-0 bg-gradient-to-r from-pink-400/50 to-orange-400/50 animate-pulse"></div>
             </button>
           </div>
 
           <!-- Form -->
           <div class="space-y-4">
             <!-- Email -->
-            <div class="relative">
-              <div class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl">📧</div>
+            <div class="relative group">
+              <div class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl transition-transform group-focus-within:scale-110">📧</div>
               <input
                 v-model="email"
                 type="email"
                 placeholder="อีเมล"
-                class="w-full pl-14 pr-4 py-4 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-green-400/50 focus:border-green-500 text-gray-900 font-semibold placeholder-gray-400 transition-all"
+                class="w-full pl-14 pr-4 py-4 border-2 border-purple-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-purple-400/30 focus:border-purple-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
               />
             </div>
 
             <!-- Password -->
-            <div class="relative">
-              <div class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl">🔐</div>
+            <div class="relative group">
+              <div class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl transition-transform group-focus-within:scale-110">🔐</div>
               <input
                 v-model="password"
                 type="password"
                 placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)"
-                class="w-full pl-14 pr-4 py-4 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-green-400/50 focus:border-green-500 text-gray-900 font-semibold placeholder-gray-400 transition-all"
+                class="w-full pl-14 pr-4 py-4 border-2 border-purple-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-purple-400/30 focus:border-purple-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
               />
             </div>
 
@@ -227,19 +235,21 @@ const switchMode = () => {
             <button
               v-if="isLoginMode"
               @click="loginUser"
-              class="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              class="w-full py-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group"
             >
-              <span class="text-2xl">🚀</span>
-              เข้าสู่ระบบ
+              <span class="absolute inset-0 bg-gradient-to-r from-purple-400/50 to-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span class="text-2xl relative z-10">🚀</span>
+              <span class="relative z-10">เข้าสู่ระบบ</span>
             </button>
 
             <button
               v-else
               @click="registerUser"
-              class="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              class="w-full py-4 bg-gradient-to-r from-pink-500 via-rose-500 to-orange-500 hover:from-pink-600 hover:via-rose-600 hover:to-orange-600 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group"
             >
-              <span class="text-2xl">⭐</span>
-              สมัครสมาชิก
+              <span class="absolute inset-0 bg-gradient-to-r from-pink-400/50 to-orange-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span class="text-2xl relative z-10">⭐</span>
+              <span class="relative z-10">สมัครสมาชิก</span>
             </button>
 
             <!-- Divider -->
@@ -255,7 +265,7 @@ const switchMode = () => {
             <!-- Google Sign-In Button -->
             <button
               @click="loginWithGoogleAccount"
-              class="w-full py-4 bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+              class="w-full py-4 bg-white hover:bg-gray-50 border-2 border-purple-200 hover:border-purple-400 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group"
             >
               <svg class="w-6 h-6" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -271,13 +281,13 @@ const switchMode = () => {
           <div class="mt-6 text-center text-sm text-gray-500">
             <p v-if="isLoginMode">
               ยังไม่มีบัญชี?
-              <button @click="switchMode" class="text-yellow-600 hover:text-yellow-700 font-bold underline">
+              <button @click="switchMode" class="text-pink-600 hover:text-pink-700 font-bold underline transition-colors">
                 สมัครสมาชิกที่นี่
               </button>
             </p>
             <p v-else>
               มีบัญชีอยู่แล้ว?
-              <button @click="switchMode" class="text-green-600 hover:text-green-700 font-bold underline">
+              <button @click="switchMode" class="text-purple-600 hover:text-purple-700 font-bold underline transition-colors">
                 เข้าสู่ระบบที่นี่
               </button>
             </p>
@@ -285,9 +295,9 @@ const switchMode = () => {
 
           <!-- VIP Badge -->
           <div class="mt-6 text-center">
-            <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full shadow-lg">
-              <span class="text-xl">👑</span>
-              <span class="text-white font-bold text-sm">VIP EXCLUSIVE ACCESS</span>
+            <div class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-default">
+              <span class="text-xl animate-pulse">👑</span>
+              <span class="text-white font-black text-sm tracking-wide">VIP EXCLUSIVE ACCESS</span>
             </div>
           </div>
 
@@ -295,12 +305,13 @@ const switchMode = () => {
           <div class="mt-6 text-center">
             <button
               @click="openLotteryPopup"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 relative overflow-hidden group"
             >
-              <span class="text-xl">🎫</span>
-              <span>ดูผลหวยย้อนหลัง</span>
+              <span class="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-purple-400/30 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span class="text-xl relative z-10">🎫</span>
+              <span class="relative z-10">ดูผลหวยย้อนหลัง</span>
             </button>
-            <p class="text-xs text-gray-500 mt-2">ไม่ต้อง Login</p>
+            <p class="text-xs text-gray-500 mt-2 font-medium">ไม่ต้อง Login</p>
           </div>
         </div>
       </div>
@@ -313,14 +324,14 @@ const switchMode = () => {
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
         @click.self="closeLotteryPopup"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border-2 border-purple-200/30">
           <!-- Header -->
-          <div class="bg-gradient-to-r from-red-600 to-red-700 p-6 flex items-center justify-between">
+          <div class="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="text-4xl">🎫</span>
               <div>
-                <h2 class="text-2xl font-black text-white">ผลหวยรัฐบาลงวดล่าสุด</h2>
-                <p class="text-red-100 text-sm">ตรวจผลรางวัลหวยรัฐบาลไทย</p>
+                <h2 class="text-2xl font-black text-white drop-shadow-lg">ผลหวยรัฐบาลงวดล่าสุด</h2>
+                <p class="text-purple-100 text-sm font-medium">ตรวจผลรางวัลหวยรัฐบาลไทย</p>
               </div>
             </div>
             <button
@@ -434,10 +445,10 @@ const switchMode = () => {
           </div>
 
           <!-- Footer -->
-          <div class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+          <div class="border-t border-purple-200 dark:border-gray-700 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:bg-gray-900">
             <button
               @click="closeLotteryPopup"
-              class="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition"
+              class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               ปิด
             </button>
