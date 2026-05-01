@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Feature Access</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .section { margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+    .feature { padding: 8px; margin: 5px 0; background: white; border-radius: 4px; }
+    .has-access { background: #d4edda; }
+    .no-access { background: #f8d7da; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Debug Feature Access</h1>
+
+  <div class="section">
+    <h2>📦 localStorage Data:</h2>
+    <button onclick="checkLocalStorage()">Check LocalStorage</button>
+    <pre id="localStorage-output"></pre>
+  </div>
+
+  <div class="section">
+    <h2>👤 Current Subscription:</h2>
+    <pre id="subscription-output"></pre>
+  </div>
+
+  <div class="section">
+    <h2>🎯 Feature Access:</h2>
+    <pre id="features-output"></pre>
+  </div>
+
+  <div class="section">
+    <h2>🔧 Actions:</h2>
+    <button onclick="createFreeFeatures()">Create Free Plan Features</button>
+    <button onclick="createFreeSubscription()">Create Free Subscription</button>
+    <button onclick="clearAll()">Clear All Data</button>
+  </div>
+
+  <script>
+    function checkLocalStorage() {
+      const output = document.getElementById('localStorage-output');
+      const subscriptionOutput = document.getElementById('subscription-output');
+      const featuresOutput = document.getElementById('features-output');
+
+      // Get all keys
+      const keys = Object.keys(localStorage);
+      const relevantKeys = keys.filter(k =>
+        k.includes('feature') ||
+        k.includes('subscription') ||
+        k.includes('vip')
+      );
+
+      let result = 'All localStorage keys:\n';
+      relevantKeys.forEach(key => {
+        result += `\n${key}:\n${localStorage.getItem(key)}\n`;
+      });
+
+      output.textContent = result || 'No data found';
+
+      // Check subscription
+      const subKeys = keys.filter(k => k.startsWith('subscription_'));
+      if (subKeys.length > 0) {
+        const subData = JSON.parse(localStorage.getItem(subKeys[0]));
+        subscriptionOutput.textContent = JSON.stringify(subData, null, 2);
+      } else {
+        subscriptionOutput.textContent = '❌ No subscription found';
+      }
+
+      // Check features
+      const featureData = localStorage.getItem('feature_access_settings');
+      if (featureData) {
+        const features = JSON.parse(featureData);
+        let featureText = '';
+        Object.keys(features).forEach(plan => {
+          featureText += `\n${plan.toUpperCase()}:\n`;
+          features[plan].forEach(f => {
+            featureText += `  ✓ ${f}\n`;
+          });
+        });
+        featuresOutput.textContent = featureText;
+      } else {
+        featuresOutput.textContent = '❌ No feature settings found';
+      }
+    }
+
+    function createFreeFeatures() {
+      const features = {
+        free: ['basic_prediction', 'check_prize', 'save_numbers_limited'],
+        basic: ['basic_prediction', 'advanced_prediction', 'check_prize', 'history_3_months', 'dream_analysis', 'save_numbers_limited', 'no_ads'],
+        pro: ['basic_prediction', 'advanced_prediction', 'check_prize', 'history_6_months', 'dream_analysis', 'accuracy_tracking', 'two_digit_advanced', 'three_digit_advanced', 'save_numbers_unlimited', 'multiple_lotteries', 'no_ads'],
+        premium: ['basic_prediction', 'advanced_prediction', 'ai_prediction', 'check_prize', 'history_unlimited', 'dream_analysis', 'dream_advanced', 'accuracy_tracking', 'accuracy_detailed', 'two_digit_advanced', 'three_digit_advanced', 'statistics_advanced', 'multiple_lotteries', 'save_numbers_unlimited', 'export_data', 'no_ads', 'notifications', 'expert_consultation']
+      };
+      localStorage.setItem('feature_access_settings', JSON.stringify(features));
+      alert('✅ Created feature access settings');
+      checkLocalStorage();
+    }
+
+    function createFreeSubscription() {
+      const uid = prompt('Enter your user ID (UID):');
+      if (!uid) return;
+
+      const subscription = {
+        userId: uid,
+        plan: 'free',
+        status: 'active',
+        startDate: new Date().toISOString(),
+        endDate: new Date('2099-12-31').toISOString(),
+        amount: 0,
+        autoRenew: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem(`subscription_${uid}`, JSON.stringify(subscription));
+      alert('✅ Created free subscription');
+      checkLocalStorage();
+    }
+
+    function clearAll() {
+      if (confirm('⚠️ Clear all feature and subscription data?')) {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.includes('feature') || key.includes('subscription')) {
+            localStorage.removeItem(key);
+          }
+        });
+        alert('✅ Cleared all data');
+        checkLocalStorage();
+      }
+    }
+
+    // Auto-check on load
+    window.onload = checkLocalStorage;
+  </script>
+</body>
+</html>

@@ -7,9 +7,11 @@ import { useLotteryType } from '../composables/useLotteryType'
 import { useEngineSettings } from '../composables/useEngineSettings'
 import { usePatternRecognition } from '../composables/usePatternRecognition'
 import { useAccuracyTracking } from '../composables/useAccuracyTracking'
+import { useSubscription } from '../composables/useSubscription'
 
 const router = useRouter()
 const { waitForAuth } = useAuth()
+const { currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
 
 const history = ref<string[]>([])
 
@@ -44,6 +46,9 @@ onMounted(async () => {
     await router.push('/login')
     return
   }
+
+  // โหลดข้อมูล subscription
+  await fetchSubscription()
 
   // โหลดข้อมูลสำหรับประเภทหวยที่เลือกอยู่
   loadDataForLotteryType(selectedLotteryType.value.id)
@@ -98,6 +103,39 @@ const getConfidenceBarColor = (confidence: number) => {
   if (confidence >= 60) return 'bg-yellow-500'
   return 'bg-gray-400'
 }
+
+// ฟังก์ชันแปลงชื่อแพ็คเกจเป็นภาษาไทย
+const getPlanNameTH = computed(() => {
+  const planNames: Record<string, string> = {
+    free: 'ฟรี',
+    basic: 'เบสิก',
+    pro: 'โปร',
+    premium: 'พรีเมียม'
+  }
+  return planNames[currentPlan.value || 'free'] || 'ฟรี'
+})
+
+// ฟังก์ชันกำหนดสีตามแพ็คเกจ
+const getPlanColor = computed(() => {
+  const colors: Record<string, string> = {
+    free: 'from-gray-500 to-gray-600',
+    basic: 'from-blue-500 to-blue-600',
+    pro: 'from-purple-500 to-purple-600',
+    premium: 'from-yellow-500 to-orange-600'
+  }
+  return colors[currentPlan.value || 'free'] || 'from-gray-500 to-gray-600'
+})
+
+// ฟังก์ชันกำหนดไอคอนตามแพ็คเกจ
+const getPlanIcon = computed(() => {
+  const icons: Record<string, string> = {
+    free: '🆓',
+    basic: '⭐',
+    pro: '🌟',
+    premium: '👑'
+  }
+  return icons[currentPlan.value || 'free'] || '🆓'
+})
 </script>
 
 <template>
@@ -105,54 +143,224 @@ const getConfidenceBarColor = (confidence: number) => {
     <div class="max-w-2xl mx-auto">
       <!-- Lottery Type & Date Header -->
       <div class="text-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
           เลือกประเภทหวย แล้วใส่เลข 3-6 หลัก
         </h1>
-        <p class="text-sm text-gray-600">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
           {{ selectedLotteryType.displayName }} · {{ todayStr }}
         </p>
-        <div class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm text-xs text-gray-600">
+        <div class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm text-xs text-gray-600 dark:text-gray-400">
           <span>Engine: <strong>{{ settings.calculationMode }}</strong></span>
           <span>·</span>
           <span>Level: <strong class="text-green-600">{{ settings.accuracyLevel }}/10</strong></span>
         </div>
-        <div v-if="accuracyStats.total > 0" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-full shadow-sm text-xs">
-          <span class="text-purple-700">ความแม่นโดยรวม: <strong>{{ accuracyStats.accuracy }}%</strong></span>
+        <div v-if="accuracyStats.total > 0" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full shadow-sm text-xs">
+          <span class="text-purple-700 dark:text-purple-300">ความแม่นโดยรวม: <strong>{{ accuracyStats.accuracy }}%</strong></span>
+        </div>
+      </div>
+
+      <!-- VIP Status Card -->
+      <div class="mb-6">
+        <!-- Glass Morphism Card with Gradient Border -->
+        <div class="relative group">
+          <!-- Animated Gradient Border -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur-sm"
+               :class="getPlanColor"></div>
+
+          <!-- Main Card -->
+          <div class="relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+            <!-- Decorative Background Pattern -->
+            <div class="absolute inset-0 opacity-5 dark:opacity-10 rounded-3xl overflow-hidden">
+              <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br"
+                   :class="getPlanColor"></div>
+              <div class="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-tr"
+                   :class="getPlanColor"></div>
+            </div>
+
+            <div class="relative flex items-center justify-between gap-4">
+              <!-- Left Side: Plan Info -->
+              <div class="flex items-center gap-4 flex-1">
+                <!-- Animated Icon Badge -->
+                <div class="relative">
+                  <div class="absolute inset-0 bg-gradient-to-br rounded-2xl blur-md opacity-60 animate-pulse"
+                       :class="getPlanColor"></div>
+                  <div
+                    class="relative w-16 h-16 rounded-2xl bg-gradient-to-br flex items-center justify-center text-3xl shadow-lg transform transition-transform hover:scale-110 hover:rotate-6"
+                    :class="getPlanColor"
+                  >
+                    {{ getPlanIcon }}
+                  </div>
+                </div>
+
+                <!-- Plan Name & Badge -->
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      สมาชิก
+                    </span>
+                    <div v-if="currentPlan !== 'free'" class="px-2 py-0.5 bg-gradient-to-r rounded-full text-[10px] font-bold text-white shadow-md"
+                         :class="getPlanColor">
+                      VIP
+                    </div>
+                  </div>
+                  <h3 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r"
+                      :class="getPlanColor">
+                    {{ getPlanNameTH.toUpperCase() }}
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Right Side: Time & Action -->
+              <div class="text-right">
+                <!-- Free Plan -->
+                <div v-if="currentPlan === 'free'" class="space-y-3">
+                  <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                      ⏱️ ไม่จำกัดเวลา
+                    </p>
+                  </div>
+                  <NuxtLink
+                    to="/pricing"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+                    :class="getPlanColor"
+                  >
+                    <span>อัพเกรด</span>
+                    <span class="animate-bounce">🚀</span>
+                  </NuxtLink>
+                </div>
+
+                <!-- Paid Plans -->
+                <div v-else class="space-y-3">
+                  <!-- Days Remaining Display -->
+                  <div class="relative">
+                    <!-- Glow Effect for Urgent -->
+                    <div v-if="urgencyLevel === 'critical'" class="absolute inset-0 bg-red-500 rounded-2xl blur-lg opacity-50 animate-pulse"></div>
+
+                    <div class="relative px-4 py-3 rounded-2xl"
+                         :class="
+                           urgencyLevel === 'critical' ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-500/50' :
+                           urgencyLevel === 'high' ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/50' :
+                           'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/50'
+                         ">
+                      <p class="text-[10px] font-bold text-white/90 uppercase tracking-wide mb-1">
+                        {{ isExpiringSoon ? '⚠️ เหลือเวลา' : '✅ ใช้งานได้อีก' }}
+                      </p>
+                      <div class="flex items-baseline gap-1 justify-center">
+                        <p class="text-3xl font-black text-white drop-shadow-lg"
+                           :class="urgencyLevel === 'critical' ? 'animate-pulse' : ''">
+                          {{ daysRemaining }}
+                        </p>
+                        <span class="text-sm font-bold text-white/90">วัน</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Renew Button -->
+                  <NuxtLink
+                    v-if="isExpiringSoon"
+                    :to="`/payment?plan=${currentPlan}&action=renew`"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+                    :class="urgencyLevel === 'critical' ? 'animate-bounce' : ''"
+                  >
+                    <span>ต่ออายุเลย</span>
+                    <span>⚡</span>
+                  </NuxtLink>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Bar for Paid Plans -->
+            <div v-if="currentPlan !== 'free' && daysRemaining !== null" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+                <span class="font-semibold">ระยะเวลาการใช้งาน</span>
+                <span class="font-bold">{{ daysRemaining }} / 30 วัน</span>
+              </div>
+              <div class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                <div
+                  class="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+                  :class="
+                    urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                    urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                    'bg-gradient-to-r from-green-500 to-green-600'
+                  "
+                  :style="{ width: `${Math.min((daysRemaining / 30) * 100, 100)}%` }"
+                >
+                  <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Results Display -->
-      <div v-if="hotNumbers.length" class="space-y-4">
+      <div v-if="hotNumbers.length" class="space-y-6">
         <!-- Hot Numbers -->
-        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 shadow-lg">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-2xl">🔥</span>
-            <h2 class="text-lg font-bold text-green-800">เลขเด่น (Hot Numbers)</h2>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              v-for="item in hotNumbersWithConfidence"
-              :key="item.number"
-              class="bg-white/70 rounded-xl p-4 shadow-md"
-            >
-              <div class="flex items-center justify-between mb-2">
-                <span
-                  class="px-6 py-2 bg-gradient-to-r text-white rounded-full font-bold text-2xl shadow-lg"
-                  :class="getConfidenceColor(item.confidence)"
-                >
-                  {{ item.number }}
-                </span>
-                <span class="text-sm font-bold" :class="item.confidence >= 80 ? 'text-green-600' : item.confidence >= 60 ? 'text-yellow-600' : 'text-gray-600'">
-                  {{ item.confidence }}%
-                </span>
+        <div class="relative group">
+          <!-- Glow Effect -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-emerald-600 rounded-3xl opacity-60 group-hover:opacity-100 transition duration-300 blur-md"></div>
+
+          <div class="relative bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 rounded-3xl p-6 shadow-2xl backdrop-blur-sm">
+            <!-- Header with Icon -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 hover:rotate-6">
+                  <span class="text-2xl">🔥</span>
+                </div>
+                <div>
+                  <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                    เลขเด่น
+                  </h2>
+                  <p class="text-xs text-green-700/70 dark:text-green-300/70 font-semibold">Hot Numbers</p>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                  <div
-                    class="h-full rounded-full transition-all"
-                    :class="getConfidenceBarColor(item.confidence)"
-                    :style="{ width: `${item.confidence}%` }"
-                  ></div>
+              <div class="px-3 py-1.5 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-md backdrop-blur-sm">
+                <span class="text-xs font-bold text-green-600 dark:text-green-400">{{ hotNumbers.length }} ตัว</span>
+              </div>
+            </div>
+
+            <!-- Hot Numbers Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                v-for="item in hotNumbersWithConfidence"
+                :key="item.number"
+                class="group/item relative"
+              >
+                <!-- Card Glow -->
+                <div class="absolute -inset-0.5 rounded-2xl opacity-0 group-hover/item:opacity-75 transition duration-300 blur-sm"
+                     :class="item.confidence >= 80 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                             item.confidence >= 60 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                             'bg-gradient-to-r from-gray-400 to-gray-500'"></div>
+
+                <div class="relative bg-white/90 dark:bg-gray-800/90 rounded-2xl p-4 shadow-xl backdrop-blur-sm transform transition-all hover:scale-105">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="relative">
+                      <div
+                        class="px-7 py-3 bg-gradient-to-br text-white rounded-2xl font-black text-3xl shadow-2xl transform transition-transform group-hover/item:scale-110"
+                        :class="getConfidenceColor(item.confidence)"
+                      >
+                        {{ item.number }}
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="px-3 py-1.5 rounded-xl font-black text-lg shadow-md"
+                           :class="item.confidence >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                   item.confidence >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                   'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
+                        {{ item.confidence }}%
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Progress Bar with Animation -->
+                  <div class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                    <div
+                      class="h-full rounded-full transition-all duration-1000 ease-out relative"
+                      :class="getConfidenceBarColor(item.confidence)"
+                      :style="{ width: `${item.confidence}%` }"
+                    >
+                      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -160,69 +368,133 @@ const getConfidenceBarColor = (confidence: number) => {
         </div>
 
         <!-- 3-Digit Numbers -->
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-lg">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-2xl">🎲</span>
-            <h2 class="text-lg font-bold text-blue-800">เลข 3 ตัว</h2>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div
-              v-for="item in threeDigitsWithConfidence"
-              :key="item.number"
-              class="bg-white/70 rounded-xl p-3 shadow-md flex items-center justify-between"
-            >
-              <span
-                class="px-5 py-2 bg-gradient-to-r text-white rounded-xl font-bold text-lg shadow-md"
-                :class="getConfidenceColor(item.confidence)"
-              >
-                {{ item.number }}
-              </span>
-              <div class="flex items-center gap-2 flex-1 ml-3">
-                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                  <div
-                    class="h-full rounded-full transition-all"
-                    :class="getConfidenceBarColor(item.confidence)"
-                    :style="{ width: `${item.confidence}%` }"
-                  ></div>
+        <div class="relative group">
+          <!-- Glow Effect -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-indigo-600 rounded-3xl opacity-60 group-hover:opacity-100 transition duration-300 blur-md"></div>
+
+          <div class="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 rounded-3xl p-6 shadow-2xl backdrop-blur-sm">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 hover:rotate-6">
+                  <span class="text-2xl">🎲</span>
                 </div>
-                <span class="text-xs font-bold min-w-[40px] text-right" :class="item.confidence >= 80 ? 'text-green-600' : item.confidence >= 60 ? 'text-yellow-600' : 'text-gray-600'">
-                  {{ item.confidence }}%
-                </span>
+                <div>
+                  <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                    เลข 3 ตัว
+                  </h2>
+                  <p class="text-xs text-blue-700/70 dark:text-blue-300/70 font-semibold">Three Digits</p>
+                </div>
+              </div>
+              <div class="px-3 py-1.5 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-md backdrop-blur-sm">
+                <span class="text-xs font-bold text-blue-600 dark:text-blue-400">{{ threeDigits.length }} ชุด</span>
+              </div>
+            </div>
+
+            <!-- 3-Digit Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div
+                v-for="item in threeDigitsWithConfidence"
+                :key="item.number"
+                class="group/item relative"
+              >
+                <div class="absolute -inset-0.5 rounded-xl opacity-0 group-hover/item:opacity-75 transition duration-300 blur-sm"
+                     :class="item.confidence >= 80 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                             item.confidence >= 60 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                             'bg-gradient-to-r from-gray-400 to-gray-500'"></div>
+
+                <div class="relative bg-white/90 dark:bg-gray-800/90 rounded-xl p-3 shadow-lg backdrop-blur-sm flex items-center justify-between transform transition-all hover:scale-105">
+                  <div
+                    class="px-6 py-2.5 bg-gradient-to-br text-white rounded-xl font-black text-xl shadow-lg transform transition-transform group-hover/item:scale-110"
+                    :class="getConfidenceColor(item.confidence)"
+                  >
+                    {{ item.number }}
+                  </div>
+                  <div class="flex items-center gap-2 flex-1 ml-4">
+                    <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden shadow-inner">
+                      <div
+                        class="h-full rounded-full transition-all duration-1000 ease-out relative"
+                        :class="getConfidenceBarColor(item.confidence)"
+                        :style="{ width: `${item.confidence}%` }"
+                      >
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                      </div>
+                    </div>
+                    <div class="px-2 py-1 rounded-lg font-black text-sm min-w-[50px] text-center shadow-md"
+                         :class="item.confidence >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                 item.confidence >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
+                      {{ item.confidence }}%
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- 2-Digit Numbers -->
-        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 shadow-lg">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-2xl">🎯</span>
-            <h2 class="text-lg font-bold text-yellow-800">ชุด 2 ตัว</h2>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div
-              v-for="item in twoDigitsWithConfidence"
-              :key="item.number"
-              class="bg-white/70 rounded-xl p-3 shadow-md"
-            >
-              <div class="flex items-center justify-between mb-2">
-                <span
-                  class="px-4 py-1 bg-gradient-to-r text-white rounded-lg font-bold text-lg shadow-md"
-                  :class="getConfidenceColor(item.confidence)"
-                >
-                  {{ item.number }}
-                </span>
-                <span class="text-xs font-bold" :class="item.confidence >= 80 ? 'text-green-600' : item.confidence >= 60 ? 'text-yellow-600' : 'text-gray-600'">
-                  {{ item.confidence }}%
-                </span>
+        <div class="relative group">
+          <!-- Glow Effect -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 to-orange-600 rounded-3xl opacity-60 group-hover:opacity-100 transition duration-300 blur-md"></div>
+
+          <div class="relative bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-100 dark:from-yellow-900/20 dark:via-orange-900/20 dark:to-yellow-900/20 rounded-3xl p-6 shadow-2xl backdrop-blur-sm">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 hover:rotate-6">
+                  <span class="text-2xl">🎯</span>
+                </div>
+                <div>
+                  <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600 dark:from-yellow-400 dark:to-orange-400">
+                    ชุด 2 ตัว
+                  </h2>
+                  <p class="text-xs text-yellow-700/70 dark:text-yellow-300/70 font-semibold">Two Digits</p>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div
-                    class="h-full rounded-full transition-all"
-                    :class="getConfidenceBarColor(item.confidence)"
-                    :style="{ width: `${item.confidence}%` }"
-                  ></div>
+              <div class="px-3 py-1.5 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-md backdrop-blur-sm">
+                <span class="text-xs font-bold text-yellow-600 dark:text-yellow-400">{{ twoDigits.length }} ชุด</span>
+              </div>
+            </div>
+
+            <!-- 2-Digit Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div
+                v-for="item in twoDigitsWithConfidence"
+                :key="item.number"
+                class="group/item relative"
+              >
+                <div class="absolute -inset-0.5 rounded-xl opacity-0 group-hover/item:opacity-75 transition duration-300 blur-sm"
+                     :class="item.confidence >= 80 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                             item.confidence >= 60 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                             'bg-gradient-to-r from-gray-400 to-gray-500'"></div>
+
+                <div class="relative bg-white/90 dark:bg-gray-800/90 rounded-xl p-3 shadow-lg backdrop-blur-sm transform transition-all hover:scale-110">
+                  <div class="flex flex-col items-center gap-2">
+                    <div
+                      class="px-5 py-2 bg-gradient-to-br text-white rounded-xl font-black text-2xl shadow-lg w-full text-center transform transition-transform group-hover/item:scale-110"
+                      :class="getConfidenceColor(item.confidence)"
+                    >
+                      {{ item.number }}
+                    </div>
+                    <div class="w-full space-y-1.5">
+                      <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden shadow-inner">
+                        <div
+                          class="h-full rounded-full transition-all duration-1000 ease-out relative"
+                          :class="getConfidenceBarColor(item.confidence)"
+                          :style="{ width: `${item.confidence}%` }"
+                        >
+                          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                        </div>
+                      </div>
+                      <div class="text-center px-2 py-0.5 rounded-lg font-bold text-xs shadow-sm"
+                           :class="item.confidence >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                                   item.confidence >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                   'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
+                        {{ item.confidence }}%
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -230,80 +502,155 @@ const getConfidenceBarColor = (confidence: number) => {
         </div>
 
         <!-- Confidence Legend -->
-        <div class="bg-white/90 rounded-2xl p-4 shadow-lg">
-          <h3 class="text-sm font-bold text-gray-700 mb-3 text-center">คำอธิบายความมั่นใจ (Confidence Score)</h3>
-          <div class="grid grid-cols-3 gap-3 text-xs">
-            <div class="text-center">
-              <div class="flex items-center justify-center gap-2 mb-1">
-                <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                <span class="font-bold text-green-600">≥ 80%</span>
-              </div>
-              <p class="text-gray-600">มั่นใจสูง</p>
+        <div class="relative group">
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-3xl opacity-40 group-hover:opacity-60 transition duration-300 blur-md"></div>
+
+          <div class="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-center gap-2 mb-5">
+              <span class="text-xl">📊</span>
+              <h3 class="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">
+                คำอธิบายความมั่นใจ
+              </h3>
             </div>
-            <div class="text-center">
-              <div class="flex items-center justify-center gap-2 mb-1">
-                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span class="font-bold text-yellow-600">60-79%</span>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="relative group/legend">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl opacity-0 group-hover/legend:opacity-100 transition duration-300 blur-sm"></div>
+                <div class="relative bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-3 shadow-md transform transition-transform hover:scale-105">
+                  <div class="flex items-center justify-center gap-2 mb-2">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-md animate-pulse"></div>
+                    <span class="font-black text-green-600 dark:text-green-400 text-sm">≥ 80%</span>
+                  </div>
+                  <p class="text-center text-xs font-bold text-green-700 dark:text-green-300">มั่นใจสูง</p>
+                  <p class="text-center text-[10px] text-green-600/70 dark:text-green-400/70 mt-1">แนะนำสูง</p>
+                </div>
               </div>
-              <p class="text-gray-600">มั่นใจปานกลาง</p>
-            </div>
-            <div class="text-center">
-              <div class="flex items-center justify-center gap-2 mb-1">
-                <div class="w-3 h-3 rounded-full bg-gray-400"></div>
-                <span class="font-bold text-gray-600">&lt; 60%</span>
+              <div class="relative group/legend">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl opacity-0 group-hover/legend:opacity-100 transition duration-300 blur-sm"></div>
+                <div class="relative bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-3 shadow-md transform transition-transform hover:scale-105">
+                  <div class="flex items-center justify-center gap-2 mb-2">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-yellow-500 to-orange-600 shadow-md"></div>
+                    <span class="font-black text-yellow-600 dark:text-yellow-400 text-sm">60-79%</span>
+                  </div>
+                  <p class="text-center text-xs font-bold text-yellow-700 dark:text-yellow-300">มั่นใจปานกลาง</p>
+                  <p class="text-center text-[10px] text-yellow-600/70 dark:text-yellow-400/70 mt-1">พิจารณาได้</p>
+                </div>
               </div>
-              <p class="text-gray-600">มั่นใจต่ำ</p>
+              <div class="relative group/legend">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-gray-400 to-gray-500 rounded-xl opacity-0 group-hover/legend:opacity-100 transition duration-300 blur-sm"></div>
+                <div class="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl p-3 shadow-md transform transition-transform hover:scale-105">
+                  <div class="flex items-center justify-center gap-2 mb-2">
+                    <div class="w-4 h-4 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 shadow-md"></div>
+                    <span class="font-black text-gray-600 dark:text-gray-400 text-sm">&lt; 60%</span>
+                  </div>
+                  <p class="text-center text-xs font-bold text-gray-700 dark:text-gray-300">มั่นใจต่ำ</p>
+                  <p class="text-center text-[10px] text-gray-600/70 dark:text-gray-400/70 mt-1">ระมัดระวัง</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Calculation Info -->
-        <div v-if="calculatedAt" class="text-center text-xs text-gray-500">
-          คำนวณล่าสุด: {{ calculatedAt }}
+        <div v-if="calculatedAt" class="text-center">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full shadow-lg">
+            <span class="text-xs">⏱️</span>
+            <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">
+              คำนวณล่าสุด: <span class="font-bold text-purple-600 dark:text-purple-400">{{ calculatedAt }}</span>
+            </span>
+          </div>
         </div>
 
         <!-- Buy Numbers CTA -->
-        <div class="mt-8 p-6 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-2xl">
-          <div class="text-center mb-4">
-            <h3 class="text-2xl font-black text-white mb-2 drop-shadow-lg">
-              🎰 พร้อมลุ้นรางวัลใหญ่?
-            </h3>
-            <p class="text-white/90 text-sm font-semibold">
-              สมัครซื้อเลขออนไลน์ได้แล้ววันนี้!
-            </p>
-          </div>
+        <div class="relative group mt-8">
+          <!-- Animated Gradient Border -->
+          <div class="absolute -inset-1 bg-gradient-to-r from-red-400 via-pink-400 to-purple-600 rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur-lg animate-pulse"></div>
 
-          <a
-            href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="block w-full py-4 px-6 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-black text-xl rounded-xl shadow-2xl transform transition-all hover:scale-105 active:scale-95 text-center"
-            style="animation: pulse-button 2s ease-in-out infinite;"
-          >
-            <span class="mr-2">🚀</span>
-            คลิกสมัครซื้อเลขที่นี่
-            <span class="ml-2">💰</span>
-          </a>
+          <div class="relative bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-3xl p-8 shadow-2xl">
+            <div class="text-center mb-6">
+              <div class="inline-block mb-3">
+                <span class="text-5xl animate-bounce inline-block">🎰</span>
+              </div>
+              <h3 class="text-3xl font-black text-white mb-3 drop-shadow-2xl">
+                พร้อมลุ้นรางวัลใหญ่?
+              </h3>
+              <p class="text-white/90 text-base font-bold">
+                สมัครซื้อเลขออนไลน์ได้แล้ววันนี้!
+              </p>
+            </div>
 
-          <div class="mt-4 flex items-center justify-center gap-2 text-white/80 text-xs">
-            <span>✅</span>
-            <span>ปลอดภัย | รวดเร็ว | ถอนง่าย</span>
+            <a
+              href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="relative block w-full group/btn overflow-hidden"
+            >
+              <div class="absolute inset-0 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 animate-pulse"></div>
+              <div class="relative py-5 px-8 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-black text-2xl rounded-2xl shadow-2xl transform transition-all hover:scale-105 active:scale-95 text-center">
+                <span class="mr-3 inline-block group-hover/btn:animate-bounce">🚀</span>
+                คลิกสมัครซื้อเลขที่นี่
+                <span class="ml-3 inline-block group-hover/btn:animate-bounce">💰</span>
+              </div>
+            </a>
+
+            <div class="mt-6 flex items-center justify-center gap-6 text-white/90 text-sm">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">✅</span>
+                <span class="font-bold">ปลอดภัย</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xl">⚡</span>
+                <span class="font-bold">รวดเร็ว</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xl">💳</span>
+                <span class="font-bold">ถอนง่าย</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- No Results -->
-      <div v-else class="text-center py-12">
-        <div class="text-6xl mb-4">🎲</div>
-        <h3 class="text-xl font-bold text-gray-700 mb-2">ยังไม่มีผลการคำนวณ</h3>
-        <p class="text-gray-500 mb-6">ไปที่หน้า "ใส่เลขเอง" เพื่อเริ่มคำนวณเลขหวย</p>
-        <NuxtLink
-          to="/manual"
-          class="inline-block px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold shadow-lg hover:from-green-600 hover:to-green-700 transition"
-        >
-          ✏️ ไปใส่เลขเอง
-        </NuxtLink>
+      <div v-else class="relative group">
+        <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-3xl opacity-30 group-hover:opacity-50 transition duration-300 blur-md"></div>
+
+        <div class="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl p-12 shadow-2xl text-center">
+          <div class="mb-6">
+            <div class="inline-block animate-bounce">
+              <span class="text-8xl">🎲</span>
+            </div>
+          </div>
+          <h3 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 mb-3">
+            ยังไม่มีผลการคำนวณ
+          </h3>
+          <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">
+            ไปที่หน้า "ใส่เลขเอง" เพื่อเริ่มคำนวณเลขหวย
+          </p>
+          <NuxtLink
+            to="/manual"
+            class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl hover:shadow-2xl transform transition-all hover:scale-110 active:scale-95"
+          >
+            <span class="text-2xl">✏️</span>
+            <span>ไปใส่เลขเอง</span>
+            <span class="text-2xl">→</span>
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </NuxtLayout>
 </template>
+
+<style scoped>
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+</style>

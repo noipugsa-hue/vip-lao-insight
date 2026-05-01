@@ -48,30 +48,46 @@
             </div>
           </div>
 
-          <!-- VIP Badge -->
-          <NuxtLink
-            v-if="isVIP"
-            to="/subscription"
-            class="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
-          >
-            <div class="flex items-center gap-2">
-              <span class="text-sm">⭐</span>
-              <span class="text-white text-sm font-bold">{{ currentPlan.toUpperCase() }}</span>
-            </div>
-            <span
-              v-if="isExpiringSoon"
-              class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full"
+          <!-- VIP/Plan Badge -->
+          <div v-if="currentPlan && currentPlan !== 'free'">
+            <NuxtLink
+              to="/subscription"
+              class="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
             >
-              {{ daysRemaining }} วัน
-            </span>
-          </NuxtLink>
-          <NuxtLink
-            v-else
-            to="/pricing"
-            class="flex items-center justify-center gap-2 p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition"
-          >
-            <span class="text-white text-sm font-bold">⬆️ อัพเกรด VIP</span>
-          </NuxtLink>
+              <div class="flex items-center gap-2">
+                <span class="text-sm">⭐</span>
+                <span class="text-white text-sm font-bold">{{ currentPlan.toUpperCase() }}</span>
+              </div>
+              <span
+                v-if="isExpiringSoon"
+                class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full"
+              >
+                {{ daysRemaining }} วัน
+              </span>
+            </NuxtLink>
+          </div>
+          <div v-else-if="currentPlan === 'free'">
+            <NuxtLink
+              to="/pricing"
+              class="flex items-center justify-between p-2 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg hover:from-gray-600 hover:to-gray-700 transition relative"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-sm">🆓</span>
+                <span class="text-white text-sm font-bold">FREE</span>
+              </div>
+              <span class="text-white text-[10px] font-bold">
+                อัพเกรด →
+              </span>
+            </NuxtLink>
+          </div>
+          <div v-else>
+            <NuxtLink
+              to="/pricing"
+              class="flex items-center justify-center gap-2 p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition"
+            >
+              <span class="text-white text-sm font-bold">⬆️ อัพเกรด VIP</span>
+            </NuxtLink>
+          </div>
         </div>
       </div>
 
@@ -216,6 +232,7 @@ import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useSubscription } from '../composables/useSubscription'
+import { useFeatureAccess, type FeatureId } from '../composables/useFeatureAccess'
 
 const route = useRoute()
 const router = useRouter()
@@ -224,14 +241,16 @@ const { user, logout } = useAuth()
 const { isAdmin } = useAdmin()
 const { isDark, toggleDarkMode } = useDarkMode()
 const { isVIP, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
+const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
 
-// Load subscription on mount
+// Load subscription and feature access on mount
 onMounted(async () => {
   if (user.value) {
     await fetchSubscription()
+    await fetchFeatureAccess()
   }
 })
 
@@ -243,25 +262,35 @@ const handleSignOut = async () => {
   }
 }
 
-// All menu items (for sidebar)
+// All menu items (for sidebar) with feature access control
 const allMenuItemsList = [
-  { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false },
-  { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false },
-  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false },
-  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false },
-  { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false },
-  { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false },
-  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false },
-  { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false },
-  { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false },
-  { path: '/range', icon: '🎯', label: '00-99', adminOnly: false },
-  { path: '/pricing', icon: '⭐', label: 'แพ็คเกจ VIP', adminOnly: false },
-  { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true },
-  { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true },
+  { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
+  { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
+  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false, featureId: 'check_prize' as FeatureId },
+  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false, featureId: 'save_numbers_limited' as FeatureId },
+  { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false, featureId: 'statistics_advanced' as FeatureId },
+  { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
+  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false, featureId: 'two_digit_advanced' as FeatureId },
+  { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false, featureId: 'dream_analysis' as FeatureId },
+  { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
+  { path: '/range', icon: '🎯', label: '00-99', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
+  { path: '/pricing', icon: '⭐', label: 'แพ็คเกจ VIP', adminOnly: false, featureId: null }, // ทุกคนเห็นได้
+  { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true, featureId: null }, // Admin only
+  { path: '/admin/feature-access', icon: '🔐', label: 'จัดการฟีเจอร์', adminOnly: true, featureId: null }, // Admin only
+  { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true, featureId: null }, // Admin only
 ]
 
 const allMenuItems = computed(() => {
-  return allMenuItemsList.filter(tab => !tab.adminOnly || isAdmin.value)
+  return allMenuItemsList.filter(tab => {
+    // เช็ค admin only ก่อน
+    if (tab.adminOnly && !isAdmin.value) return false
+
+    // ถ้าไม่มี featureId แสดงว่าเป็นหน้าพื้นฐาน (แสดงได้ทั้งหมด)
+    if (!tab.featureId) return true
+
+    // เช็คสิทธิ์การเข้าถึงฟีเจอร์
+    return canAccessFeature(tab.featureId)
+  })
 })
 
 // Bottom Tab Bar (Mobile - most important pages)

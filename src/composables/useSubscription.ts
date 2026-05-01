@@ -159,30 +159,59 @@ export const useSubscription = () => {
         throw new Error('กรุณาเข้าสู่ระบบก่อน')
       }
 
-      const docRef = doc(db, 'subscriptions', user.value.uid)
-      const docSnap = await getDoc(docRef)
-
-      if (docSnap.exists()) {
-        const data = docSnap.data()
+      // ลองอ่านจาก localStorage ก่อน
+      const localKey = `subscription_${user.value.uid}`
+      const localData = localStorage.getItem(localKey)
+      if (localData) {
+        const parsed = JSON.parse(localData)
         subscription.value = {
-          ...data,
-          startDate: data.startDate?.toDate() || new Date(),
-          endDate: data.endDate?.toDate() || new Date(),
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
+          ...parsed,
+          startDate: new Date(parsed.startDate),
+          endDate: new Date(parsed.endDate),
+          createdAt: new Date(parsed.createdAt),
+          updatedAt: new Date(parsed.updatedAt)
         } as Subscription
 
-        // เช็คว่าหมดอายุหรือยัง
-        if (subscription.value.status === 'active' && new Date(subscription.value.endDate) < new Date()) {
-          await expireSubscription()
+        loading.value = false
+        return
+      }
+
+      // พยายามโหลดจาก Firestore
+      try {
+        const docRef = doc(db, 'subscriptions', user.value.uid)
+        const docSnap = await getDoc(docRef)
+
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          subscription.value = {
+            ...data,
+            startDate: data.startDate?.toDate() || new Date(),
+            endDate: data.endDate?.toDate() || new Date(),
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date()
+          } as Subscription
+
+          // บันทึกลง localStorage
+          localStorage.setItem(localKey, JSON.stringify(subscription.value))
+
+          // เช็คว่าหมดอายุหรือยัง
+          if (subscription.value.status === 'active' && new Date(subscription.value.endDate) < new Date()) {
+            await expireSubscription()
+          }
+        } else {
+          // ถ้ายังไม่มี subscription ให้สร้าง free plan
+          await createFreeSubscription()
         }
-      } else {
-        // ถ้ายังไม่มี subscription ให้สร้าง free plan
+      } catch (firestoreErr: any) {
+        console.warn('Cannot access Firestore, creating free subscription locally:', firestoreErr.message)
+        // สร้าง free subscription ใน localStorage
         await createFreeSubscription()
       }
     } catch (err: any) {
       error.value = err.message
       console.error('Error fetching subscription:', err)
+      // สร้าง free subscription เป็นค่าเริ่มต้น
+      await createFreeSubscription()
     } finally {
       loading.value = false
     }
@@ -205,16 +234,25 @@ export const useSubscription = () => {
       updatedAt: now
     }
 
-    const docRef = doc(db, 'subscriptions', user.value.uid)
-    await setDoc(docRef, {
-      ...freeSubscription,
-      startDate: Timestamp.fromDate(freeSubscription.startDate),
-      endDate: Timestamp.fromDate(freeSubscription.endDate),
-      createdAt: Timestamp.fromDate(freeSubscription.createdAt),
-      updatedAt: Timestamp.fromDate(freeSubscription.updatedAt)
-    })
-
+    // บันทึกลง localStorage ก่อน (ทำงานได้เสมอ)
+    const localKey = `subscription_${user.value.uid}`
+    localStorage.setItem(localKey, JSON.stringify(freeSubscription))
     subscription.value = freeSubscription
+
+    // พยายามบันทึกลง Firestore
+    try {
+      const docRef = doc(db, 'subscriptions', user.value.uid)
+      await setDoc(docRef, {
+        ...freeSubscription,
+        startDate: Timestamp.fromDate(freeSubscription.startDate),
+        endDate: Timestamp.fromDate(freeSubscription.endDate),
+        createdAt: Timestamp.fromDate(freeSubscription.createdAt),
+        updatedAt: Timestamp.fromDate(freeSubscription.updatedAt)
+      })
+      console.log('Free subscription saved to both localStorage and Firestore')
+    } catch (err: any) {
+      console.warn('Cannot save to Firestore, saved to localStorage only:', err.message)
+    }
   }
 
   // สร้าง subscription ใหม่หลังชำระเงิน
@@ -379,16 +417,25 @@ export const useSubscription = () => {
   const expireSubscription = async () => {
     if (!user.value || !subscription.value) return
 
-    const docRef = doc(db, 'subscriptions', user.value.uid)
-    await updateDoc(docRef, {
-      status: 'expired',
-      updatedAt: Timestamp.fromDate(new Date())
-    })
-
     subscription.value = {
       ...subscription.value,
       status: 'expired',
       updatedAt: new Date()
+    }
+
+    // บันทึกลง localStorage
+    const localKey = `subscription_${user.value.uid}`
+    localStorage.setItem(localKey, JSON.stringify(subscription.value))
+
+    // พยายามบันทึกลง Firestore
+    try {
+      const docRef = doc(db, 'subscriptions', user.value.uid)
+      await updateDoc(docRef, {
+        status: 'expired',
+        updatedAt: Timestamp.fromDate(new Date())
+      })
+    } catch (err: any) {
+      console.warn('Cannot update Firestore, updated localStorage only:', err.message)
     }
   }
 

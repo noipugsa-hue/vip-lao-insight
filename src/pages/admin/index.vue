@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
-import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
-import { useVipResult } from '../composables/useVipResult'
+import { useLaoFormulaAdvanced } from '../../composables/useLaoFormulaAdvanced'
+import { useVipResult } from '../../composables/useVipResult'
 import { useRouter } from 'vue-router'
-import { useVipPopup } from '../composables/useVipPopup'
-import { useLotteryType } from '../composables/useLotteryType'
-import { useLotteryFetcher, type LotteryResult } from '../composables/useLotteryFetcher'
-import { useBalance } from '../composables/useBalance'
-import { useAuth } from '../composables/useAuth'
-import { useAdmin } from '../composables/useAdmin'
+import { useVipPopup } from '../../composables/useVipPopup'
+import { useLotteryType } from '../../composables/useLotteryType'
+import { useLotteryFetcher, type LotteryResult } from '../../composables/useLotteryFetcher'
+import { useBalance } from '../../composables/useBalance'
+import { useAuth } from '../../composables/useAuth'
+import { useAdmin } from '../../composables/useAdmin'
 
 definePageMeta({
   layout: false // ปิด layout เพราะหน้านี้เป็นหน้าเก่า
@@ -327,6 +327,17 @@ onMounted(() => {
     :show="showLotterySelector"
     @close="showLotterySelector = false"
   />
+
+  <!-- Back Button -->
+  <div class="mb-6">
+    <button
+      @click="router.push('/home')"
+      class="group inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transform transition-all hover:scale-105 active:scale-95"
+    >
+      <span class="text-2xl group-hover:animate-bounce">←</span>
+      <span>ย้อนกลับหน้าหลัก</span>
+    </button>
+  </div>
 
   <!-- ส่วนดึงข้อมูลหวยอัตโนมัติ -->
   <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-2xl p-6 text-white">

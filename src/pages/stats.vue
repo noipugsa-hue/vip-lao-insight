@@ -76,17 +76,37 @@ const isMobile = (userAgent: string) => {
 <template>
   <NuxtLayout name="main">
     <div class="max-w-6xl mx-auto">
+      <!-- Back Button -->
+      <div class="mb-6">
+        <button
+          @click="router.push('/home')"
+          class="group inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transform transition-all hover:scale-105 active:scale-95"
+        >
+          <span class="text-2xl group-hover:animate-bounce">←</span>
+          <span>ย้อนกลับหน้าหลัก</span>
+        </button>
+      </div>
+
       <!-- Header -->
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-black text-gray-800 mb-2">📊 สถิติการเข้าใช้งาน</h1>
-        <p class="text-gray-600 mb-3">ข้อมูลการ Login เข้าสู่ระบบ VIP Lao Insight</p>
-        <!-- Real-time Badge -->
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-lg">
-          <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-          </span>
-          <span class="text-white font-bold text-sm">🔄 Real-time Updates</span>
+      <div class="mb-8">
+        <div class="relative group">
+          <!-- Animated Gradient Border -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur-md"></div>
+
+          <!-- Main Header Card -->
+          <div class="relative bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-3xl p-8 shadow-2xl text-center">
+            <h1 class="text-4xl font-black text-white mb-3 drop-shadow-lg">📊 สถิติการเข้าใช้งาน</h1>
+            <p class="text-white/90 mb-6 text-lg font-semibold">ข้อมูลการ Login เข้าสู่ระบบ VIP Lao Insight</p>
+
+            <!-- Real-time Badge -->
+            <div class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-md rounded-full shadow-xl border border-white/30">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+              <span class="text-white font-bold text-sm">🔄 Real-time Updates</span>
+            </div>
+          </div>
         </div>
       </div>
 

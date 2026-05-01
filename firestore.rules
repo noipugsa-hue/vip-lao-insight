@@ -72,6 +72,33 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Settings Collection (การตั้งค่าระบบ)
+    // ========================================
+    match /settings/{settingId} {
+      // อนุญาตให้ทุกคนที่ authenticate แล้วอ่านได้ (เพื่อเช็คสิทธิ์การเข้าถึง)
+      allow read: if request.auth != null;
+
+      // อนุญาตให้ admin เขียนได้
+      allow write: if request.auth != null &&
+                      request.auth.token.email == 'noipugsa@gmail.com';
+    }
+
+    // ========================================
+    // Government Lottery Collection (หวยรัฐบาล)
+    // ========================================
+    match /governmentLottery/{document=**} {
+      // อนุญาตให้ทุกคนอ่านได้
+      allow read: if true;
+
+      // อนุญาตให้ user ที่ authenticate แล้วเขียนได้ (สำหรับ auto-save จาก API)
+      allow write: if request.auth != null;
+
+      // อนุญาตให้ admin จัดการได้ทั้งหมด
+      allow read, write: if request.auth != null &&
+                            request.auth.token.email == 'noipugsa@gmail.com';
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {
