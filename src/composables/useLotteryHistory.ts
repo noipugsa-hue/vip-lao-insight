@@ -3,7 +3,7 @@ import { ref } from 'vue'
 /**
  * ข้อมูลผลหวยรัฐบาลจาก glo.or.th
  */
-export interface LotteryResult {
+export interface GovernmentLotteryResult {
   date: string // วันที่ออกรางวัล
   period: string // งวดที่
   first: string // รางวัลที่ 1 (6 หลัก)
@@ -18,15 +18,15 @@ export interface LotteryResult {
 }
 
 export const useLotteryHistory = () => {
-  const results = ref<LotteryResult[]>([])
-  const currentResult = ref<LotteryResult | null>(null)
+  const results = ref<GovernmentLotteryResult[]>([])
+  const currentResult = ref<GovernmentLotteryResult | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
   /**
    * บันทึกงวดหวยลง Firestore
    */
-  const saveResultToFirestore = async (result: LotteryResult) => {
+  const saveResultToFirestore = async (result: GovernmentLotteryResult) => {
     if (import.meta.client) {
       try {
         const { $db } = useNuxtApp()
@@ -62,7 +62,7 @@ export const useLotteryHistory = () => {
         )
 
         const querySnapshot = await getDocs(q)
-        const savedResults: LotteryResult[] = []
+        const savedResults: GovernmentLotteryResult[] = []
 
         querySnapshot.forEach((doc) => {
           const data = doc.data()
@@ -164,7 +164,7 @@ export const useLotteryHistory = () => {
       const savedResults = await fetchResultsFromFirestore(count)
 
       // รวมผลลัพธ์ (ไม่ซ้ำกัน)
-      const allResults: LotteryResult[] = []
+      const allResults: GovernmentLotteryResult[] = []
       const periodSet = new Set<string>()
 
       // เพิ่มงวดล่าสุดก่อน
@@ -196,7 +196,7 @@ export const useLotteryHistory = () => {
   /**
    * ตรวจสอบว่าเลขถูกรางวัลหรือไม่
    */
-  const checkNumber = (number: string, result: LotteryResult) => {
+  const checkNumber = (number: string, result: GovernmentLotteryResult) => {
     const prizes: { name: string, amount: number }[] = []
 
     // รางวัลที่ 1

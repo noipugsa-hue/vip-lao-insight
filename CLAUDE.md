@@ -131,6 +131,7 @@ The heart of the prediction system uses multi-dimensional analysis:
 - **Graceful degradation**: HTTP → Puppeteer → Mock data
 
 **useLotteryHistory.ts** - Government lottery specific:
+- Exports `GovernmentLotteryResult` interface (6-digit format with prize categories)
 - `fetchLatestResult()` - Gets latest from glo.or.th API via `/api/lottery/glo`
 - `fetchMultipleResults()` - Combines latest API result + historical Firestore data
 - `saveResultToFirestore()` - Auto-saves to `governmentLottery` collection

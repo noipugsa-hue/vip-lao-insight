@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useLoginStats } from '../composables/useLoginStats'
-import { useLotteryHistory, type LotteryResult } from '../composables/useLotteryHistory'
+import { useLotteryHistory, type GovernmentLotteryResult } from '../composables/useLotteryHistory'
 
 definePageMeta({
   layout: false

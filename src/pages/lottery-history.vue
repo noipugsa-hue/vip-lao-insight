@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useLotteryHistory, type LotteryResult } from '../composables/useLotteryHistory'
+import { useLotteryHistory, type GovernmentLotteryResult } from '../composables/useLotteryHistory'
 import { useAuth } from '../composables/useAuth'
 
 definePageMeta({
@@ -10,7 +10,7 @@ definePageMeta({
 const { user } = useAuth()
 const { results, currentResult, loading, error, fetchLatestResult, fetchMultipleResults, checkNumber } = useLotteryHistory()
 
-const selectedResult = ref<LotteryResult | null>(null)
+const selectedResult = ref<GovernmentLotteryResult | null>(null)
 const checkingNumber = ref('')
 const checkResults = ref<{ name: string, amount: number }[]>([])
 const showCheckModal = ref(false)
@@ -40,7 +40,7 @@ const loadResults = async () => {
   }
 }
 
-const selectResult = (result: LotteryResult) => {
+const selectResult = (result: GovernmentLotteryResult) => {
   selectedResult.value = result
 }
 
