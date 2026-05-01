@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useLotteryHistory, type LotteryResult } from '../composables/useLotteryHistory'
+import { useAuth } from '../composables/useAuth'
 
 definePageMeta({
   layout: 'main'
 })
 
+const { user } = useAuth()
 const { results, currentResult, loading, error, fetchLatestResult, fetchMultipleResults, checkNumber } = useLotteryHistory()
 
 const selectedResult = ref<LotteryResult | null>(null)
@@ -100,11 +102,12 @@ const formatCurrency = (amount: number) => {
         ตรวจผลรางวัลหวยรัฐบาลไทยงวดล่าสุด
       </p>
       <NuxtLink
+        v-if="!user"
         to="/login"
         class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95"
       >
-        <span class="text-xl">🔑</span>
-        <span>เข้าสู่ระบบเพื่อใช้งานเพิ่มเติม</span>
+        <span class="text-xl drop-shadow-lg">🔑</span>
+        <span class="drop-shadow-lg">เข้าสู่ระบบเพื่อใช้งานเพิ่มเติม</span>
       </NuxtLink>
     </div>
 

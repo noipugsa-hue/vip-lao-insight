@@ -116,13 +116,13 @@ const switchMode = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
+  <div class="min-h-screen bg-gradient-to-br from-orange-900 via-red-900 to-amber-900 flex items-center justify-center p-4 relative overflow-hidden">
     <!-- Animated Background Patterns -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-10 left-10 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl animate-float"></div>
-      <div class="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float-delayed"></div>
-      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-400/15 rounded-full blur-2xl animate-pulse"></div>
-      <div class="absolute top-1/3 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-float-slow"></div>
+      <div class="absolute top-10 left-10 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl animate-float"></div>
+      <div class="absolute bottom-20 right-20 w-96 h-96 bg-red-500/20 rounded-full blur-3xl animate-float-delayed"></div>
+      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-orange-400/15 rounded-full blur-2xl animate-pulse"></div>
+      <div class="absolute top-1/3 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl animate-float-slow"></div>
     </div>
 
     <!-- VIP Alert -->
@@ -142,56 +142,53 @@ const switchMode = () => {
     <div class="w-full max-w-5xl flex flex-col md:flex-row items-center gap-8 relative z-10">
 
       <!-- Left: Tao Wessuwan Image -->
-      <div class="hidden md:flex flex-1 justify-center items-center">
+      <div class="flex flex-1 justify-center items-center">
         <div class="relative">
           <div class="absolute inset-0 bg-yellow-400/20 blur-3xl rounded-full animate-pulse-slow"></div>
           <img
             src="/images/tao-wessuwan.png"
             alt="ท้าวเวสสุวรรณ"
-            class="relative h-[500px] object-contain drop-shadow-2xl animate-float-slow"
+            class="relative h-[300px] md:h-[500px] object-contain drop-shadow-2xl animate-float-slow"
           />
         </div>
       </div>
 
       <!-- Right: Login/Register Form -->
       <div class="flex-1 w-full max-w-md">
-        <div class="bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden border border-purple-200/30 ring-2 ring-purple-500/20">
+        <div class="bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden border border-orange-200/30 ring-2 ring-orange-500/20">
 
           <!-- Decorative Corner -->
-          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-400/15 to-transparent rounded-bl-full"></div>
-          <div class="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-400/15 to-transparent rounded-tr-full"></div>
+          <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-400/15 to-transparent rounded-bl-full"></div>
+          <div class="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-red-400/15 to-transparent rounded-tr-full"></div>
 
           <!-- Premium Glow Effects -->
-          <div class="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl"></div>
-          <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-500/30 rounded-full blur-3xl"></div>
+          <div class="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/30 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-red-500/30 rounded-full blur-3xl"></div>
 
           <!-- Header -->
           <div class="text-center mb-8 relative">
             <div class="inline-block mb-4 relative">
-              <div class="absolute inset-0 bg-purple-500/30 blur-2xl rounded-full animate-pulse-slow"></div>
+              <div class="absolute inset-0 bg-orange-500/30 blur-2xl rounded-full animate-pulse-slow"></div>
               <div class="relative text-6xl animate-bounce-slow">🎰</div>
             </div>
-            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 drop-shadow-lg mb-2 animate-gradient">
+            <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-amber-600 drop-shadow-lg mb-2 animate-gradient">
               LOTTOAI
             </h1>
-            <p class="text-white font-bold text-lg drop-shadow-lg">
-              {{ isLoginMode ? 'เข้าสู่ระบบเพื่อใช้งาน' : 'สมัครสมาชิกใหม่' }}
-            </p>
           </div>
 
           <!-- Tab Switcher -->
-          <div class="flex gap-2 mb-6 p-1 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-inner">
+          <div class="flex gap-2 mb-6 p-1 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-inner">
             <button
               @click="isLoginMode = true"
               :class="[
                 'flex-1 py-3 rounded-lg font-bold transition-all duration-300 relative overflow-hidden',
                 isLoginMode
-                  ? 'bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 text-white shadow-xl scale-105 shadow-purple-500/50'
+                  ? 'bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 text-white shadow-xl scale-105 shadow-orange-500/50'
                   : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
               ]"
             >
               <span class="relative z-10">🔑 เข้าสู่ระบบ</span>
-              <div v-if="isLoginMode" class="absolute inset-0 bg-gradient-to-r from-purple-400/50 to-blue-400/50 animate-pulse"></div>
+              <div v-if="isLoginMode" class="absolute inset-0 bg-gradient-to-r from-orange-400/50 to-red-400/50 animate-pulse"></div>
             </button>
             <button
               @click="isLoginMode = false"
@@ -216,7 +213,7 @@ const switchMode = () => {
                 v-model="email"
                 type="email"
                 placeholder="อีเมล"
-                class="w-full pl-14 pr-4 py-4 border-2 border-purple-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-purple-400/30 focus:border-purple-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
+                class="w-full pl-14 pr-4 py-4 border-2 border-orange-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-orange-400/30 focus:border-orange-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
               />
             </div>
 
@@ -227,7 +224,7 @@ const switchMode = () => {
                 v-model="password"
                 type="password"
                 placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)"
-                class="w-full pl-14 pr-4 py-4 border-2 border-purple-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-purple-400/30 focus:border-purple-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
+                class="w-full pl-14 pr-4 py-4 border-2 border-orange-200/50 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-orange-400/30 focus:border-orange-500 text-gray-900 font-semibold placeholder-gray-400 transition-all bg-white/80 hover:bg-white"
               />
             </div>
 
@@ -235,9 +232,9 @@ const switchMode = () => {
             <button
               v-if="isLoginMode"
               @click="loginUser"
-              class="w-full py-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group"
+              class="w-full py-4 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-700 hover:via-red-700 hover:to-amber-700 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group"
             >
-              <span class="absolute inset-0 bg-gradient-to-r from-purple-400/50 to-blue-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span class="absolute inset-0 bg-gradient-to-r from-orange-400/50 to-red-400/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
               <span class="text-2xl relative z-10">🚀</span>
               <span class="relative z-10">เข้าสู่ระบบ</span>
             </button>
@@ -265,7 +262,7 @@ const switchMode = () => {
             <!-- Google Sign-In Button -->
             <button
               @click="loginWithGoogleAccount"
-              class="w-full py-4 bg-white hover:bg-gray-50 border-2 border-purple-200 hover:border-purple-400 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group"
+              class="w-full py-4 bg-white hover:bg-gray-50 border-2 border-orange-200 hover:border-orange-400 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group"
             >
               <svg class="w-6 h-6" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -281,13 +278,13 @@ const switchMode = () => {
           <div class="mt-6 text-center text-sm text-gray-500">
             <p v-if="isLoginMode">
               ยังไม่มีบัญชี?
-              <button @click="switchMode" class="text-pink-600 hover:text-pink-700 font-bold underline transition-colors">
+              <button @click="switchMode" class="text-orange-600 hover:text-orange-700 font-bold underline transition-colors">
                 สมัครสมาชิกที่นี่
               </button>
             </p>
             <p v-else>
               มีบัญชีอยู่แล้ว?
-              <button @click="switchMode" class="text-purple-600 hover:text-purple-700 font-bold underline transition-colors">
+              <button @click="switchMode" class="text-orange-600 hover:text-orange-700 font-bold underline transition-colors">
                 เข้าสู่ระบบที่นี่
               </button>
             </p>
@@ -305,9 +302,9 @@ const switchMode = () => {
           <div class="mt-6 text-center">
             <button
               @click="openLotteryPopup"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 relative overflow-hidden group"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 hover:from-orange-600 hover:via-red-600 hover:to-amber-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 relative overflow-hidden group"
             >
-              <span class="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-purple-400/30 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span class="absolute inset-0 bg-gradient-to-r from-orange-400/30 to-amber-400/30 opacity-0 group-hover:opacity-100 transition-opacity"></span>
               <span class="text-xl relative z-10">🎫</span>
               <span class="relative z-10">ดูผลหวยย้อนหลัง</span>
             </button>
@@ -324,9 +321,9 @@ const switchMode = () => {
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
         @click.self="closeLotteryPopup"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border-2 border-purple-200/30">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border-2 border-orange-200/30">
           <!-- Header -->
-          <div class="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-6 flex items-center justify-between">
+          <div class="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 p-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <span class="text-4xl">🎫</span>
               <div>
@@ -445,10 +442,17 @@ const switchMode = () => {
           </div>
 
           <!-- Footer -->
-          <div class="border-t border-purple-200 dark:border-gray-700 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:bg-gray-900">
+          <div class="border-t border-orange-200 dark:border-gray-700 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:bg-gray-900 space-y-3">
             <button
               @click="closeLotteryPopup"
-              class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-105"
+              class="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <span class="text-xl">🔑</span>
+              <span>เข้าสู่ระบบเพื่อใช้งานเพิ่มเติม</span>
+            </button>
+            <button
+              @click="closeLotteryPopup"
+              class="w-full py-3 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold rounded-xl transition shadow hover:shadow-lg border-2 border-gray-300 dark:border-gray-600"
             >
               ปิด
             </button>
