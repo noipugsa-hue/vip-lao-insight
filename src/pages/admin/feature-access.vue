@@ -78,6 +78,10 @@ const handleSave = async () => {
 
   if (success) {
     successMessage.value = '✅ บันทึกการตั้งค่าสำเร็จ'
+
+    // ส่ง event เพื่อบอกให้ layout รีเฟรชเมนู
+    window.dispatchEvent(new CustomEvent('feature-access-updated'))
+
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)

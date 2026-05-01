@@ -226,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
@@ -246,12 +246,26 @@ const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
 
+// Handler สำหรับรีเฟรชเมนูเมื่อมีการอัปเดตสิทธิ์การเข้าถึงฟีเจอร์
+const handleFeatureAccessUpdate = async () => {
+  console.log('🔄 Feature access updated, refreshing menu...')
+  await fetchFeatureAccess()
+}
+
 // Load subscription and feature access on mount
 onMounted(async () => {
   if (user.value) {
     await fetchSubscription()
     await fetchFeatureAccess()
   }
+
+  // ฟัง event จากหน้า feature-access
+  window.addEventListener('feature-access-updated', handleFeatureAccessUpdate)
+})
+
+// Cleanup event listener
+onUnmounted(() => {
+  window.removeEventListener('feature-access-updated', handleFeatureAccessUpdate)
 })
 
 // Sign out function
@@ -271,10 +285,10 @@ const allMenuItemsList = [
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false, featureId: 'statistics_advanced' as FeatureId },
   { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false, featureId: 'two_digit_advanced' as FeatureId },
+  { path: '/three-digit', icon: '🔢', label: 'เลข 3 ตัว', adminOnly: false, featureId: 'three_digit_advanced' as FeatureId },
   { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false, featureId: 'dream_analysis' as FeatureId },
   { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/range', icon: '🎯', label: '00-99', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
-  { path: '/pricing', icon: '⭐', label: 'แพ็คเกจ VIP', adminOnly: false, featureId: null }, // ทุกคนเห็นได้
   { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/feature-access', icon: '🔐', label: 'จัดการฟีเจอร์', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true, featureId: null }, // Admin only
@@ -299,7 +313,7 @@ const bottomTabsAll = [
   { path: '/lottery-history', icon: '🎫', label: 'ผลหวย' },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล' },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ' },
-  { path: '/pricing', icon: '⭐', label: 'VIP' },
+  { path: '/statistics', icon: '📊', label: 'สถิติ' },
 ]
 
 const bottomTabs = computed(() => bottomTabsAll)
