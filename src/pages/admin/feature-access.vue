@@ -6,7 +6,7 @@ import { useAdmin } from '../../composables/useAdmin'
 import { useFeatureAccess, type SubscriptionPlan, type FeatureId, ALL_FEATURES } from '../../composables/useFeatureAccess'
 
 definePageMeta({
-  layout: 'main'
+  layout: false
 })
 
 const router = useRouter()

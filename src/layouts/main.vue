@@ -12,33 +12,35 @@
     <!-- Sidebar Navigation -->
     <aside
       :class="[
-        'fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col',
+        'fixed top-0 left-0 h-full bg-white dark:bg-gray-800 shadow-2xl transform transition-all duration-300 ease-in-out flex flex-col',
+        isSidebarExpanded ? 'w-72' : 'w-20',
         isMobileMenuOpen ? 'translate-x-0 z-[60]' : '-translate-x-full lg:translate-x-0 lg:z-10'
       ]"
     >
       <!-- Sidebar Header -->
-      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-4">
           <!-- LOTTOAI: Always show in sidebar -->
-          <div>
+          <div v-if="isSidebarExpanded">
             <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
               LOTTOAI
             </h1>
             <p class="text-xs text-gray-600 dark:text-gray-400">แนวทางสำหรับหวยออนไลน์</p>
           </div>
-          <!-- Close button (mobile only) -->
+          <div v-else class="w-full flex justify-center">
+            <div class="text-3xl">🎰</div>
+          </div>
+          <!-- Toggle button -->
           <button
-            @click="isMobileMenuOpen = false"
-            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            @click="isSidebarExpanded = !isSidebarExpanded"
+            class="lg:block hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           >
-            <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <span class="text-xl">{{ isSidebarExpanded ? '◀' : '▶' }}</span>
           </button>
         </div>
 
         <!-- User Info Card -->
-        <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-3">
+        <div v-if="isSidebarExpanded" class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-3">
           <div class="flex items-center gap-3 mb-2">
             <div class="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
               <span class="text-white text-lg">👤</span>
@@ -90,10 +92,34 @@
             </NuxtLink>
           </div>
         </div>
+        <div v-else class="flex flex-col items-center gap-2">
+          <!-- User Icon -->
+          <div class="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
+            <span class="text-white text-lg">👤</span>
+          </div>
+
+          <!-- VIP Badge Icon -->
+          <div v-if="currentPlan && currentPlan !== 'free'">
+            <NuxtLink
+              to="/subscription"
+              class="flex items-center justify-center p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition"
+            >
+              <span class="text-xl">⭐</span>
+            </NuxtLink>
+          </div>
+          <div v-else>
+            <NuxtLink
+              to="/pricing"
+              class="flex items-center justify-center p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition"
+            >
+              <span class="text-xl">⬆️</span>
+            </NuxtLink>
+          </div>
+        </div>
       </div>
 
       <!-- Navigation Menu -->
-      <nav class="flex-1 overflow-y-auto p-4">
+      <nav class="flex-1 overflow-y-auto p-2">
         <div class="space-y-1">
           <NuxtLink
             v-for="tab in allMenuItems"
@@ -101,14 +127,15 @@
             :to="tab.path"
             @click="isMobileMenuOpen = false"
             :class="[
-              'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all',
+              'flex items-center rounded-xl font-semibold transition-all',
+              isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3',
               currentPath === tab.path
                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105'
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <span class="text-2xl">{{ tab.icon }}</span>
-            <span class="text-sm">{{ tab.label }}</span>
+            <span v-if="isSidebarExpanded" class="text-sm">{{ tab.label }}</span>
           </NuxtLink>
         </div>
       </nav>
@@ -118,25 +145,31 @@
         <!-- Dark Mode Toggle -->
         <button
           @click="toggleDarkMode"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          :class="[
+            'w-full flex items-center rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
+            isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3'
+          ]"
         >
           <span class="text-2xl">{{ isDark ? '☀️' : '🌙' }}</span>
-          <span class="text-sm">{{ isDark ? 'โหมดกลางวัน' : 'โหมดกลางคืน' }}</span>
+          <span v-if="isSidebarExpanded" class="text-sm">{{ isDark ? 'โหมดกลางวัน' : 'โหมดกลางคืน' }}</span>
         </button>
 
         <!-- Sign Out Button -->
         <button
           @click="handleSignOut"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-lg"
+          :class="[
+            'w-full flex items-center rounded-xl font-semibold transition-all bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-lg',
+            isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3'
+          ]"
         >
           <span class="text-2xl">🚪</span>
-          <span class="text-sm">ออกจากระบบ</span>
+          <span v-if="isSidebarExpanded" class="text-sm">ออกจากระบบ</span>
         </button>
       </div>
     </aside>
 
     <!-- Main Content -->
-    <div class="lg:ml-72 min-h-screen flex flex-col">
+    <div :class="['min-h-screen flex flex-col transition-all duration-300', isSidebarExpanded ? 'lg:ml-72' : 'lg:ml-20']">
       <!-- DEBUG: Show menu state -->
       <div class="lg:hidden fixed top-0 right-0 z-[100] bg-red-500 text-white px-2 py-1 text-xs">
         Menu: {{ isMobileMenuOpen ? 'OPEN' : 'CLOSED' }}
@@ -206,7 +239,7 @@
       </div>
 
       <!-- Page Content -->
-      <main class="flex-1 py-6 pb-20 lg:pb-6 container mx-auto px-4">
+      <main class="flex-1 py-4 pb-20 lg:pb-4">
         <slot />
       </main>
     </div>
@@ -251,6 +284,9 @@ const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
+
+// Sidebar expanded state
+const isSidebarExpanded = ref(true)
 
 // Open mobile menu with debug
 const openMobileMenu = () => {

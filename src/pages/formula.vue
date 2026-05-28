@@ -8,7 +8,7 @@ import { useDarkMode } from '../composables/useDarkMode'
 
 /* @ts-ignore - Nuxt auto-imported compiler macro */
 definePageMeta({
-  layout: 'main'
+  layout: false
 })
 
 const { user, waitForAuth } = useAuth()
@@ -209,64 +209,60 @@ onMounted(async () => {
 </script>
 
 <template>
-  <NuxtLayout name="main">
-    <!-- Custom Top Bar for Formula Page (Mobile Only) -->
-    <div class="lg:hidden sticky top-0 z-30 bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 dark:from-gray-900 dark:via-black dark:to-gray-900 shadow-lg mb-4">
-      <div class="flex items-center justify-between px-4 py-3">
-        <!-- Hamburger Menu -->
-        <button
-          @click="openMobileMenu"
-          class="p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition"
-        >
-          <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+  <div class="min-h-screen bg-gradient-to-br from-cyan-100 via-purple-50 to-blue-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8 px-4">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8">
+        <!-- Back Button -->
+        <div class="mb-6">
+          <button
+            @click="router.push('/home')"
+            class="group inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transform transition-all hover:scale-105 active:scale-95"
+          >
+            <span class="text-2xl group-hover:animate-bounce">←</span>
+            <span>ย้อนกลับหน้าหลัก</span>
+          </button>
+        </div>
 
-        <!-- Logo -->
-        <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400">
-          LOTTOAI
-        </h1>
-
-        <!-- Dark Mode Toggle -->
-        <button
-          @click="toggleDarkMode"
-          class="p-2 rounded-full bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 transition"
-        >
-          <span class="text-xl">{{ isDark ? '☀️' : '🌙' }}</span>
-        </button>
+        <div class="mb-4">
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
+            🧪 สูตรหวย
+          </h1>
+          <p class="text-gray-600 dark:text-gray-300">
+            คำนวณเลขหวยด้วยสูตรต่างๆ แบบละเอียด
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Lottery Type Selector Modal -->
-    <LotteryTypeSelector
-      :show="showLotterySelector"
-      @close="showLotterySelector = false"
-    />
+      <!-- Lottery Type Selector Modal -->
+      <LotteryTypeSelector
+        :show="showLotterySelector"
+        @close="showLotterySelector = false"
+      />
 
-    <!-- Success Message -->
-    <Transition name="fade">
-      <div
-        v-if="showSuccess"
-        class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl font-bold"
-      >
-        ✅ คำนวณสำเร็จ!
-      </div>
-    </Transition>
+      <!-- Success Message -->
+      <Transition name="fade">
+        <div
+          v-if="showSuccess"
+          class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl font-bold"
+        >
+          ✅ คำนวณสำเร็จ!
+        </div>
+      </Transition>
 
-    <div class="w-full">
-        <!-- Lottery Type Selector Button -->
-        <button
-          @click="showLotterySelector = true"
-          class="w-full mb-6 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg font-semibold text-lg transition-all flex items-center justify-center gap-2"
+      <!-- Lottery Type Selector Button -->
+      <button
+        @click="showLotterySelector = true"
+        class="w-full mb-6 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg font-semibold text-lg transition-all flex items-center justify-center gap-2"
         >
           <span class="text-xl">🎲</span>
           <span>{{ selectedLotteryType.displayName }}</span>
           <span class="text-sm opacity-80">(คลิกเพื่อเปลี่ยน)</span>
-        </button>
+      </button>
 
-        <!-- Formula Selector Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <!-- Formula Selector Cards -->
+      <div class="mb-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <button
             v-for="formula in FORMULAS"
             :key="formula.id"
@@ -282,10 +278,11 @@ onMounted(async () => {
             <div class="font-bold text-lg mb-2">{{ formula.displayName }}</div>
             <div class="text-sm opacity-80">{{ formula.description }}</div>
           </button>
-        </div> <!-- Close formula cards grid (line 236) -->
+        </div>
+      </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Main Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <!-- Left: Settings Panel -->
           <div class="bg-white/90 dark:bg-gray-800 backdrop-blur rounded-2xl shadow-lg p-6">
             <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -470,6 +467,27 @@ onMounted(async () => {
               <p class="font-semibold mb-2">💡 ข้อมูลสูตร:</p>
               <p class="text-xs leading-relaxed">{{ selectedFormula?.description }}</p>
             </div>
+
+            <!-- History Status (Moved Here) -->
+            <div class="mt-6 p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border-2 border-purple-200 dark:border-purple-800">
+              <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                <span>📚</span>
+                <span>สถานะข้อมูล</span>
+              </h3>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-gray-700 dark:text-gray-300">
+                    มีข้อมูลหวยย้อนหลัง: <span class="font-bold text-purple-600">{{ history.length }} งวด</span>
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    ต้องการอย่างน้อย 3 งวดเพื่อคำนวณ
+                  </p>
+                </div>
+                <div class="text-4xl">
+                  {{ history.length >= 10 ? '🟢' : history.length >= 3 ? '🟡' : '🔴' }}
+                </div>
+              </div>
+            </div>
           </div> <!-- Close left settings panel (line 257) -->
 
           <!-- Right: Results -->
@@ -558,42 +576,25 @@ onMounted(async () => {
           </div> <!-- Close v-if results display (line 448) -->
 
           <!-- Empty State -->
-          <div v-else class="bg-white/90 dark:bg-gray-800 backdrop-blur rounded-2xl shadow-lg p-12 text-center">
-            <div class="text-7xl mb-4">🧪</div>
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-              เลือกสูตรและคำนวณ
+          <div v-else class="bg-white/90 dark:bg-gray-800 backdrop-blur rounded-2xl shadow-lg p-16 text-center flex flex-col items-center justify-center min-h-[500px]">
+            <div class="text-9xl mb-8 animate-pulse">🎲</div>
+            <h3 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4">
+              ยังไม่มีผลการคำนวณ
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md">
               เลือกสูตรที่ต้องการ ปรับการตั้งค่า แล้วกดคำนวณ
             </p>
-            <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
-              ต้องมีข้อมูลหวยย้อนหลังอย่างน้อย 3 งวด
-            </p>
-          </div> <!-- Close empty state (line 531) -->
-
-          <!-- History Status -->
-          <div class="bg-white/90 dark:bg-gray-800 backdrop-blur rounded-2xl shadow-lg p-6">
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-3">
-              📚 สถานะข้อมูล
-            </h3>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-gray-700 dark:text-gray-300">
-                  มีข้อมูลหวยย้อนหลัง: <span class="font-bold text-purple-600">{{ history.length }} งวด</span>
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  ต้องการอย่างน้อย 3 งวดเพื่อคำนวณ
-                </p>
-              </div>
-              <div class="text-4xl">
-                {{ history.length >= 10 ? '🟢' : history.length >= 3 ? '🟡' : '🔴' }}
-              </div>
+            <div class="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-4 mb-6 max-w-md">
+              <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2">
+                <span>💡</span>
+                <span>ต้องมีข้อมูลหวยย้อนหลังอย่างน้อย 3 งวด</span>
+              </p>
             </div>
-          </div> <!-- Close History Status -->
-          </div> <!-- Close Results container (line 445) -->
-        </div> <!-- Close Main Content Grid (line 254) -->
-    </div> <!-- Close w-full container (line 213) -->
-  </NuxtLayout>
+          </div> <!-- Close empty state -->
+        </div> <!-- Close Results container -->
+      </div> <!-- Close Main Content Grid -->
+    </div> <!-- Close max-w-7xl container -->
+  </div> <!-- Close min-h-screen wrapper -->
 </template>
 
 <style scoped>
