@@ -95,13 +95,13 @@
           <div class="space-y-3 pt-2">
             <!-- Add Line Button (Primary) -->
             <a
-              href="https://line.me/R/"
+              href="https://line.me/ti/p/R0C12DzIhX"
               target="_blank"
               class="w-full py-4 bg-gradient-to-r from-green-500 via-green-600 to-green-500 hover:from-green-600 hover:via-green-700 hover:to-green-600 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden group"
             >
               <span class="absolute inset-0 bg-gradient-to-r from-green-400/30 to-green-500/30 opacity-0 group-hover:opacity-100 transition-opacity"></span>
               <span class="text-2xl relative z-10">💚</span>
-              <span class="relative z-10">แอด LINE เพื่อชำระเงิน</span>
+              <span class="relative z-10">แอด LINE เพื่อชำระเงิน 599 บาท</span>
             </a>
 
             <button
@@ -117,7 +117,7 @@
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg p-3">
             <p class="text-blue-800 dark:text-blue-200 text-xs text-center font-medium">
               ℹ️ แอด LINE แล้วแจ้งต้องการต่ออายุ PRO VIP 599 บาท<br/>
-              ชำระเงินผ่าน QR Code และส่งสลิปยืนยัน
+              ชำระเงิน และส่งสลิปยืนยัน ได้ใน LINE
             </p>
           </div>
         </div>
