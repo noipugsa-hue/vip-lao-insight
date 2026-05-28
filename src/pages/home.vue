@@ -8,10 +8,12 @@ import { useEngineSettings } from '../composables/useEngineSettings'
 import { usePatternRecognition } from '../composables/usePatternRecognition'
 import { useAccuracyTracking } from '../composables/useAccuracyTracking'
 import { useSubscription } from '../composables/useSubscription'
+import { useAdmin } from '../composables/useAdmin'
 
 const router = useRouter()
 const { waitForAuth } = useAuth()
 const { currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
+const { isAdmin } = useAdmin()
 
 const history = ref<string[]>([])
 
@@ -36,6 +38,12 @@ const loadDataForLotteryType = (lotteryId: string) => {
 
   // โหลดผลลัพธ์การคำนวณสำหรับประเภทหวยนี้
   loadResult(lotteryId)
+}
+
+// ฟังก์ชันแสดง Expired Modal
+const showExpiredModal = () => {
+  // ส่ง event ไปยัง main.vue เพื่อแสดง modal
+  window.dispatchEvent(new CustomEvent('show-expired-modal'))
 }
 
 onMounted(async () => {
@@ -106,35 +114,38 @@ const getConfidenceBarColor = (confidence: number) => {
 
 // ฟังก์ชันแปลงชื่อแพ็คเกจเป็นภาษาไทย
 const getPlanNameTH = computed(() => {
+  // Admin มีสิทธิ์พิเศษ
+  if (isAdmin.value) return 'ADMIN'
+
   const planNames: Record<string, string> = {
-    free: 'ฟรี',
-    basic: 'เบสิก',
-    pro: 'โปร',
-    premium: 'พรีเมียม'
+    free: 'FREE 30 วัน',
+    pro: 'PRO VIP'
   }
-  return planNames[currentPlan.value || 'free'] || 'ฟรี'
+  return planNames[currentPlan.value || 'free'] || 'FREE 30 วัน'
 })
 
 // ฟังก์ชันกำหนดสีตามแพ็คเกจ
 const getPlanColor = computed(() => {
+  // Admin ใช้สีม่วง-ชมพู
+  if (isAdmin.value) return 'from-purple-600 to-pink-600'
+
   const colors: Record<string, string> = {
-    free: 'from-gray-500 to-gray-600',
-    basic: 'from-blue-500 to-blue-600',
-    pro: 'from-purple-500 to-purple-600',
-    premium: 'from-yellow-500 to-orange-600'
+    free: 'from-green-400 to-emerald-500',
+    pro: 'from-yellow-400 to-orange-500'
   }
-  return colors[currentPlan.value || 'free'] || 'from-gray-500 to-gray-600'
+  return colors[currentPlan.value || 'free'] || 'from-green-400 to-emerald-500'
 })
 
 // ฟังก์ชันกำหนดไอคอนตามแพ็คเกจ
 const getPlanIcon = computed(() => {
+  // Admin ใช้ไอคอนมงกุฎ
+  if (isAdmin.value) return '👑'
+
   const icons: Record<string, string> = {
-    free: '🆓',
-    basic: '⭐',
-    pro: '🌟',
-    premium: '👑'
+    free: '🎁',
+    pro: '⭐'
   }
-  return icons[currentPlan.value || 'free'] || '🆓'
+  return icons[currentPlan.value || 'free'] || '🎁'
 })
 </script>
 
@@ -198,7 +209,7 @@ const getPlanIcon = computed(() => {
                     <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       สมาชิก
                     </span>
-                    <div v-if="currentPlan !== 'free'" class="px-2 py-0.5 bg-gradient-to-r rounded-full text-[10px] font-bold text-white shadow-md"
+                    <div class="px-2 py-0.5 bg-gradient-to-r rounded-full text-[10px] font-bold text-white shadow-md"
                          :class="getPlanColor">
                       VIP
                     </div>
@@ -211,76 +222,86 @@ const getPlanIcon = computed(() => {
               </div>
 
               <!-- Right Side: Time & Action -->
-              <div class="text-right">
-                <!-- Free Plan -->
-                <div v-if="currentPlan === 'free'" class="space-y-3">
-                  <div class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">
-                      ⏱️ ไม่จำกัดเวลา
+              <div class="text-right space-y-3">
+                <!-- Days Remaining Display -->
+                <div class="relative">
+                  <!-- Glow Effect for Urgent -->
+                  <div v-if="urgencyLevel === 'critical' && !isAdmin" class="absolute inset-0 bg-red-500 rounded-2xl blur-lg opacity-50 animate-pulse"></div>
+
+                  <!-- Admin: Show days but with special styling -->
+                  <div v-if="isAdmin" class="relative px-4 py-3 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg shadow-purple-500/50">
+                    <p class="text-[10px] font-bold text-white/90 uppercase tracking-wide mb-1">
+                      👑 ADMIN (ไม่ต้องจ่าย)
                     </p>
-                  </div>
-                  <NuxtLink
-                    to="/pricing"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
-                    :class="getPlanColor"
-                  >
-                    <span>อัพเกรด</span>
-                    <span class="animate-bounce">🚀</span>
-                  </NuxtLink>
-                </div>
-
-                <!-- Paid Plans -->
-                <div v-else class="space-y-3">
-                  <!-- Days Remaining Display -->
-                  <div class="relative">
-                    <!-- Glow Effect for Urgent -->
-                    <div v-if="urgencyLevel === 'critical'" class="absolute inset-0 bg-red-500 rounded-2xl blur-lg opacity-50 animate-pulse"></div>
-
-                    <div class="relative px-4 py-3 rounded-2xl"
-                         :class="
-                           urgencyLevel === 'critical' ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-500/50' :
-                           urgencyLevel === 'high' ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/50' :
-                           'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/50'
-                         ">
-                      <p class="text-[10px] font-bold text-white/90 uppercase tracking-wide mb-1">
-                        {{ isExpiringSoon ? '⚠️ เหลือเวลา' : '✅ ใช้งานได้อีก' }}
+                    <div class="flex items-baseline gap-1 justify-center">
+                      <p class="text-3xl font-black text-white drop-shadow-lg">
+                        {{ daysRemaining }}
                       </p>
-                      <div class="flex items-baseline gap-1 justify-center">
-                        <p class="text-3xl font-black text-white drop-shadow-lg"
-                           :class="urgencyLevel === 'critical' ? 'animate-pulse' : ''">
-                          {{ daysRemaining }}
-                        </p>
-                        <span class="text-sm font-bold text-white/90">วัน</span>
-                      </div>
+                      <span class="text-sm font-bold text-white/90">วัน</span>
                     </div>
                   </div>
 
-                  <!-- Renew Button -->
-                  <NuxtLink
-                    v-if="isExpiringSoon"
-                    :to="`/payment?plan=${currentPlan}&action=renew`"
-                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
-                    :class="urgencyLevel === 'critical' ? 'animate-bounce' : ''"
-                  >
-                    <span>ต่ออายุเลย</span>
-                    <span>⚡</span>
-                  </NuxtLink>
+                  <!-- Regular Users: Days Remaining -->
+                  <div v-else class="relative px-4 py-3 rounded-2xl"
+                       :class="
+                         urgencyLevel === 'critical' ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-500/50' :
+                         urgencyLevel === 'high' ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/50' :
+                         urgencyLevel === 'medium' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-lg shadow-yellow-500/50' :
+                         'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/50'
+                       ">
+                    <p class="text-[10px] font-bold text-white/90 uppercase tracking-wide mb-1">
+                      {{ isExpiringSoon ? '⚠️ เหลือเวลา' : '✅ ใช้งานได้อีก' }}
+                    </p>
+                    <div class="flex items-baseline gap-1 justify-center">
+                      <p class="text-3xl font-black text-white drop-shadow-lg"
+                         :class="urgencyLevel === 'critical' ? 'animate-pulse' : ''">
+                        {{ daysRemaining }}
+                      </p>
+                      <span class="text-sm font-bold text-white/90">วัน</span>
+                    </div>
+                    <p v-if="currentPlan === 'free'" class="text-[10px] text-white/80 mt-1 text-center">
+                      หมดอายุต้องชำระ 599฿
+                    </p>
+                  </div>
                 </div>
+
+                <!-- Admin: View Payment Page Button -->
+                <NuxtLink
+                  v-if="isAdmin"
+                  to="/payment"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 via-purple-600 to-pink-600 text-white text-xs font-bold rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+                >
+                  <span>👁️ ดูหน้าจ่ายเงิน</span>
+                  <span>(ตัวอย่าง)</span>
+                </NuxtLink>
+
+                <!-- Renew/Upgrade Button (not shown for admin) -->
+                <button
+                  v-else-if="isExpiringSoon"
+                  @click="showExpiredModal()"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 via-red-500 to-red-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 active:scale-95"
+                  :class="urgencyLevel === 'critical' ? 'animate-bounce' : ''"
+                >
+                  <span>{{ currentPlan === 'free' ? 'อัพเกรด PRO 599฿' : 'ต่ออายุ PRO' }}</span>
+                  <span>⚡</span>
+                </button>
               </div>
             </div>
 
-            <!-- Progress Bar for Paid Plans -->
-            <div v-if="currentPlan !== 'free' && daysRemaining !== null" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                <span class="font-semibold">ระยะเวลาการใช้งาน</span>
+            <!-- Progress Bar -->
+            <div v-if="daysRemaining !== null" class="mt-4 pt-4 border-t" :class="isAdmin ? 'border-purple-200 dark:border-purple-700' : 'border-gray-200 dark:border-gray-700'">
+              <div class="flex items-center justify-between text-xs mb-2" :class="isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'">
+                <span class="font-semibold">{{ isAdmin ? '👑 Admin - ไม่ต้องชำระเงิน' : 'ระยะเวลาการใช้งาน' }}</span>
                 <span class="font-bold">{{ daysRemaining }} / 30 วัน</span>
               </div>
               <div class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                 <div
                   class="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
                   :class="
+                    isAdmin ? 'bg-gradient-to-r from-purple-500 to-pink-600' :
                     urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600' :
                     urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+                    urgencyLevel === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
                     'bg-gradient-to-r from-green-500 to-green-600'
                   "
                   :style="{ width: `${Math.min((daysRemaining / 30) * 100, 100)}%` }"

@@ -52,14 +52,62 @@
           </div>
 
           <!-- VIP/Plan Badge -->
-          <div v-if="currentPlan && currentPlan !== 'free'">
+          <!-- Admin Badge -->
+          <div v-if="isAdmin">
+            <div class="space-y-1">
+              <div class="flex items-center justify-between p-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-lg relative shadow-lg">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">👑</span>
+                  <span class="text-white text-sm font-bold">ADMIN</span>
+                </div>
+                <span
+                  :class="[
+                    'px-2 py-0.5 text-white text-[10px] font-bold rounded-full',
+                    daysRemaining <= 3 ? 'bg-red-600 animate-pulse' :
+                    daysRemaining <= 7 ? 'bg-orange-600' :
+                    'bg-purple-800'
+                  ]"
+                >
+                  เหลือ {{ daysRemaining }} วัน
+                </span>
+              </div>
+              <div class="space-y-1">
+                <div class="text-center">
+                  <p class="text-xs text-purple-600 dark:text-purple-300 font-bold">
+                    👑 ไม่ต้องชำระเงิน
+                  </p>
+                </div>
+                <NuxtLink
+                  to="/payment"
+                  class="block text-center text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 underline font-medium"
+                >
+                  👁️ ดูหน้าจ่ายเงิน (สำหรับดูตัวอย่าง)
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+          <div v-else-if="isExpired">
+            <button
+              @click="showExpiredModal = true"
+              class="w-full flex items-center justify-between p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg hover:from-red-600 hover:to-red-700 transition relative animate-pulse"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-sm">🚨</span>
+                <span class="text-white text-sm font-bold">FREE หมดอายุ</span>
+              </div>
+              <span class="px-2 py-0.5 bg-white text-red-600 text-[10px] font-bold rounded-full">
+                ต่ออายุ PRO
+              </span>
+            </button>
+          </div>
+          <div v-else-if="currentPlan === 'pro'">
             <NuxtLink
               to="/subscription"
               class="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition relative"
             >
               <div class="flex items-center gap-2">
                 <span class="text-sm">⭐</span>
-                <span class="text-white text-sm font-bold">{{ currentPlan.toUpperCase() }}</span>
+                <span class="text-white text-sm font-bold">PRO VIP</span>
               </div>
               <span
                 v-if="isExpiringSoon"
@@ -70,26 +118,31 @@
             </NuxtLink>
           </div>
           <div v-else-if="currentPlan === 'free'">
-            <NuxtLink
-              to="/pricing"
-              class="flex items-center justify-between p-2 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg hover:from-gray-600 hover:to-gray-700 transition relative"
-            >
-              <div class="flex items-center gap-2">
-                <span class="text-sm">🆓</span>
-                <span class="text-white text-sm font-bold">FREE</span>
+            <div class="space-y-1">
+              <div
+                class="flex items-center justify-between p-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg relative"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">🎁</span>
+                  <span class="text-white text-sm font-bold">FREE 30 วัน</span>
+                </div>
+                <span
+                  :class="[
+                    'px-2 py-0.5 text-white text-[10px] font-bold rounded-full',
+                    daysRemaining <= 3 ? 'bg-red-600 animate-pulse' :
+                    daysRemaining <= 7 ? 'bg-orange-600' :
+                    'bg-green-700'
+                  ]"
+                >
+                  เหลือ {{ daysRemaining }} วัน
+                </span>
               </div>
-              <span class="text-white text-[10px] font-bold">
-                อัพเกรด →
-              </span>
-            </NuxtLink>
-          </div>
-          <div v-else>
-            <NuxtLink
-              to="/pricing"
-              class="flex items-center justify-center gap-2 p-2 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition"
-            >
-              <span class="text-white text-sm font-bold">⬆️ อัพเกรด VIP</span>
-            </NuxtLink>
+              <div class="text-center">
+                <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                  หมดอายุแล้วต้องชำระ 599 บาท
+                </p>
+              </div>
+            </div>
           </div>
         </div>
         <div v-else class="flex flex-col items-center gap-2">
@@ -99,7 +152,12 @@
           </div>
 
           <!-- VIP Badge Icon -->
-          <div v-if="currentPlan && currentPlan !== 'free'">
+          <div v-if="isAdmin">
+            <div class="flex items-center justify-center p-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg shadow-lg">
+              <span class="text-xl">👑</span>
+            </div>
+          </div>
+          <div v-else-if="currentPlan && currentPlan !== 'free'">
             <NuxtLink
               to="/subscription"
               class="flex items-center justify-center p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition"
@@ -205,12 +263,35 @@
 
       <!-- Expiration Warning Banner -->
       <div
-        v-if="isExpiringSoon"
+        v-if="isExpired"
+        class="mt-4 mx-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4 bg-gradient-to-r from-red-600 to-red-700 animate-pulse"
+      >
+        <div class="flex items-center gap-3 flex-1">
+          <span class="text-2xl">🚨</span>
+          <div>
+            <p class="text-white font-bold text-sm md:text-base">
+              {{ expirationMessage }}
+            </p>
+            <p class="text-white/90 text-xs mt-1">
+              คลิกเพื่อแอด Line และชำระเงิน 599 บาทเพื่ออัพเกรด PRO VIP
+            </p>
+          </div>
+        </div>
+        <button
+          @click="showExpiredModal = true"
+          class="px-6 py-2 rounded-lg font-bold shadow-lg transition-all hover:scale-105 bg-white text-red-600 animate-bounce"
+        >
+          อัพเกรด PRO
+        </button>
+      </div>
+      <div
+        v-else-if="isExpiringSoon"
         :class="[
-          'mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
+          'mt-4 mx-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
           urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-600 to-red-700 animate-pulse' :
           urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
-          'bg-gradient-to-r from-yellow-500 to-yellow-600'
+          urgencyLevel === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+          'bg-gradient-to-r from-blue-500 to-blue-600'
         ]"
       >
         <div class="flex items-center gap-3 flex-1">
@@ -222,20 +303,20 @@
               {{ expirationMessage }}
             </p>
             <p class="text-white/90 text-xs mt-1">
-              คลิกเพื่อต่ออายุและใช้งานต่อได้ไม่มีสะดุด
+              คลิกเพื่อแอด Line และชำระเงิน 599 บาทต่ออายุ PRO VIP
             </p>
           </div>
         </div>
-        <NuxtLink
-          :to="`/payment?plan=${currentPlan}&action=renew`"
+        <button
+          @click="showExpiredModal = true"
           :class="[
             'px-6 py-2 rounded-lg font-bold shadow-lg transition-all hover:scale-105',
             urgencyLevel === 'critical' ? 'bg-white text-red-600 animate-bounce' :
             'bg-white text-orange-600'
           ]"
         >
-          ต่ออายุเลย
-        </NuxtLink>
+          ต่ออายุ PRO
+        </button>
       </div>
 
       <!-- Page Content -->
@@ -261,17 +342,25 @@
         </NuxtLink>
       </div>
     </nav>
+
+    <!-- Expired Modal -->
+    <ExpiredModal
+      :show="showExpiredModal"
+      :can-close="true"
+      @close="showExpiredModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useSubscription } from '../composables/useSubscription'
 import { useFeatureAccess, type FeatureId } from '../composables/useFeatureAccess'
+import ExpiredModal from '../components/ExpiredModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -279,7 +368,7 @@ const currentPath = computed(() => route.path)
 const { user, logout } = useAuth()
 const { isAdmin } = useAdmin()
 const { isDark, toggleDarkMode } = useDarkMode()
-const { isVIP, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
+const { isVIP, isExpired, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
 const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 
 // Mobile menu state
@@ -287,6 +376,9 @@ const isMobileMenuOpen = ref(false)
 
 // Sidebar expanded state
 const isSidebarExpanded = ref(true)
+
+// Expired modal state
+const showExpiredModal = ref(false)
 
 // Open mobile menu with debug
 const openMobileMenu = () => {
@@ -307,6 +399,12 @@ const handleFeatureAccessUpdate = async () => {
   await fetchFeatureAccess()
 }
 
+// Handler สำหรับแสดง Expired Modal จากหน้าอื่น
+const handleShowExpiredModal = () => {
+  console.log('📱 Received show-expired-modal event')
+  showExpiredModal.value = true
+}
+
 // Load subscription and feature access on mount
 onMounted(async () => {
   if (user.value) {
@@ -319,12 +417,24 @@ onMounted(async () => {
 
   // ฟัง event เปิดเมนูจากหน้าอื่นๆ เช่น formula
   window.addEventListener('open-mobile-menu', handleOpenMobileMenu)
+
+  // ฟัง event แสดง expired modal จากหน้าอื่น
+  window.addEventListener('show-expired-modal', handleShowExpiredModal)
 })
+
+// Watch for expired subscription and show modal
+watch(isExpired, (newValue) => {
+  if (newValue && user.value) {
+    // แสดง modal เมื่อหมดอายุ
+    showExpiredModal.value = true
+  }
+}, { immediate: true })
 
 // Cleanup event listener
 onUnmounted(() => {
   window.removeEventListener('feature-access-updated', handleFeatureAccessUpdate)
   window.removeEventListener('open-mobile-menu', handleOpenMobileMenu)
+  window.removeEventListener('show-expired-modal', handleShowExpiredModal)
 })
 
 // Sign out function
