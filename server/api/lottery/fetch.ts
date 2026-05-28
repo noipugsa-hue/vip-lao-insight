@@ -29,27 +29,24 @@ export default defineEventHandler(async (event) => {
     let responseData: any = null
     let successUrl = ''
 
-    // ลองดึงข้อมูลจากแต่ละ endpoint
+    // ลองดึงข้อมูลจากแต่ละ endpoint (silent mode)
     for (const endpoint of endpoints) {
       try {
-        console.log(`🔍 Trying to fetch from: ${endpoint}`)
-
         const response = await fetch(endpoint, {
           method: 'GET',
           headers: {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
             'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7'
-          }
+          },
+          signal: AbortSignal.timeout(5000) // timeout 5 วินาที
         })
 
         if (response.ok) {
-          const contentType = response.headers.get('content-type')
           const text = await response.text()
 
-          // ตรวจสอบว่าเป็น HTML หรือไม่
+          // ตรวจสอบว่าเป็น HTML หรือไม่ (silent fail)
           if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-            console.log(`⚠️ ${endpoint} returned HTML (not a valid API endpoint)`)
             continue
           }
 
@@ -58,17 +55,14 @@ export default defineEventHandler(async (event) => {
             const data = JSON.parse(text)
             responseData = data
             successUrl = endpoint
-            console.log(`✅ Success from: ${endpoint}`)
+            console.log(`✅ Lottery API success: ${endpoint}`)
             break
           } catch (parseError) {
-            console.log(`❌ Cannot parse JSON from ${endpoint}`)
             continue
           }
-        } else {
-          console.log(`❌ Failed from ${endpoint}: ${response.status} ${response.statusText}`)
         }
       } catch (error: any) {
-        console.log(`❌ Error from ${endpoint}:`, error.message)
+        // Silent fail - ลอง endpoint ถัดไป
         continue
       }
     }
