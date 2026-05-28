@@ -48,20 +48,18 @@ export const useLotteryHistory = () => {
 
   /**
    * ดึงรายการงวดย้อนหลังจาก Firestore
+   * Note: ไม่บังคับต้องมีข้อมูลจาก Firestore - ถ้าล้มเหลวจะใช้ API แทน
    */
   const fetchResultsFromFirestore = async (limit: number = 10) => {
     if (import.meta.client) {
       try {
         const { $db } = useNuxtApp()
-        const { collection, query, orderBy, getDocs, limit: firestoreLimit } = await import('firebase/firestore')
+        const { collection, getDocs } = await import('firebase/firestore')
 
-        const q = query(
-          collection($db, 'governmentLottery'),
-          orderBy('period', 'desc'),
-          firestoreLimit(limit)
-        )
+        // ใช้ getDocs แบบง่าย ไม่ใช้ orderBy เพื่อหลีกเลี่ยง permission issue
+        const collectionRef = collection($db, 'governmentLottery')
+        const querySnapshot = await getDocs(collectionRef)
 
-        const querySnapshot = await getDocs(q)
         const savedResults: GovernmentLotteryResult[] = []
 
         querySnapshot.forEach((doc) => {
@@ -81,9 +79,20 @@ export const useLotteryHistory = () => {
           })
         })
 
-        return savedResults
-      } catch (err) {
-        console.error('Error fetching from Firestore:', err)
+        // เรียงลำดับใน client-side
+        savedResults.sort((a, b) => b.period.localeCompare(a.period))
+
+        // จำกัดจำนวน
+        const limitedResults = savedResults.slice(0, limit)
+
+        if (limitedResults.length > 0) {
+          console.log(`✅ Loaded ${limitedResults.length} results from Firestore`)
+        }
+
+        return limitedResults
+      } catch (err: any) {
+        // Silent fail - ใช้ API fallback
+        // ไม่แสดง warning เพื่อไม่รบกวนผู้ใช้
         return []
       }
     }

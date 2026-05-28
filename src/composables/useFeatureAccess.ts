@@ -14,6 +14,7 @@ export type FeatureId =
   | 'advanced_prediction'   // พยากรณ์ขั้นสูง
   | 'ai_prediction'         // พยากรณ์ AI
   | 'check_prize'           // ตรวจรางวัล
+  | 'lottery_formula'       // สูตรหวย
   | 'history_3_months'      // สถิติย้อนหลัง 3 เดือน
   | 'history_6_months'      // สถิติย้อนหลัง 6 เดือน
   | 'history_unlimited'     // สถิติย้อนหลังไม่จำกัด
@@ -56,6 +57,7 @@ export const ALL_FEATURES: Feature[] = [
   { id: 'advanced_prediction', name: 'พยากรณ์ขั้นสูง', description: 'เห็นการพยากรณ์ด้วยอัลกอริธึมขั้นสูง', category: 'prediction', icon: '✨' },
   { id: 'ai_prediction', name: 'พยากรณ์ AI', description: 'พยากรณ์ด้วย AI ที่แม่นยำที่สุด', category: 'prediction', icon: '🤖' },
   { id: 'check_prize', name: 'ตรวจรางวัล', description: 'ตรวจสอบผลรางวัลหวย', category: 'prediction', icon: '🎯' },
+  { id: 'lottery_formula', name: 'สูตรหวย', description: 'คำนวณเลขหวยด้วยสูตรต่างๆ (สถิติ, เลขคงที่, ความน่าจะเป็น, เลขกำลังวัน)', category: 'prediction', icon: '🧪' },
   { id: 'two_digit_advanced', name: 'เลข 2 ตัวขั้นสูง', description: 'วิเคราะห์เลข 2 ตัวแบบละเอียด', category: 'prediction', icon: '🎲' },
   { id: 'three_digit_advanced', name: 'เลข 3 ตัวขั้นสูง', description: 'วิเคราะห์เลข 3 ตัวแบบละเอียด', category: 'prediction', icon: '🔢' },
 
@@ -92,6 +94,7 @@ export const DEFAULT_PLAN_FEATURES: Record<SubscriptionPlan, FeatureId[]> = {
     'basic_prediction',
     'advanced_prediction',
     'check_prize',
+    'lottery_formula',
     'history_3_months',
     'dream_analysis',
     'save_numbers_limited',
@@ -101,6 +104,7 @@ export const DEFAULT_PLAN_FEATURES: Record<SubscriptionPlan, FeatureId[]> = {
     'basic_prediction',
     'advanced_prediction',
     'check_prize',
+    'lottery_formula',
     'history_6_months',
     'dream_analysis',
     'accuracy_tracking',
@@ -115,6 +119,7 @@ export const DEFAULT_PLAN_FEATURES: Record<SubscriptionPlan, FeatureId[]> = {
     'advanced_prediction',
     'ai_prediction',
     'check_prize',
+    'lottery_formula',
     'history_unlimited',
     'dream_analysis',
     'dream_advanced',

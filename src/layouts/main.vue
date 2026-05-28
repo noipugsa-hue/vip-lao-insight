@@ -4,7 +4,7 @@
     <transition name="fade">
       <div
         v-if="isMobileMenuOpen"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] lg:hidden"
         @click="isMobileMenuOpen = false"
       ></div>
     </transition>
@@ -12,13 +12,14 @@
     <!-- Sidebar Navigation -->
     <aside
       :class="[
-        'fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col',
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        'fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col',
+        isMobileMenuOpen ? 'translate-x-0 z-[60]' : '-translate-x-full lg:translate-x-0 lg:z-10'
       ]"
     >
       <!-- Sidebar Header -->
       <div class="p-6 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-4">
+          <!-- LOTTOAI: Always show in sidebar -->
           <div>
             <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
               LOTTOAI
@@ -136,12 +137,17 @@
 
     <!-- Main Content -->
     <div class="lg:ml-72 min-h-screen flex flex-col">
-      <!-- Top Bar (Mobile) -->
-      <header class="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-800 shadow-md">
+      <!-- DEBUG: Show menu state -->
+      <div class="lg:hidden fixed top-0 right-0 z-[100] bg-red-500 text-white px-2 py-1 text-xs">
+        Menu: {{ isMobileMenuOpen ? 'OPEN' : 'CLOSED' }}
+      </div>
+
+      <!-- Top Bar (Mobile) - Hide completely when menu is open or on formula page -->
+      <header v-if="!isMobileMenuOpen && currentPath !== '/formula'" :key="`topbar-${isMobileMenuOpen}`" class="lg:hidden sticky top-0 z-20 bg-white dark:bg-gray-800 shadow-md">
         <div class="flex items-center justify-between px-4 py-3">
           <!-- Hamburger Menu -->
           <button
-            @click="isMobileMenuOpen = true"
+            @click="openMobileMenu"
             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           >
             <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +174,7 @@
       <div
         v-if="isExpiringSoon"
         :class="[
-          'mx-4 mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
+          'mt-4 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4',
           urgencyLevel === 'critical' ? 'bg-gradient-to-r from-red-600 to-red-700 animate-pulse' :
           urgencyLevel === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
           'bg-gradient-to-r from-yellow-500 to-yellow-600'
@@ -200,7 +206,7 @@
       </div>
 
       <!-- Page Content -->
-      <main class="flex-1 container mx-auto px-4 py-6 pb-20 lg:pb-6">
+      <main class="flex-1 py-6 pb-20 lg:pb-6 container mx-auto px-4">
         <slot />
       </main>
     </div>
@@ -246,6 +252,19 @@ const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 // Mobile menu state
 const isMobileMenuOpen = ref(false)
 
+// Open mobile menu with debug
+const openMobileMenu = () => {
+  console.log('🔓 Opening mobile menu, current state:', isMobileMenuOpen.value)
+  isMobileMenuOpen.value = true
+  console.log('✅ Menu opened, new state:', isMobileMenuOpen.value)
+}
+
+// Handler สำหรับเปิดเมนูจาก event
+const handleOpenMobileMenu = () => {
+  console.log('📱 Received open-mobile-menu event')
+  isMobileMenuOpen.value = true
+}
+
 // Handler สำหรับรีเฟรชเมนูเมื่อมีการอัปเดตสิทธิ์การเข้าถึงฟีเจอร์
 const handleFeatureAccessUpdate = async () => {
   console.log('🔄 Feature access updated, refreshing menu...')
@@ -261,11 +280,15 @@ onMounted(async () => {
 
   // ฟัง event จากหน้า feature-access
   window.addEventListener('feature-access-updated', handleFeatureAccessUpdate)
+
+  // ฟัง event เปิดเมนูจากหน้าอื่นๆ เช่น formula
+  window.addEventListener('open-mobile-menu', handleOpenMobileMenu)
 })
 
 // Cleanup event listener
 onUnmounted(() => {
   window.removeEventListener('feature-access-updated', handleFeatureAccessUpdate)
+  window.removeEventListener('open-mobile-menu', handleOpenMobileMenu)
 })
 
 // Sign out function
@@ -283,6 +306,7 @@ const allMenuItemsList = [
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false, featureId: 'check_prize' as FeatureId },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false, featureId: 'save_numbers_limited' as FeatureId },
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false, featureId: 'statistics_advanced' as FeatureId },
+  { path: '/formula', icon: '🧪', label: 'สูตรหวย', adminOnly: false, featureId: 'lottery_formula' as FeatureId },
   { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false, featureId: 'two_digit_advanced' as FeatureId },
   { path: '/three-digit', icon: '🔢', label: 'เลข 3 ตัว', adminOnly: false, featureId: 'three_digit_advanced' as FeatureId },

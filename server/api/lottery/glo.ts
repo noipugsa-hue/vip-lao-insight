@@ -89,86 +89,106 @@ const transformData = (rawData: any) => {
   }
 }
 
-export default defineEventHandler(async (event): Promise<RayriffyLotteryResult> => {
+// ฟังก์ชันสำหรับดึงจาก glo.or.th API (fallback)
+const fetchFromGLO = async (id?: string) => {
   try {
-    const query = getQuery(event)
-    const id = query.id as string | undefined
+    const gloUrl = id
+      ? `https://www.glo.or.th/api/lottery/${id}`
+      : 'https://www.glo.or.th/api/lottery/latest'
 
-    // สร้าง URL สำหรับเรียก API
-    let apiUrl = 'https://lotto.api.rayriffy.com'
+    const response = await fetch(gloUrl, {
+      signal: AbortSignal.timeout(8000) // timeout 8 วินาที
+    })
 
-    if (id) {
-      // ถ้ามี id ให้เรียกงวดเฉพาะ (รูปแบบ DDMMYYYY เช่น 16042569)
-      apiUrl += `/${id}`
-    } else {
-      // ถ้าไม่มี id ให้เรียกงวดล่าสุด
-      apiUrl += '/latest'
+    if (!response.ok) {
+      return null
     }
 
-    console.log('[Rayriffy API] Fetching from:', apiUrl)
+    const data = await response.json()
 
-    // เรียก API จาก rayriffy
+    // แปลงข้อมูลจาก glo.or.th format
+    if (data && data.date) {
+      return {
+        date: data.date,
+        period: data.period || data.id,
+        first: data.first || '',
+        firstNear: data.firstNear || [],
+        second: data.second || [],
+        third: data.third || [],
+        fourth: data.fourth || [],
+        fifth: data.fifth || [],
+        runningNumberFront: data.runningNumberFront || [],
+        runningNumberBack: data.runningNumberBack || [],
+        runningNumberBack2: data.runningNumberBack2 || []
+      }
+    }
+
+    return null
+  } catch (err) {
+    return null
+  }
+}
+
+export default defineEventHandler(async (event): Promise<RayriffyLotteryResult> => {
+  const query = getQuery(event)
+  const id = query.id as string | undefined
+
+  // ลอง rayriffy ก่อน (ด้วย timeout สั้น)
+  try {
+    const apiUrl = id
+      ? `https://lotto.api.rayriffy.com/${id}`
+      : 'https://lotto.api.rayriffy.com/latest'
+
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
+      },
+      signal: AbortSignal.timeout(5000) // timeout 5 วินาที
     })
 
-    if (!response.ok) {
-      console.error('[Rayriffy API] HTTP Error:', response.status, response.statusText)
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${response.statusText}`
+    if (response.ok) {
+      const contentType = response.headers.get('content-type')
+      if (contentType?.includes('application/json')) {
+        const rawData = await response.json()
+
+        if (rawData.status === 'success') {
+          const transformedData = transformData(rawData)
+
+          if (transformedData) {
+            console.log('[Rayriffy API] ✅ Success')
+            return {
+              success: true,
+              data: transformedData
+            }
+          }
+        }
       }
     }
+  } catch (err: any) {
+    // Silent fail - ไม่แสดง error เพราะมี fallback
+  }
 
-    const contentType = response.headers.get('content-type')
-    if (!contentType?.includes('application/json')) {
-      console.error('[Rayriffy API] Invalid content type:', contentType)
+  // Fallback: ลอง glo.or.th API
+  try {
+    const gloData = await fetchFromGLO(id)
+
+    if (gloData) {
+      console.log('[GLO API] ✅ Success (fallback)')
       return {
-        success: false,
-        error: 'Invalid response format (not JSON)'
+        success: true,
+        data: gloData
       }
     }
+  } catch (err: any) {
+    // Silent fail
+  }
 
-    const rawData = await response.json()
-    console.log('[Rayriffy API] Raw data:', JSON.stringify(rawData).substring(0, 200))
-
-    // เช็คว่า API return success หรือไม่
-    if (rawData.status !== 'success') {
-      console.error('[Rayriffy API] API returned error status')
-      return {
-        success: false,
-        error: 'API returned error status'
-      }
-    }
-
-    // แปลงข้อมูลเป็น format ของเรา
-    const transformedData = transformData(rawData)
-
-    if (!transformedData) {
-      console.error('[Rayriffy API] Failed to transform data')
-      return {
-        success: false,
-        error: 'Failed to transform data'
-      }
-    }
-
-    console.log('[Rayriffy API] Success:', transformedData)
-
-    return {
-      success: true,
-      data: transformedData
-    }
-
-  } catch (error: any) {
-    console.error('[Rayriffy API] Error:', error)
-    return {
-      success: false,
-      error: error.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล',
-      message: 'ไม่สามารถดึงข้อมูลหวยได้ กรุณาลองใหม่อีกครั้ง'
-    }
+  // ถ้าทั้งสอง API ล้มเหลว
+  return {
+    success: false,
+    error: 'ไม่สามารถดึงข้อมูลหวยได้ในขณะนี้',
+    message: 'กรุณาลองใหม่อีกครั้ง'
   }
 })

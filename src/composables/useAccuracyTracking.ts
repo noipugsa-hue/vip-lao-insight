@@ -7,6 +7,7 @@ export interface PredictionRecord {
   actualNumber: string | null
   isCorrect: boolean | null
   confidence: number
+  formulaId?: string // Optional: ID of the formula used (statistics, fixed, probability, daypower)
 }
 
 const STORAGE_KEY = 'accuracy_tracking'
@@ -38,7 +39,8 @@ export const useAccuracyTracking = () => {
   const addPrediction = (
     lotteryType: string,
     predictedNumbers: string[],
-    confidence: number
+    confidence: number,
+    formulaId?: string
   ) => {
     const record: PredictionRecord = {
       date: new Date().toISOString(),
@@ -47,6 +49,7 @@ export const useAccuracyTracking = () => {
       actualNumber: null,
       isCorrect: null,
       confidence,
+      formulaId,
     }
 
     records.value.unshift(record)
@@ -98,6 +101,32 @@ export const useAccuracyTracking = () => {
     }
   })
 
+  // คำนวณสถิติความแม่นตาม Formula
+  const accuracyStatsByFormula = computed(() => {
+    const verified = records.value.filter(r => r.isCorrect !== null && r.formulaId)
+    const formulas = ['statistics', 'fixed', 'probability', 'daypower']
+
+    const statsByFormula: Record<string, {
+      total: number
+      correct: number
+      accuracy: number
+    }> = {}
+
+    formulas.forEach(formulaId => {
+      const formulaRecords = verified.filter(r => r.formulaId === formulaId)
+      const correct = formulaRecords.filter(r => r.isCorrect).length
+      const total = formulaRecords.length
+
+      statsByFormula[formulaId] = {
+        total,
+        correct,
+        accuracy: total > 0 ? Math.round((correct / total) * 1000) / 10 : 0
+      }
+    })
+
+    return statsByFormula
+  })
+
   // ล้างข้อมูล
   const clearRecords = () => {
     records.value = []
@@ -112,6 +141,7 @@ export const useAccuracyTracking = () => {
     addPrediction,
     recordActualResult,
     accuracyStats,
+    accuracyStatsByFormula,
     clearRecords,
     loadRecords,
   }
