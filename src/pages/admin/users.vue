@@ -28,7 +28,8 @@ const {
   loading: analyticsLoading,
   subscribeToAnalytics,
   maxHourlyValue,
-  maxDailyValue
+  maxDailyValue,
+  maxExtensionValue
 } = useLoginAnalytics()
 
 const isLoading = ref(true)
@@ -383,10 +384,12 @@ const confirmExtension = async () => {
       </div>
 
       <!-- Login Analytics Charts -->
-      <div v-if="!analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Daily Activity Chart (7 days) -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
-          <div class="flex items-center justify-between mb-6">
+      <div v-if="!analyticsLoading" class="space-y-6 mb-8">
+        <!-- First Row: Login Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Daily Activity Chart (7 days) -->
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-6">
             <div>
               <h3 class="text-xl font-black text-gray-900 dark:text-white">📊 การเข้าใช้งาน 7 วันล่าสุด</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">อัพเดทแบบ Real-time</p>
@@ -496,6 +499,79 @@ const confirmExtension = async () => {
             <div class="text-center">
               <p class="text-2xl font-black text-purple-600 dark:text-purple-400">{{ analytics.activeToday }}</p>
               <p class="text-xs text-gray-600 dark:text-gray-400">คนที่ใช้งาน</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Second Row: Subscription Extensions Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">🔓 การต่ออายุ VIP (7 วัน)</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ติดตามการต่ออายุแบบ Real-time</p>
+            </div>
+            <div class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+            </div>
+          </div>
+
+          <!-- Extension Bars -->
+          <div class="space-y-4">
+            <div
+              v-for="(day, index) in analytics.extensionDaily"
+              :key="day.date"
+              class="group"
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ day.label }}</span>
+                <span class="text-sm font-black text-yellow-600 dark:text-yellow-400">{{ day.count }}</span>
+              </div>
+              <div class="h-8 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                <div
+                  :class="[
+                    'h-full rounded-lg transition-all duration-700 ease-out',
+                    index === analytics.extensionDaily.length - 1
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                      : 'bg-gradient-to-r from-amber-400 to-yellow-500'
+                  ]"
+                  :style="{ width: `${(day.count / maxExtensionValue) * 100}%` }"
+                >
+                  <div class="h-full flex items-center justify-end pr-3">
+                    <span v-if="day.count > 0" class="text-xs font-bold text-white">
+                      {{ day.count }} คน
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded bg-gradient-to-r from-yellow-400 to-orange-500"></div>
+              <span class="text-xs text-gray-600 dark:text-gray-400">วันนี้</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded bg-gradient-to-r from-amber-400 to-yellow-500"></div>
+              <span class="text-xs text-gray-600 dark:text-gray-400">วันก่อนหน้า</span>
+            </div>
+          </div>
+
+          <!-- Extension Stats -->
+          <div class="grid grid-cols-3 gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="text-center">
+              <p class="text-2xl font-black text-yellow-600 dark:text-yellow-400">{{ analytics.extensionTodayCount }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">วันนี้</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-black text-orange-600 dark:text-orange-400">{{ analytics.extensionWeekCount }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">7 วัน</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-black text-amber-600 dark:text-amber-400">{{ analytics.extensionMonthCount }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">30 วัน</p>
             </div>
           </div>
         </div>
