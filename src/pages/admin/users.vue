@@ -502,6 +502,7 @@ const confirmExtension = async () => {
             </div>
           </div>
         </div>
+        </div>
 
         <!-- Second Row: Subscription Extensions Chart -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
