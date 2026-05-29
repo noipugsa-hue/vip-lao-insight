@@ -189,11 +189,22 @@
               isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3',
               currentPath === tab.path
                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
+              // ป้องกันการคลิกเมื่อหมดอายุ (ยกเว้นหน้าที่อนุญาต)
+              shouldBlockContent && !allowedPagesWhenExpired.includes(tab.path)
+                ? 'pointer-events-none opacity-40 grayscale'
+                : ''
             ]"
           >
             <span class="text-2xl">{{ tab.icon }}</span>
             <span v-if="isSidebarExpanded" class="text-sm">{{ tab.label }}</span>
+            <!-- Lock icon for blocked items -->
+            <span
+              v-if="shouldBlockContent && !allowedPagesWhenExpired.includes(tab.path) && isSidebarExpanded"
+              class="ml-auto text-lg"
+            >
+              🔒
+            </span>
           </NuxtLink>
         </div>
       </nav>
@@ -320,7 +331,23 @@
       </div>
 
       <!-- Page Content -->
-      <main class="flex-1 py-4 pb-20 lg:pb-4">
+      <main class="flex-1 py-4 pb-20 lg:pb-4 relative">
+        <!-- Content Blocker Overlay (when expired and not allowed page) -->
+        <div
+          v-if="shouldBlockContent"
+          class="absolute inset-0 bg-black/30 backdrop-blur-md z-[90] flex items-center justify-center pointer-events-none"
+        >
+          <div class="text-center p-8 bg-red-600/80 rounded-2xl shadow-2xl max-w-md animate-pulse">
+            <div class="text-6xl mb-4">🔒</div>
+            <p class="text-white text-xl font-bold mb-2">
+              เนื้อหาถูกล็อค
+            </p>
+            <p class="text-white/90 text-sm">
+              กรุณาชำระเงิน 599 บาทเพื่อใช้งานต่อ
+            </p>
+          </div>
+        </div>
+
         <slot />
       </main>
     </div>
@@ -332,13 +359,26 @@
           v-for="tab in bottomTabs"
           :key="tab.path"
           :to="tab.path"
-          class="flex flex-col items-center justify-center flex-1 h-full transition-colors"
-          :class="currentPath === tab.path
-            ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-gray-700'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          class="flex flex-col items-center justify-center flex-1 h-full transition-colors relative"
+          :class="[
+            currentPath === tab.path
+              ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-gray-700'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+            // ป้องกันการคลิกเมื่อหมดอายุ (ยกเว้นหน้าที่อนุญาต)
+            shouldBlockContent && !allowedPagesWhenExpired.includes(tab.path)
+              ? 'pointer-events-none opacity-40 grayscale'
+              : ''
+          ]"
         >
           <span class="text-xl mb-1">{{ tab.icon }}</span>
           <span class="text-xs font-medium">{{ tab.label }}</span>
+          <!-- Lock icon for blocked items -->
+          <span
+            v-if="shouldBlockContent && !allowedPagesWhenExpired.includes(tab.path)"
+            class="absolute top-1 right-1 text-xs"
+          >
+            🔒
+          </span>
         </NuxtLink>
       </div>
     </nav>
@@ -346,7 +386,7 @@
     <!-- Expired Modal -->
     <ExpiredModal
       :show="showExpiredModal"
-      :can-close="true"
+      :can-close="canCloseExpiredModal"
       @close="showExpiredModal = false"
     />
   </div>
@@ -381,6 +421,37 @@ const isSidebarExpanded = ref(true)
 
 // Expired modal state
 const showExpiredModal = ref(false)
+
+// Determine if expired modal can be closed
+// ถ้าหมดอายุจริงๆ (และไม่ใช่ admin) จะปิดไม่ได้ ต้องจ่ายเงินก่อน
+// ถ้าแค่ใกล้หมดอายุ ปิดได้
+const canCloseExpiredModal = computed(() => {
+  // Admin สามารถปิดได้เสมอ (แม้จะหมดอายุ)
+  if (isAdmin.value) return true
+
+  // ถ้าหมดอายุจริงๆ แล้ว ไม่สามารถปิดได้ ต้องจ่ายเงิน
+  if (isExpired.value) return false
+
+  // ถ้าแค่ใกล้หมดอายุ สามารถปิดได้
+  return true
+})
+
+// Determine if content should be blocked (when expired and not admin)
+// หน้าที่อนุญาตให้เข้าถึงได้แม้หมดอายุ
+const allowedPagesWhenExpired = ['/login', '/payment', '/pricing', '/subscription']
+const shouldBlockContent = computed(() => {
+  // Admin ไม่ถูกบล็อก
+  if (isAdmin.value) return false
+
+  // ถ้าไม่หมดอายุ ไม่บล็อก
+  if (!isExpired.value) return false
+
+  // ถ้าอยู่ในหน้าที่อนุญาต ไม่บล็อก
+  if (allowedPagesWhenExpired.includes(currentPath.value)) return false
+
+  // กรณีอื่นๆ บล็อกทั้งหมด
+  return true
+})
 
 // Open mobile menu with debug
 const openMobileMenu = () => {
@@ -426,8 +497,8 @@ onMounted(async () => {
 
 // Watch for expired subscription and show modal
 watch(isExpired, (newValue) => {
-  if (newValue && user.value) {
-    // แสดง modal เมื่อหมดอายุ
+  // แสดง modal เมื่อหมดอายุ (ยกเว้น admin ที่ไม่ต้องจ่ายเงิน)
+  if (newValue && user.value && !isAdmin.value) {
     showExpiredModal.value = true
   }
 }, { immediate: true })

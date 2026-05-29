@@ -26,8 +26,14 @@ export const useLoginStats = () => {
     recentLogins: []
   })
 
-  // บันทึก login
+  // บันทึก login (ปิดชั่วคราวเพื่อหลีกเลี่ยง Error 400)
   const recordLogin = async (userId: string, email: string) => {
+    // TODO: Enable this after fixing Firestore rules issues
+    console.log('⏸️ Login recording temporarily disabled to avoid Error 400')
+    console.log('📝 Would record login for user:', userId, email)
+    return
+
+    /* COMMENTED OUT TEMPORARILY
     try {
       const loginData = {
         userId,
@@ -37,11 +43,16 @@ export const useLoginStats = () => {
         device: /mobile/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
       }
 
+      console.log('📝 Attempting to record login for user:', userId)
       await addDoc(collection(db, 'login_history'), loginData)
       console.log('✅ Login recorded successfully')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error recording login:', error)
+      console.error('❌ Error code:', error?.code)
+      console.error('❌ Error message:', error?.message)
+      // Don't throw - allow login to continue even if logging fails
     }
+    */
   }
 
   // ดึงสถิติการ login

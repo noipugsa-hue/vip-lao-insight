@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore'
 import { defineNuxtPlugin } from '#app'
 
 // ใส่ค่าที่ได้จาก Firebase Console
@@ -17,7 +17,35 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
-const db = getFirestore(app)
+
+// Initialize Firestore with settings to avoid offline persistence issues
+let db
+try {
+  // Try to initialize with custom settings
+  db = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    ignoreUndefinedProperties: true,
+    // Use long polling to avoid WebSocket issues
+    experimentalForceLongPolling: false,
+    experimentalAutoDetectLongPolling: true
+  })
+  console.log('✅ Firestore initialized with custom settings')
+} catch (error: any) {
+  // If already initialized, get the existing instance
+  console.warn('⚠️ Firestore already initialized, using existing instance:', error.message)
+  db = getFirestore(app)
+}
+
+// Add error listener for Firestore
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.message?.includes('PERMISSION_DENIED') ||
+        event.reason?.message?.includes('Missing or insufficient permissions')) {
+      console.warn('🔒 Firestore permission denied - user may not be authenticated yet')
+      event.preventDefault() // Prevent error from bubbling up
+    }
+  })
+}
 
 export default defineNuxtPlugin(() => {
   return {

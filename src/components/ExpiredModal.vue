@@ -3,7 +3,7 @@
     <div
       v-if="show"
       class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-      @click.self="handleClose"
+      @click.self="canClose ? handleClose() : null"
     >
       <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border-4 border-red-500 animate-pulse-border">
         <!-- Header -->
@@ -104,6 +104,16 @@
               <span class="relative z-10">แอด LINE เพื่อชำระเงิน 599 บาท</span>
             </a>
 
+            <!-- Go to Payment Button (Secondary) -->
+            <button
+              @click="goToPayment"
+              class="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span class="text-xl">💳</span>
+              <span>ไปหน้าชำระเงิน</span>
+            </button>
+
+            <!-- Close Button (only if canClose) -->
             <button
               v-if="canClose"
               @click="handleClose"
@@ -111,6 +121,16 @@
             >
               ปิดหน้าต่าง (จะใช้งานฟีเจอร์ VIP ไม่ได้)
             </button>
+
+            <!-- Warning when cannot close -->
+            <div
+              v-if="!canClose"
+              class="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg p-3"
+            >
+              <p class="text-red-700 dark:text-red-300 text-xs text-center font-bold">
+                🚫 คุณไม่สามารถใช้งานต่อได้จนกว่าจะชำระเงิน 599 บาท
+              </p>
+            </div>
           </div>
 
           <!-- Payment Instructions -->
@@ -127,6 +147,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 // Vue 3 compiler macros (withDefaults, defineProps, defineEmits) are auto-imported
 // @ts-ignore - Vetur doesn't support Vue 3 macros, use Volar instead
 interface Props {
@@ -142,10 +164,17 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
+const router = useRouter()
+
 const handleClose = () => {
   if (props.canClose) {
     emit('close')
   }
+}
+
+const goToPayment = () => {
+  emit('close')
+  router.push('/payment')
 }
 </script>
 
