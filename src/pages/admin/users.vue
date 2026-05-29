@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref } from 'vue'
+import { onMounted, onUnmounted, computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNuxtApp } from '#app'
 import { collection, query, getDocs } from 'firebase/firestore'
@@ -34,6 +34,10 @@ const showSuccessToast = ref(false)
 const successMessage = ref('')
 const debugInfo = ref<any>(null)
 const showDebugModal = ref(false)
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 18
 
 onMounted(async () => {
   // ตรวจสอบ authentication ก่อน
@@ -83,6 +87,49 @@ const filteredUsers = computed(() => {
 
   // Default: urgency (already sorted from composable)
   return filtered
+})
+
+// Total pages
+const totalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / itemsPerPage)
+})
+
+// Paginated users
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredUsers.value.slice(start, end)
+})
+
+// Page numbers for pagination UI
+const pageNumbers = computed(() => {
+  const pages = []
+  const maxVisible = 5
+  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
+  let endPage = Math.min(totalPages.value, startPage + maxVisible - 1)
+
+  if (endPage - startPage < maxVisible - 1) {
+    startPage = Math.max(1, endPage - maxVisible + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+
+  return pages
+})
+
+// Go to page
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Reset to page 1 when filters change
+watch([filterStatus, sortBy], () => {
+  currentPage.value = 1
 })
 
 // Format date
@@ -374,9 +421,9 @@ const confirmExtension = async () => {
       </div>
 
       <!-- Users Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div
-          v-for="user in filteredUsers"
+          v-for="user in paginatedUsers"
           :key="user.uid"
           class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all border-2 border-gray-100 dark:border-gray-700"
         >
@@ -428,6 +475,81 @@ const confirmExtension = async () => {
           >
             🔓 ปลดล็อค/ต่ออายุ
           </button>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <!-- Page Info -->
+          <div class="text-sm font-bold text-gray-700 dark:text-gray-300">
+            แสดง {{ ((currentPage - 1) * itemsPerPage) + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }}
+            จากทั้งหมด {{ filteredUsers.length }} รายการ
+          </div>
+
+          <!-- Page Numbers -->
+          <div class="flex items-center gap-2">
+            <!-- Previous Button -->
+            <button
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-200 dark:disabled:hover:bg-gray-700"
+            >
+              ← ก่อนหน้า
+            </button>
+
+            <!-- First Page -->
+            <button
+              v-if="pageNumbers[0] > 1"
+              @click="goToPage(1)"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl font-bold transition-all"
+            >
+              1
+            </button>
+
+            <!-- Dots -->
+            <span v-if="pageNumbers[0] > 2" class="text-gray-500 dark:text-gray-400 font-bold">
+              ...
+            </span>
+
+            <!-- Page Numbers -->
+            <button
+              v-for="page in pageNumbers"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'px-4 py-2 rounded-xl font-bold transition-all',
+                page === currentPage
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
+              ]"
+            >
+              {{ page }}
+            </button>
+
+            <!-- Dots -->
+            <span v-if="pageNumbers[pageNumbers.length - 1] < totalPages - 1" class="text-gray-500 dark:text-gray-400 font-bold">
+              ...
+            </span>
+
+            <!-- Last Page -->
+            <button
+              v-if="pageNumbers[pageNumbers.length - 1] < totalPages"
+              @click="goToPage(totalPages)"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl font-bold transition-all"
+            >
+              {{ totalPages }}
+            </button>
+
+            <!-- Next Button -->
+            <button
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-200 dark:disabled:hover:bg-gray-700"
+            >
+              ถัดไป →
+            </button>
+          </div>
         </div>
       </div>
     </div>
