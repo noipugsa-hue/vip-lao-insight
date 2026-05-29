@@ -393,6 +393,47 @@ const confirmExtension = async () => {
         <p class="mt-4 text-gray-600 dark:text-gray-400 font-semibold">กำลังโหลดข้อมูล...</p>
       </div>
 
+      <!-- Error State (if error exists) -->
+      <div v-else-if="error" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
+        <div class="text-6xl mb-6">❌</div>
+        <p class="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">เกิดข้อผิดพลาด</p>
+        <div class="max-w-2xl mx-auto space-y-4">
+          <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800 text-left">
+            <p class="text-sm text-red-700 dark:text-red-300 font-mono">{{ error }}</p>
+          </div>
+
+          <div class="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800 text-left space-y-3">
+            <p class="text-blue-800 dark:text-blue-300 font-bold">🔧 วิธีแก้ไข Error 400:</p>
+            <ol class="text-sm text-blue-700 dark:text-blue-300 space-y-2 list-decimal list-inside">
+              <li><strong>ใช้ Incognito Mode</strong> - เปิดหน้านี้ใน Incognito/Private window เพื่อหลีกเลี่ยง cache เก่า</li>
+              <li><strong>ลบ Browser Cache</strong>:
+                <ul class="ml-6 mt-1 space-y-1 list-disc list-inside">
+                  <li>เปิด DevTools (F12)</li>
+                  <li>ไปที่ Tab Application → IndexedDB</li>
+                  <li>ลบทุก database ที่ขึ้นต้นด้วย "firestore"</li>
+                  <li>Refresh หน้า (Cmd+Shift+R)</li>
+                </ul>
+              </li>
+              <li><strong>รอ 2 นาที</strong> - Firestore rules ต้องใช้เวลากระจายไปทั่ว Google servers</li>
+            </ol>
+          </div>
+
+          <button
+            @click="checkFirestoreConnection"
+            class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95"
+          >
+            🔧 ทดสอบการเชื่อมต่อ Firestore
+          </button>
+
+          <button
+            @click="location.reload()"
+            class="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95"
+          >
+            🔄 Hard Refresh (Ctrl+Shift+R)
+          </button>
+        </div>
+      </div>
+
       <!-- Empty State -->
       <div v-else-if="filteredUsers.length === 0" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
         <div class="text-6xl mb-6">📭</div>

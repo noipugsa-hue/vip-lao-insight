@@ -70,11 +70,11 @@ service cloud.firestore {
     // Subscriptions Collection (สมาชิก VIP)
     // ========================================
     match /subscriptions/{userId} {
-      // Admin can do everything
-      allow read, write: if isAdmin();
+      // Admin can do everything (list, get, write)
+      allow list, get, write: if isAdmin();
 
-      // Users can read their own subscription
-      allow read: if isOwner(userId);
+      // Users can only get (not list) their own subscription
+      allow get: if isOwner(userId);
 
       // Users can create their own subscription
       allow create: if isOwner(userId) &&
