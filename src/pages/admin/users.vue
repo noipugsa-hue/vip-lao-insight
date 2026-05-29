@@ -390,15 +390,15 @@ const confirmExtension = async () => {
           <!-- Daily Activity Chart (7 days) -->
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
             <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-xl font-black text-gray-900 dark:text-white">📊 การเข้าใช้งาน 7 วันล่าสุด</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">อัพเดทแบบ Real-time</p>
+              <div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-white">📊 การเข้าใช้งาน 7 วันล่าสุด</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">อัพเดทแบบ Real-time</p>
+              </div>
+              <div class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </div>
             </div>
-            <div class="relative flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </div>
-          </div>
 
           <!-- Daily Bars -->
           <div class="space-y-4">
