@@ -6,6 +6,7 @@ import { collection, query, getDocs } from 'firebase/firestore'
 import { useAuth } from '../../composables/useAuth'
 import { useAdmin } from '../../composables/useAdmin'
 import { useAdminSubscription } from '../../composables/useAdminSubscription'
+import { useLoginAnalytics } from '../../composables/useLoginAnalytics'
 import type { UserSubscriptionInfo } from '../../composables/useAdminSubscription'
 
 const router = useRouter()
@@ -21,6 +22,14 @@ const {
   extendUserSubscription,
   cleanup
 } = useAdminSubscription()
+
+const {
+  analytics,
+  loading: analyticsLoading,
+  subscribeToAnalytics,
+  maxHourlyValue,
+  maxDailyValue
+} = useLoginAnalytics()
 
 const isLoading = ref(true)
 const filterStatus = ref<'all' | 'active' | 'expired' | 'critical'>('all')
@@ -40,6 +49,9 @@ const showDebugModal = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = 18
 
+// Analytics subscription
+let unsubscribeAnalytics: (() => void) | null = null
+
 onMounted(async () => {
   // ตรวจสอบ authentication ก่อน
   const currentUser = await waitForAuth()
@@ -57,12 +69,19 @@ onMounted(async () => {
 
   // Fetch users with real-time updates
   await fetchAllUsers()
+
+  // Subscribe to login analytics
+  unsubscribeAnalytics = subscribeToAnalytics()
+
   isLoading.value = false
 })
 
 // Unsubscribe when component unmounts
 onUnmounted(() => {
   cleanup()
+  if (unsubscribeAnalytics) {
+    unsubscribeAnalytics()
+  }
 })
 
 // Filtered and sorted users
@@ -360,6 +379,125 @@ const confirmExtension = async () => {
             </div>
           </div>
           <div class="text-xs opacity-80">เหลือ 0-3 วัน</div>
+        </div>
+      </div>
+
+      <!-- Login Analytics Charts -->
+      <div v-if="!analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Daily Activity Chart (7 days) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">📊 การเข้าใช้งาน 7 วันล่าสุด</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">อัพเดทแบบ Real-time</p>
+            </div>
+            <div class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </div>
+          </div>
+
+          <!-- Daily Bars -->
+          <div class="space-y-4">
+            <div
+              v-for="(day, index) in analytics.daily"
+              :key="day.date"
+              class="group"
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-300">{{ day.label }}</span>
+                <span class="text-sm font-black text-purple-600 dark:text-purple-400">{{ day.count }}</span>
+              </div>
+              <div class="h-8 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                <div
+                  :class="[
+                    'h-full rounded-lg transition-all duration-700 ease-out',
+                    index === analytics.daily.length - 1
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                      : 'bg-gradient-to-r from-blue-400 to-cyan-400'
+                  ]"
+                  :style="{ width: `${(day.count / maxDailyValue) * 100}%` }"
+                >
+                  <div class="h-full flex items-center justify-end pr-3">
+                    <span v-if="day.count > 0" class="text-xs font-bold text-white">
+                      {{ day.count }} ครั้ง
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-pink-500"></div>
+              <span class="text-xs text-gray-600 dark:text-gray-400">วันนี้</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 rounded bg-gradient-to-r from-blue-400 to-cyan-400"></div>
+              <span class="text-xs text-gray-600 dark:text-gray-400">วันก่อนหน้า</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hourly Activity Chart (24 hours) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">⏰ การเข้าใช้งาน 24 ชั่วโมง</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">แสดงการเข้าใช้งานแบบรายชั่วโมง</p>
+            </div>
+            <div class="text-2xl">📈</div>
+          </div>
+
+          <!-- Hourly Bars (Vertical) -->
+          <div class="flex items-end justify-between gap-1 h-48">
+            <div
+              v-for="(hour, index) in analytics.hourly"
+              :key="hour.hour"
+              class="flex-1 flex flex-col items-center group relative"
+            >
+              <!-- Bar -->
+              <div class="w-full flex items-end justify-center" style="height: 160px">
+                <div
+                  :class="[
+                    'w-full rounded-t-md transition-all duration-700 ease-out group-hover:opacity-80',
+                    hour.count > 0
+                      ? 'bg-gradient-to-t from-green-400 to-emerald-500'
+                      : 'bg-gray-200 dark:bg-gray-700'
+                  ]"
+                  :style="{ height: `${(hour.count / maxHourlyValue) * 100}%` }"
+                >
+                  <!-- Tooltip -->
+                  <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shadow-xl z-10">
+                    {{ hour.hour }}<br/>{{ hour.count }} ครั้ง
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Hour Label (show every 3 hours) -->
+              <div v-if="index % 3 === 0" class="text-[8px] font-bold text-gray-500 dark:text-gray-500 mt-1 text-center">
+                {{ hour.hour.split(':')[0] }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-3 gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="text-center">
+              <p class="text-2xl font-black text-green-600 dark:text-green-400">{{ analytics.todayCount }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">วันนี้</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ analytics.weekCount }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">7 วัน</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-black text-purple-600 dark:text-purple-400">{{ analytics.activeToday }}</p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">คนที่ใช้งาน</p>
+            </div>
+          </div>
         </div>
       </div>
 
