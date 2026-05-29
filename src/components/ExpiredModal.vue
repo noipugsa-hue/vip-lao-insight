@@ -127,6 +127,8 @@
 </template>
 
 <script setup lang="ts">
+// Vue 3 compiler macros (withDefaults, defineProps, defineEmits) are auto-imported
+// @ts-ignore - Vetur doesn't support Vue 3 macros, use Volar instead
 interface Props {
   show: boolean
   canClose?: boolean

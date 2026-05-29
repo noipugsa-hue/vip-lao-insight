@@ -119,12 +119,13 @@ export const useSubscription = () => {
   const currentPlan = computed(() => subscription.value?.plan || 'free')
 
   // จำนวนวันที่เหลือ (Admin ก็นับวันปกติ แต่ไม่ต้องจ่ายเงิน)
+  // ใช้ Math.floor() เพื่อให้ครบ 24 ชม. ถึงจะลบวัน
   const daysRemaining = computed(() => {
     if (!subscription.value || subscription.value.status !== 'active') return 0
     const now = new Date()
     const end = new Date(subscription.value.endDate)
     const diff = end.getTime() - now.getTime()
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
   })
 
   // เช็คว่าใกล้หมดอายุหรือไม่ (Admin ไม่มีการหมดอายุ)

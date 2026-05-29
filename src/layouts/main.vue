@@ -360,6 +360,7 @@ import { useAdmin } from '../composables/useAdmin'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useSubscription } from '../composables/useSubscription'
 import { useFeatureAccess, type FeatureId } from '../composables/useFeatureAccess'
+// @ts-ignore - Vetur doesn't support Vue 3 SFC default exports, use Volar instead
 import ExpiredModal from '../components/ExpiredModal.vue'
 
 const route = useRoute()
@@ -367,8 +368,9 @@ const router = useRouter()
 const currentPath = computed(() => route.path)
 const { user, logout } = useAuth()
 const { isAdmin } = useAdmin()
+// @ts-ignore - Used in template, Vetur can't detect
 const { isDark, toggleDarkMode } = useDarkMode()
-const { isVIP, isExpired, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
+const { isExpired, currentPlan, fetchSubscription, isExpiringSoon, expirationMessage, urgencyLevel, daysRemaining } = useSubscription()
 const { canAccessFeature, fetchFeatureAccess } = useFeatureAccess()
 
 // Mobile menu state
