@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, memoryLocalCache } from 'firebase/firestore'
 import { defineNuxtPlugin } from '#app'
 
 // ใส่ค่าที่ได้จาก Firebase Console
@@ -18,19 +18,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 
-// Initialize Firestore with settings to avoid offline persistence issues
+// Initialize Firestore with MEMORY-ONLY cache (NO IndexedDB persistence)
+// This completely bypasses offline persistence and fixes Error 400 WebSocket issues
 let db
 try {
-  // Try to initialize with custom settings
-  // IMPORTANT: experimentalForceLongPolling = true to bypass WebSocket Error 400
+  console.log('🔧 Initializing Firestore with MEMORY-ONLY cache (no IndexedDB)...')
+
   db = initializeFirestore(app, {
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    // CRITICAL: Use memory cache ONLY - no IndexedDB persistence at all
+    localCache: memoryLocalCache(),
     ignoreUndefinedProperties: true,
     // Force long polling to completely avoid WebSocket/Listen stream errors
     experimentalForceLongPolling: true,
     experimentalAutoDetectLongPolling: false
   })
-  console.log('✅ Firestore initialized with long polling (bypass WebSocket Error 400)')
+
+  console.log('✅ Firestore initialized with MEMORY-ONLY cache (no offline support)')
+  console.log('✅ Using HTTP long polling instead of WebSocket')
+  console.log('⚠️  Offline mode is DISABLED - requires internet connection')
 } catch (error: any) {
   // If already initialized, get the existing instance
   console.warn('⚠️ Firestore already initialized, using existing instance:', error.message)
