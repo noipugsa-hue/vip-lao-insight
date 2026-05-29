@@ -53,24 +53,28 @@ export const useLoginAnalytics = () => {
     extensionMonthCount: 0
   })
 
-  // สร้างข้อมูล 24 ชั่วโมงล่าสุด
+  // สร้างข้อมูล 24 ชั่วโมงล่าสุด (นับ unique users)
   const generateHourlyData = (loginData: any[]) => {
     const now = new Date()
-    const hourlyMap = new Map<number, number>()
+    const hourlyUsersMap = new Map<number, Set<string>>()
 
-    // Initialize 24 hours
+    // Initialize 24 hours with empty sets
     for (let i = 23; i >= 0; i--) {
       const hourDate = new Date(now.getTime() - i * 60 * 60 * 1000)
-      hourlyMap.set(hourDate.getHours(), 0)
+      hourlyUsersMap.set(hourDate.getHours(), new Set<string>())
     }
 
-    // Count logins per hour
+    // Count unique users per hour (using email or userId)
     loginData.forEach(login => {
       const loginDate = login.timestamp.toDate()
       const hoursDiff = Math.floor((now.getTime() - loginDate.getTime()) / (1000 * 60 * 60))
       if (hoursDiff < 24) {
         const hour = loginDate.getHours()
-        hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1)
+        const userKey = login.email || login.userId || 'unknown'
+
+        if (hourlyUsersMap.has(hour)) {
+          hourlyUsersMap.get(hour)?.add(userKey)
+        }
       }
     })
 
@@ -81,31 +85,33 @@ export const useLoginAnalytics = () => {
       const hour = hourDate.getHours()
       result.push({
         hour: hour.toString().padStart(2, '0') + ':00',
-        count: hourlyMap.get(hour) || 0
+        count: hourlyUsersMap.get(hour)?.size || 0
       })
     }
 
     return result
   }
 
-  // สร้างข้อมูล 7 วันล่าสุด
+  // สร้างข้อมูล 7 วันล่าสุด (นับ unique users)
   const generateDailyData = (loginData: any[]) => {
     const now = new Date()
-    const dailyMap = new Map<string, number>()
+    const dailyUsersMap = new Map<string, Set<string>>()
 
-    // Initialize 7 days
+    // Initialize 7 days with empty sets
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateKey = date.toISOString().split('T')[0]
-      dailyMap.set(dateKey, 0)
+      dailyUsersMap.set(dateKey, new Set<string>())
     }
 
-    // Count logins per day
+    // Count unique users per day (using email or userId)
     loginData.forEach(login => {
       const loginDate = login.timestamp.toDate()
       const dateKey = loginDate.toISOString().split('T')[0]
-      if (dailyMap.has(dateKey)) {
-        dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + 1)
+      const userKey = login.email || login.userId || 'unknown'
+
+      if (dailyUsersMap.has(dateKey)) {
+        dailyUsersMap.get(dateKey)?.add(userKey)
       }
     })
 
@@ -120,7 +126,7 @@ export const useLoginAnalytics = () => {
 
       result.push({
         date: dateKey,
-        count: dailyMap.get(dateKey) || 0,
+        count: dailyUsersMap.get(dateKey)?.size || 0,
         label: i === 0 ? 'วันนี้' : `${dayName} ${dayMonth}`
       })
     }

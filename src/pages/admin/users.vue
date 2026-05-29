@@ -423,7 +423,7 @@ const confirmExtension = async () => {
                 >
                   <div class="h-full flex items-center justify-end pr-3">
                     <span v-if="day.count > 0" class="text-xs font-bold text-white">
-                      {{ day.count }} ครั้ง
+                      {{ day.count }} คน
                     </span>
                   </div>
                 </div>
@@ -474,7 +474,7 @@ const confirmExtension = async () => {
                 >
                   <!-- Tooltip -->
                   <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shadow-xl z-10">
-                    {{ hour.hour }}<br/>{{ hour.count }} ครั้ง
+                    {{ hour.hour }}<br/>{{ hour.count }} คน
                     <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-700"></div>
                   </div>
                 </div>
