@@ -25,6 +25,7 @@ const {
 const isLoading = ref(true)
 const filterStatus = ref<'all' | 'active' | 'expired' | 'critical'>('all')
 const sortBy = ref<'urgency' | 'recent'>('urgency')
+const searchQuery = ref('')
 const showExtendModal = ref(false)
 const selectedUser = ref<UserSubscriptionInfo | null>(null)
 const extendDays = ref(30)
@@ -67,6 +68,16 @@ onUnmounted(() => {
 // Filtered and sorted users
 const filteredUsers = computed(() => {
   let filtered = users.value
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    filtered = filtered.filter(u => {
+      const email = u.email?.toLowerCase() || ''
+      const uid = u.uid.toLowerCase()
+      return email.includes(query) || uid.includes(query)
+    })
+  }
 
   // Filter by status
   if (filterStatus.value === 'active') {
@@ -127,8 +138,8 @@ const goToPage = (page: number) => {
   }
 }
 
-// Reset to page 1 when filters change
-watch([filterStatus, sortBy], () => {
+// Reset to page 1 when filters or search change
+watch([filterStatus, sortBy, searchQuery], () => {
   currentPage.value = 1
 })
 
@@ -354,35 +365,66 @@ const confirmExtension = async () => {
 
       <!-- Filters -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6">
-        <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-          <!-- Status Filter -->
-          <div class="flex-1">
+        <div class="flex flex-col gap-4">
+          <!-- Search Box -->
+          <div>
             <label class="block text-base font-black text-gray-900 dark:text-white mb-3">
-              🔍 กรองสถานะ
+              🔎 ค้นหาผู้ใช้
             </label>
-            <select
-              v-model="filterStatus"
-              class="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-gray-900 dark:text-white text-base"
-            >
-              <option value="all" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ทั้งหมด</option>
-              <option value="active" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ใช้งานอยู่</option>
-              <option value="expired" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">หมดอายุ</option>
-              <option value="critical" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">เหลือน้อย (0-3 วัน)</option>
-            </select>
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="ค้นหาจาก Email หรือ UID..."
+                class="w-full px-4 py-3 pl-12 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-gray-900 dark:text-white text-base placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              />
+              <div class="absolute left-4 top-1/2 -translate-y-1/2 text-xl">
+                🔎
+              </div>
+              <button
+                v-if="searchQuery"
+                @click="searchQuery = ''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <span class="text-xl">✕</span>
+              </button>
+            </div>
+            <p v-if="searchQuery" class="text-xs text-purple-600 dark:text-purple-400 mt-2 font-semibold">
+              พบ {{ filteredUsers.length }} รายการจากการค้นหา "{{ searchQuery }}"
+            </p>
           </div>
 
-          <!-- Sort -->
-          <div class="flex-1">
-            <label class="block text-base font-black text-gray-900 dark:text-white mb-3">
-              📊 เรียงตาม
-            </label>
-            <select
-              v-model="sortBy"
-              class="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-gray-900 dark:text-white text-base"
-            >
-              <option value="urgency" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ความเร่งด่วน</option>
-              <option value="recent" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">อัพเดทล่าสุด</option>
-            </select>
+          <!-- Status Filter & Sort -->
+          <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <!-- Status Filter -->
+            <div class="flex-1 w-full">
+              <label class="block text-base font-black text-gray-900 dark:text-white mb-3">
+                🔍 กรองสถานะ
+              </label>
+              <select
+                v-model="filterStatus"
+                class="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-gray-900 dark:text-white text-base"
+              >
+                <option value="all" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ทั้งหมด</option>
+                <option value="active" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ใช้งานอยู่</option>
+                <option value="expired" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">หมดอายุ</option>
+                <option value="critical" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">เหลือน้อย (0-3 วัน)</option>
+              </select>
+            </div>
+
+            <!-- Sort -->
+            <div class="flex-1 w-full">
+              <label class="block text-base font-black text-gray-900 dark:text-white mb-3">
+                📊 เรียงตาม
+              </label>
+              <select
+                v-model="sortBy"
+                class="w-full px-4 py-3 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-bold text-gray-900 dark:text-white text-base"
+              >
+                <option value="urgency" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">ความเร่งด่วน</option>
+                <option value="recent" class="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-900">อัพเดทล่าสุด</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
