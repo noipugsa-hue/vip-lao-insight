@@ -22,14 +22,15 @@ const auth = getAuth(app)
 let db
 try {
   // Try to initialize with custom settings
+  // IMPORTANT: experimentalForceLongPolling = true to bypass WebSocket Error 400
   db = initializeFirestore(app, {
     cacheSizeBytes: CACHE_SIZE_UNLIMITED,
     ignoreUndefinedProperties: true,
-    // Use long polling to avoid WebSocket issues
-    experimentalForceLongPolling: false,
-    experimentalAutoDetectLongPolling: true
+    // Force long polling to completely avoid WebSocket/Listen stream errors
+    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: false
   })
-  console.log('✅ Firestore initialized with custom settings')
+  console.log('✅ Firestore initialized with long polling (bypass WebSocket Error 400)')
 } catch (error: any) {
   // If already initialized, get the existing instance
   console.warn('⚠️ Firestore already initialized, using existing instance:', error.message)
