@@ -462,6 +462,7 @@ const allMenuItemsList = [
   { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/range', icon: '🎯', label: '00-99', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true, featureId: null }, // Admin only
+  { path: '/admin/users', icon: '🔓', label: 'จัดการผู้ใช้', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/feature-access', icon: '🔐', label: 'จัดการฟีเจอร์', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true, featureId: null }, // Admin only
 ]

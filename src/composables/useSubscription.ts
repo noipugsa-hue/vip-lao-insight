@@ -167,21 +167,28 @@ export const useSubscription = () => {
 
   // ดึงข้อมูล subscription
   const fetchSubscription = async () => {
+    console.log('🔄 [fetchSubscription] Function called!')
     try {
       loading.value = true
       error.value = null
 
+      console.log('⏳ [fetchSubscription] Waiting for auth...')
       await waitForAuth()
+      console.log('✅ [fetchSubscription] Auth ready, user:', user.value?.email)
+
       if (!user.value) {
+        console.error('❌ [fetchSubscription] No user found after waitForAuth')
         throw new Error('กรุณาเข้าสู่ระบบก่อน')
       }
 
       // ลองอ่านจาก localStorage ก่อน
       const localKey = `subscription_${user.value.uid}`
       const localData = localStorage.getItem(localKey)
+      console.log('💾 [fetchSubscription] localStorage check:', localData ? 'Found' : 'Not found')
 
       // ถ้าเป็น admin และมี subscription เก่า ให้เช็คว่าหมดอายุหรือยัง
       if (localData && isAdmin.value) {
+        console.log('👑 [fetchSubscription] Found localStorage for admin, checking expiration...')
         const parsed = JSON.parse(localData)
         const endDate = new Date(parsed.endDate)
         const now = new Date()
@@ -219,20 +226,23 @@ export const useSubscription = () => {
 
       // สำหรับ user ทั่วไป ใช้ localStorage ปกติ
       if (localData && !isAdmin.value) {
+        console.log('👤 [fetchSubscription] Found localStorage for regular user')
         const parsed = JSON.parse(localData)
         const endDate = new Date(parsed.endDate)
         const now = new Date()
         const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        console.log('📅 [fetchSubscription] Days left:', daysLeft)
 
         // ถ้าวันที่ผิดปกติมาก (>100 วัน หรือ <-100 วัน) ให้ลบและสร้างใหม่
         if (daysLeft > 100 || daysLeft < -100) {
-          console.log('⚠️ Invalid subscription data detected, creating new subscription')
+          console.log('⚠️ [fetchSubscription] Invalid subscription data detected, creating new subscription')
           localStorage.removeItem(localKey)
           await createFreeSubscription()
           loading.value = false
           return
         }
 
+        console.log('✅ [fetchSubscription] Using valid localStorage subscription')
         subscription.value = {
           ...parsed,
           startDate: new Date(parsed.startDate),
@@ -241,16 +251,44 @@ export const useSubscription = () => {
           updatedAt: new Date(parsed.updatedAt)
         } as Subscription
 
+        // 🔥 IMPORTANT: เช็คว่า subscription นี้อยู่ใน Firestore หรือไม่
+        // ถ้าไม่มีให้ sync ไปเพื่อให้ admin เห็น
+        console.log('🔄 [fetchSubscription] Checking if subscription exists in Firestore...')
+        try {
+          const docRef = doc(db, 'subscriptions', user.value.uid)
+          const docSnap = await getDoc(docRef)
+
+          if (!docSnap.exists()) {
+            console.log('⚠️ [fetchSubscription] Subscription not in Firestore, syncing...')
+            await setDoc(docRef, {
+              ...subscription.value,
+              email: user.value.email || user.value.uid, // เพิ่ม email field
+              startDate: Timestamp.fromDate(subscription.value.startDate),
+              endDate: Timestamp.fromDate(subscription.value.endDate),
+              createdAt: Timestamp.fromDate(subscription.value.createdAt),
+              updatedAt: Timestamp.fromDate(subscription.value.updatedAt)
+            })
+            console.log('✅ [fetchSubscription] Successfully synced to Firestore with email:', user.value.email)
+          } else {
+            console.log('✅ [fetchSubscription] Subscription already exists in Firestore')
+          }
+        } catch (syncErr: any) {
+          console.error('❌ [fetchSubscription] Failed to sync to Firestore:', syncErr.message)
+        }
+
         loading.value = false
         return
       }
 
       // พยายามโหลดจาก Firestore
+      console.log('🔥 [fetchSubscription] No localStorage, trying Firestore...')
       try {
         const docRef = doc(db, 'subscriptions', user.value.uid)
         const docSnap = await getDoc(docRef)
+        console.log('🔥 [fetchSubscription] Firestore check:', docSnap.exists() ? 'Document exists' : 'Document not found')
 
         if (docSnap.exists()) {
+          console.log('📄 [fetchSubscription] Found Firestore subscription')
           const data = docSnap.data()
           const endDate = data.endDate?.toDate() || new Date()
           const now = new Date()
@@ -290,11 +328,13 @@ export const useSubscription = () => {
           }
         } else {
           // ถ้ายังไม่มี subscription ให้สร้าง free 30 วัน
+          console.log('🆕 [fetchSubscription] No Firestore subscription found')
           console.log(isAdmin.value ? '👑 Admin first login, creating 30-day subscription' : '🎁 New user, creating free 30-day subscription')
           await createFreeSubscription()
         }
       } catch (firestoreErr: any) {
-        console.warn('Cannot access Firestore, creating free subscription locally:', firestoreErr.message)
+        console.error('❌ [fetchSubscription] Firestore error:', firestoreErr)
+        console.warn('⚠️ [fetchSubscription] Cannot access Firestore, creating free subscription locally:', firestoreErr.message)
         // สร้าง free subscription ใน localStorage
         await createFreeSubscription()
       }
@@ -310,10 +350,15 @@ export const useSubscription = () => {
 
   // สร้าง free subscription (30 วันฟรี)
   const createFreeSubscription = async () => {
-    if (!user.value) return
+    if (!user.value) {
+      console.warn('⚠️ Cannot create subscription: user is not logged in')
+      return
+    }
 
+    console.log('🎁 Creating FREE subscription for user:', user.value.uid, user.value.email)
     const now = new Date()
     const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 วันจากวันนี้
+    console.log('📅 Subscription period:', { startDate: now, endDate })
 
     const freeSubscription: Subscription = {
       userId: user.value.uid,
@@ -327,6 +372,12 @@ export const useSubscription = () => {
       updatedAt: now
     }
 
+    // เพิ่ม email field สำหรับให้ admin เห็น
+    const subscriptionWithEmail = {
+      ...freeSubscription,
+      email: user.value.email || user.value.uid
+    }
+
     // บันทึกลง localStorage ก่อน (ทำงานได้เสมอ)
     const localKey = `subscription_${user.value.uid}`
     localStorage.setItem(localKey, JSON.stringify(freeSubscription))
@@ -334,17 +385,20 @@ export const useSubscription = () => {
 
     // พยายามบันทึกลง Firestore
     try {
+      console.log('💾 Saving subscription to Firestore for user:', user.value.uid)
       const docRef = doc(db, 'subscriptions', user.value.uid)
       await setDoc(docRef, {
-        ...freeSubscription,
+        ...subscriptionWithEmail,
         startDate: Timestamp.fromDate(freeSubscription.startDate),
         endDate: Timestamp.fromDate(freeSubscription.endDate),
         createdAt: Timestamp.fromDate(freeSubscription.createdAt),
         updatedAt: Timestamp.fromDate(freeSubscription.updatedAt)
       })
-      console.log('🎁 FREE 30 วันสร้างสำเร็จ! saved to both localStorage and Firestore')
+      console.log('✅ FREE 30 วันสร้างสำเร็จ! saved to both localStorage and Firestore')
+      console.log('✅ Document path: subscriptions/' + user.value.uid)
     } catch (err: any) {
-      console.warn('Cannot save to Firestore, saved to localStorage only:', err.message)
+      console.error('❌ Cannot save to Firestore, saved to localStorage only:', err)
+      console.error('❌ Error details:', { message: err.message, code: err.code, name: err.name })
     }
   }
 

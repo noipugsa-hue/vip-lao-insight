@@ -99,6 +99,22 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Admin Actions Collection (Audit Log)
+    // ========================================
+    match /admin_actions/{actionId} {
+      // อนุญาตให้ admin อ่านได้
+      allow read: if request.auth != null &&
+                     request.auth.token.email == 'noipugsa@gmail.com';
+
+      // อนุญาตให้ admin สร้างได้ (immutable audit log)
+      allow create: if request.auth != null &&
+                       request.auth.token.email == 'noipugsa@gmail.com';
+
+      // ห้ามอัพเดทและลบ (เพื่อความปลอดภัยของ audit trail)
+      allow update, delete: if false;
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {

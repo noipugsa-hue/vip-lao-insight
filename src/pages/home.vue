@@ -47,19 +47,29 @@ const showExpiredModal = () => {
 }
 
 onMounted(async () => {
+  console.log('🏠 [Home] Page mounted!')
+
   // ตรวจสอบ authentication ก่อน
+  console.log('🏠 [Home] Waiting for auth...')
   const currentUser = await waitForAuth()
+  console.log('🏠 [Home] Auth result:', currentUser ? `User: ${currentUser.email}` : 'No user')
+
   if (!currentUser) {
     // ถ้ายังไม่ได้ login ให้ไปหน้า login
+    console.log('🏠 [Home] No user, redirecting to /login')
     await router.push('/login')
     return
   }
 
   // โหลดข้อมูล subscription
+  console.log('🏠 [Home] Calling fetchSubscription()...')
   await fetchSubscription()
+  console.log('🏠 [Home] fetchSubscription() completed')
 
   // โหลดข้อมูลสำหรับประเภทหวยที่เลือกอยู่
+  console.log('🏠 [Home] Loading lottery data...')
   loadDataForLotteryType(selectedLotteryType.value.id)
+  console.log('🏠 [Home] Home page initialization complete!')
 })
 
 // Watch lottery type changes
