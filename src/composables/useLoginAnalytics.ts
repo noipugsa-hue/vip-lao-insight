@@ -290,6 +290,38 @@ export const useLoginAnalytics = () => {
       monthAgo.setDate(monthAgo.getDate() - 30)
       const monthTimestamp = Timestamp.fromDate(monthAgo)
 
+      // เก็บข้อมูลล่าสุดไว้ใน closure
+      let cachedLoginData: any[] = []
+      let cachedExtensionData: any[] = []
+
+      // ฟังก์ชันอัพเดทกราฟ
+      const updateCharts = () => {
+        // อัพเดทกราฟ login
+        analytics.value.hourly = generateHourlyData(cachedLoginData)
+        analytics.value.daily = generateDailyData(cachedLoginData)
+
+        // คำนวณสถิติ login
+        const stats = calculateStats(cachedLoginData)
+        analytics.value.todayCount = stats.todayCount
+        analytics.value.weekCount = stats.weekCount
+        analytics.value.monthCount = stats.monthCount
+        analytics.value.totalUsers = stats.totalUsers
+        analytics.value.activeToday = stats.activeToday
+
+        // อัพเดทกราฟการต่ออายุ
+        analytics.value.extensionDaily = generateExtensionDailyData(cachedExtensionData)
+
+        // คำนวณสถิติการต่ออายุ
+        const now = new Date()
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+        analytics.value.extensionTodayCount = cachedExtensionData.filter(ext => ext.timestamp.toDate() >= todayStart).length
+        analytics.value.extensionWeekCount = cachedExtensionData.filter(ext => ext.timestamp.toDate() >= weekStart).length
+        analytics.value.extensionMonthCount = cachedExtensionData.filter(ext => ext.timestamp.toDate() >= monthStart).length
+      }
+
       // Subscribe to login data
       const loginQuery = query(
         loginCollection,
@@ -298,21 +330,9 @@ export const useLoginAnalytics = () => {
       )
 
       const unsubscribeLogin = onSnapshot(loginQuery, (snapshot) => {
-        const loginData = snapshot.docs.map(doc => doc.data())
-
-        // สร้างข้อมูลกราฟ login
-        analytics.value.hourly = generateHourlyData(loginData)
-        analytics.value.daily = generateDailyData(loginData)
-
-        // คำนวณสถิติ login
-        const stats = calculateStats(loginData)
-        analytics.value.todayCount = stats.todayCount
-        analytics.value.weekCount = stats.weekCount
-        analytics.value.monthCount = stats.monthCount
-        analytics.value.totalUsers = stats.totalUsers
-        analytics.value.activeToday = stats.activeToday
-
-        console.log('🔄 Real-time login analytics update')
+        cachedLoginData = snapshot.docs.map(doc => doc.data())
+        updateCharts()
+        console.log('🔄 Real-time login analytics update from Firestore')
       })
 
       // Subscribe to extension data
@@ -324,28 +344,22 @@ export const useLoginAnalytics = () => {
       )
 
       const unsubscribeExtension = onSnapshot(extensionQuery, (snapshot) => {
-        const extensionData = snapshot.docs.map(doc => doc.data())
-
-        // สร้างข้อมูลกราฟการต่ออายุ
-        analytics.value.extensionDaily = generateExtensionDailyData(extensionData)
-
-        // คำนวณสถิติการต่ออายุ
-        const now = new Date()
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-        analytics.value.extensionTodayCount = extensionData.filter(ext => ext.timestamp.toDate() >= todayStart).length
-        analytics.value.extensionWeekCount = extensionData.filter(ext => ext.timestamp.toDate() >= weekStart).length
-        analytics.value.extensionMonthCount = extensionData.filter(ext => ext.timestamp.toDate() >= monthStart).length
-
-        console.log('🔄 Real-time extension analytics update')
+        cachedExtensionData = snapshot.docs.map(doc => doc.data())
+        updateCharts()
+        console.log('🔄 Real-time extension analytics update from Firestore')
       })
+
+      // อัพเดทกราฟทุก 1 นาที แม้ไม่มี event ใหม่ (เพื่อเลื่อนช่วงเวลา "24 ชั่วโมงล่าสุด")
+      const intervalId = setInterval(() => {
+        updateCharts()
+        console.log('⏰ Auto-refresh charts (1 minute interval)')
+      }, 60 * 1000) // 60 วินาที
 
       // Return combined unsubscribe function
       return () => {
         unsubscribeLogin()
         unsubscribeExtension()
+        clearInterval(intervalId)
       }
     } catch (err) {
       console.error('❌ Error subscribing to analytics:', err)

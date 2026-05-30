@@ -119,13 +119,13 @@ export const useSubscription = () => {
   const currentPlan = computed(() => subscription.value?.plan || 'free')
 
   // จำนวนวันที่เหลือ (Admin ก็นับวันปกติ แต่ไม่ต้องจ่ายเงิน)
-  // ใช้ Math.ceil() เพื่อปัดขึ้น ทำให้วันแรกแสดง 30 วันเต็ม
+  // ใช้ Math.round() เพื่อให้การคำนวณแม่นยำ (ถ้าเหลือ > 12 ชม. = 1 วัน, < 12 ชม. = 0 วัน)
   const daysRemaining = computed(() => {
     if (!subscription.value || subscription.value.status !== 'active') return 0
     const now = new Date()
     const end = new Date(subscription.value.endDate)
     const diff = end.getTime() - now.getTime()
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+    return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)))
   })
 
   // เช็คว่าใกล้หมดอายุหรือไม่ (Admin ไม่มีการหมดอายุ)
@@ -194,7 +194,7 @@ export const useSubscription = () => {
         const now = new Date()
 
         // คำนวณจำนวนวันที่เหลือ
-        const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        const daysLeft = Math.round((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
         console.log('👑 Admin subscription check:', {
           endDate: endDate.toISOString(),
@@ -224,17 +224,73 @@ export const useSubscription = () => {
         return
       }
 
-      // สำหรับ user ทั่วไป ใช้ localStorage ปกติ
+      // สำหรับ user ทั่วไป ตรวจสอบ localStorage และ Firestore
       if (localData && !isAdmin.value) {
         console.log('👤 [fetchSubscription] Found localStorage for regular user')
         const parsed = JSON.parse(localData)
+        const localUpdatedAt = new Date(parsed.updatedAt)
+
+        // ต้องเช็ค Firestore ทุกครั้งเพื่อให้แน่ใจว่าได้ข้อมูลล่าสุด (กรณี admin ขยายอายุ)
+        console.log('🔄 [fetchSubscription] Checking Firestore for latest updates...')
+        try {
+          const docRef = doc(db, 'subscriptions', user.value.uid)
+          const docSnap = await getDoc(docRef)
+
+          if (docSnap.exists()) {
+            const firestoreData = docSnap.data()
+            const firestoreUpdatedAt = firestoreData.updatedAt?.toDate() || new Date(0)
+
+            console.log('📊 [fetchSubscription] Comparing timestamps:', {
+              localStorage: localUpdatedAt.toISOString(),
+              firestore: firestoreUpdatedAt.toISOString()
+            })
+
+            // ถ้า Firestore ใหม่กว่า localStorage ให้ใช้จาก Firestore
+            if (firestoreUpdatedAt > localUpdatedAt) {
+              console.log('🔥 [fetchSubscription] Firestore data is newer, using it')
+              subscription.value = {
+                ...firestoreData,
+                startDate: firestoreData.startDate?.toDate() || firestoreData.createdAt?.toDate() || new Date(),
+                endDate: firestoreData.endDate?.toDate() || new Date(),
+                createdAt: firestoreData.createdAt?.toDate() || new Date(),
+                updatedAt: firestoreUpdatedAt
+              } as Subscription
+
+              // อัพเดท localStorage ด้วยข้อมูลใหม่
+              localStorage.setItem(localKey, JSON.stringify(subscription.value))
+              console.log('✅ [fetchSubscription] Updated localStorage with latest Firestore data')
+
+              loading.value = false
+              return
+            }
+
+            // ถ้า localStorage ใหม่กว่าหรือเท่ากัน ใช้จาก localStorage
+            console.log('💾 [fetchSubscription] localStorage is up-to-date, using it')
+          } else {
+            // ถ้าไม่มีใน Firestore ให้ sync ไป
+            console.log('⚠️ [fetchSubscription] Subscription not in Firestore, syncing...')
+            await setDoc(docRef, {
+              ...parsed,
+              email: user.value.email || user.value.uid,
+              startDate: Timestamp.fromDate(new Date(parsed.startDate)),
+              endDate: Timestamp.fromDate(new Date(parsed.endDate)),
+              createdAt: Timestamp.fromDate(new Date(parsed.createdAt)),
+              updatedAt: Timestamp.fromDate(new Date(parsed.updatedAt))
+            })
+            console.log('✅ [fetchSubscription] Successfully synced to Firestore')
+          }
+        } catch (syncErr: any) {
+          console.error('❌ [fetchSubscription] Firestore check failed, using localStorage:', syncErr.message)
+        }
+
+        // ใช้ข้อมูลจาก localStorage
         const endDate = new Date(parsed.endDate)
         const now = new Date()
-        const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        const daysLeft = Math.round((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         console.log('📅 [fetchSubscription] Days left:', daysLeft)
 
-        // ถ้าวันที่ผิดปกติมาก (>100 วัน หรือ <-100 วัน) ให้ลบและสร้างใหม่
-        if (daysLeft > 100 || daysLeft < -100) {
+        // ถ้าวันที่ผิดปกติมาก (>365 วัน หรือ <-100 วัน) ให้ลบและสร้างใหม่
+        if (daysLeft > 365 || daysLeft < -100) {
           console.log('⚠️ [fetchSubscription] Invalid subscription data detected, creating new subscription')
           localStorage.removeItem(localKey)
           await createFreeSubscription()
@@ -242,7 +298,6 @@ export const useSubscription = () => {
           return
         }
 
-        console.log('✅ [fetchSubscription] Using valid localStorage subscription')
         subscription.value = {
           ...parsed,
           startDate: new Date(parsed.startDate),
@@ -250,31 +305,6 @@ export const useSubscription = () => {
           createdAt: new Date(parsed.createdAt),
           updatedAt: new Date(parsed.updatedAt)
         } as Subscription
-
-        // 🔥 IMPORTANT: เช็คว่า subscription นี้อยู่ใน Firestore หรือไม่
-        // ถ้าไม่มีให้ sync ไปเพื่อให้ admin เห็น
-        console.log('🔄 [fetchSubscription] Checking if subscription exists in Firestore...')
-        try {
-          const docRef = doc(db, 'subscriptions', user.value.uid)
-          const docSnap = await getDoc(docRef)
-
-          if (!docSnap.exists()) {
-            console.log('⚠️ [fetchSubscription] Subscription not in Firestore, syncing...')
-            await setDoc(docRef, {
-              ...subscription.value,
-              email: user.value.email || user.value.uid, // เพิ่ม email field
-              startDate: Timestamp.fromDate(subscription.value.startDate),
-              endDate: Timestamp.fromDate(subscription.value.endDate),
-              createdAt: Timestamp.fromDate(subscription.value.createdAt),
-              updatedAt: Timestamp.fromDate(subscription.value.updatedAt)
-            })
-            console.log('✅ [fetchSubscription] Successfully synced to Firestore with email:', user.value.email)
-          } else {
-            console.log('✅ [fetchSubscription] Subscription already exists in Firestore')
-          }
-        } catch (syncErr: any) {
-          console.error('❌ [fetchSubscription] Failed to sync to Firestore:', syncErr.message)
-        }
 
         loading.value = false
         return
@@ -294,7 +324,7 @@ export const useSubscription = () => {
           const now = new Date()
 
           // คำนวณจำนวนวันที่เหลือสำหรับ admin
-          const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          const daysLeft = Math.round((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
           console.log('👑 Admin Firestore subscription check:', {
             endDate: endDate.toISOString(),
@@ -313,11 +343,24 @@ export const useSubscription = () => {
 
           subscription.value = {
             ...data,
-            startDate: data.startDate?.toDate() || new Date(),
+            startDate: data.startDate?.toDate() || data.createdAt?.toDate() || new Date(),
             endDate: endDate,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date()
           } as Subscription
+
+          // ถ้า startDate หายไปจาก Firestore ให้ sync กลับไป
+          if (!data.startDate && subscription.value.startDate) {
+            console.log('⚠️ [fetchSubscription] Missing startDate in Firestore, syncing...')
+            try {
+              await updateDoc(docRef, {
+                startDate: Timestamp.fromDate(subscription.value.startDate)
+              })
+              console.log('✅ [fetchSubscription] Synced startDate to Firestore')
+            } catch (syncErr: any) {
+              console.error('❌ [fetchSubscription] Failed to sync startDate:', syncErr.message)
+            }
+          }
 
           // บันทึกลง localStorage
           localStorage.setItem(localKey, JSON.stringify(subscription.value))

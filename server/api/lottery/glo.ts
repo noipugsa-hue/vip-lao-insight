@@ -133,11 +133,15 @@ export default defineEventHandler(async (event): Promise<RayriffyLotteryResult> 
   const query = getQuery(event)
   const id = query.id as string | undefined
 
+  console.log('[GLO API] 🔍 Request:', { id: id || 'latest' })
+
   // ลอง rayriffy ก่อน (ด้วย timeout สั้น)
   try {
     const apiUrl = id
       ? `https://lotto.api.rayriffy.com/${id}`
       : 'https://lotto.api.rayriffy.com/latest'
+
+    console.log('[Rayriffy API] 📞 Fetching:', apiUrl)
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -148,44 +152,57 @@ export default defineEventHandler(async (event): Promise<RayriffyLotteryResult> 
       signal: AbortSignal.timeout(5000) // timeout 5 วินาที
     })
 
+    console.log('[Rayriffy API] 📡 Response status:', response.status)
+
     if (response.ok) {
       const contentType = response.headers.get('content-type')
+      console.log('[Rayriffy API] 📄 Content-Type:', contentType)
+
       if (contentType?.includes('application/json')) {
         const rawData = await response.json()
+        console.log('[Rayriffy API] 📦 Data status:', rawData.status)
 
         if (rawData.status === 'success') {
           const transformedData = transformData(rawData)
 
           if (transformedData) {
-            console.log('[Rayriffy API] ✅ Success')
+            console.log('[Rayriffy API] ✅ Success - Period:', transformedData.period)
             return {
               success: true,
               data: transformedData
             }
+          } else {
+            console.warn('[Rayriffy API] ⚠️ Transform failed')
           }
+        } else {
+          console.warn('[Rayriffy API] ⚠️ Status not success:', rawData.status)
         }
       }
     }
   } catch (err: any) {
-    // Silent fail - ไม่แสดง error เพราะมี fallback
+    console.error('[Rayriffy API] ❌ Error:', err.message)
   }
 
   // Fallback: ลอง glo.or.th API
   try {
+    console.log('[GLO API] 📞 Trying fallback...')
     const gloData = await fetchFromGLO(id)
 
     if (gloData) {
-      console.log('[GLO API] ✅ Success (fallback)')
+      console.log('[GLO API] ✅ Success (fallback) - Period:', gloData.period)
       return {
         success: true,
         data: gloData
       }
+    } else {
+      console.warn('[GLO API] ⚠️ No data returned')
     }
   } catch (err: any) {
-    // Silent fail
+    console.error('[GLO API] ❌ Error:', err.message)
   }
 
   // ถ้าทั้งสอง API ล้มเหลว
+  console.error('[GLO API] 💥 Both APIs failed!')
   return {
     success: false,
     error: 'ไม่สามารถดึงข้อมูลหวยได้ในขณะนี้',

@@ -107,10 +107,20 @@ export const useLotteryHistory = () => {
       loading.value = true
       error.value = null
 
+      console.log('🔄 Fetching latest lottery result from /api/lottery/glo')
       const response = await fetch('/api/lottery/glo')
+
+      if (!response.ok) {
+        console.error('❌ API response not ok:', response.status, response.statusText)
+        error.value = `API Error: ${response.status}`
+        return null
+      }
+
       const data = await response.json()
+      console.log('📦 API Response:', data)
 
       if (data.success && data.data) {
+        console.log('✅ Latest result fetched successfully:', data.data.period)
         currentResult.value = data.data
 
         // บันทึกลง Firestore
@@ -118,12 +128,13 @@ export const useLotteryHistory = () => {
 
         return data.data
       } else {
-        error.value = data.error || 'ไม่สามารถดึงข้อมูลได้'
+        console.warn('⚠️ API returned success:false or no data:', data)
+        error.value = data.error || data.message || 'ไม่สามารถดึงข้อมูลได้'
         return null
       }
     } catch (err: any) {
       error.value = err.message || 'เกิดข้อผิดพลาด'
-      console.error('Error fetching latest result:', err)
+      console.error('❌ Error fetching latest result:', err)
       return null
     } finally {
       loading.value = false
@@ -166,11 +177,15 @@ export const useLotteryHistory = () => {
       error.value = null
       results.value = []
 
+      console.log(`📋 Fetching multiple results (count: ${count})`)
+
       // ดึงงวดล่าสุดจาก API
       const latest = await fetchLatestResult()
+      console.log('📊 Latest result:', latest ? `Period ${latest.period}` : 'null')
 
       // ดึงงวดย้อนหลังจาก Firestore
       const savedResults = await fetchResultsFromFirestore(count)
+      console.log(`💾 Firestore results count: ${savedResults.length}`)
 
       // รวมผลลัพธ์ (ไม่ซ้ำกัน)
       const allResults: GovernmentLotteryResult[] = []
@@ -190,12 +205,19 @@ export const useLotteryHistory = () => {
         }
       }
 
+      console.log(`✅ Total unique results: ${allResults.length}`)
       results.value = allResults
+
+      if (allResults.length === 0) {
+        error.value = 'ไม่พบข้อมูลหวย - กรุณาลองใหม่อีกครั้ง'
+        console.warn('⚠️ No results found!')
+      }
+
       return allResults
 
     } catch (err: any) {
       error.value = err.message || 'เกิดข้อผิดพลาด'
-      console.error('Error fetching results:', err)
+      console.error('❌ Error fetching multiple results:', err)
       return []
     } finally {
       loading.value = false

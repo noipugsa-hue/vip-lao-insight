@@ -12,8 +12,18 @@ import { useAdmin } from '../composables/useAdmin'
 
 const router = useRouter()
 const { waitForAuth } = useAuth()
-const { currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
+const { subscription, currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
 const { isAdmin } = useAdmin()
+
+// คำนวณจำนวนวันทั้งหมดจาก startDate ถึง endDate
+const totalDays = computed(() => {
+  if (!subscription.value) return 30
+  const start = new Date(subscription.value.startDate)
+  const end = new Date(subscription.value.endDate)
+  const diffTime = end.getTime() - start.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+  return Math.max(diffDays, 1) // อย่างน้อย 1 วัน
+})
 
 const history = ref<string[]>([])
 
@@ -302,7 +312,7 @@ const getPlanIcon = computed(() => {
             <div v-if="daysRemaining !== null" class="mt-4 pt-4 border-t" :class="isAdmin ? 'border-purple-200 dark:border-purple-700' : 'border-gray-200 dark:border-gray-700'">
               <div class="flex items-center justify-between text-xs mb-2" :class="isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'">
                 <span class="font-semibold">{{ isAdmin ? '👑 Admin - ไม่ต้องชำระเงิน' : 'ระยะเวลาการใช้งาน' }}</span>
-                <span class="font-bold">{{ daysRemaining }} / 30 วัน</span>
+                <span class="font-bold">{{ daysRemaining }} / {{ totalDays }} วัน</span>
               </div>
               <div class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
                 <div
@@ -314,7 +324,7 @@ const getPlanIcon = computed(() => {
                     urgencyLevel === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
                     'bg-gradient-to-r from-green-500 to-green-600'
                   "
-                  :style="{ width: `${Math.min((daysRemaining / 30) * 100, 100)}%` }"
+                  :style="{ width: `${Math.min((daysRemaining / totalDays) * 100, 100)}%` }"
                 >
                   <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
                 </div>

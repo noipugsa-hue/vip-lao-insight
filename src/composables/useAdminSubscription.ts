@@ -62,19 +62,19 @@ export const useAdminSubscription = () => {
       const now = new Date()
       const end = new Date(u.endDate)
       const diff = end.getTime() - now.getTime()
-      const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
+      const days = Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)))
       return days <= 3
     }).length
 
     return { total, active, expired, critical }
   })
 
-  // คำนวณจำนวนวันที่เหลือ (ใช้ Math.floor เหมือน useSubscription)
+  // คำนวณจำนวนวันที่เหลือ (ใช้ Math.round เหมือน useSubscription)
   const calculateDaysRemaining = (endDate: Date): number => {
     const now = new Date()
     const end = new Date(endDate)
     const diff = end.getTime() - now.getTime()
-    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
+    return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)))
   }
 
   // ระดับความเร่งด่วน
