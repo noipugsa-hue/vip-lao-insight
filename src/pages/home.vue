@@ -91,7 +91,6 @@ const formatShareText = () => {
   }
 
   text += `━━━━━━━━━━━━━━━━━━━━\n`
-  text += `🤖 สร้างโดย AI Analysis\n`
   text += `🌐 vip-lao-insight.vercel.app`
 
   return text
