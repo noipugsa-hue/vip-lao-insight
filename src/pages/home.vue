@@ -90,7 +90,7 @@ const formatShareText = () => {
     text += `${threeDigits.value.join(', ')}\n\n`
   }
 
-  text += `━━━━━━━━━━━━━━━━━━━━\n`
+  text += `━━━━━━━━━━━━━━━━━━━━\n\n`
   text += `🌐 vip-lao-insight.vercel.app`
 
   return text
