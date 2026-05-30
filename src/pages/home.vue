@@ -63,7 +63,13 @@ const copySuccess = ref(false)
 // สร้าง text สำหรับแชร์
 const formatShareText = () => {
   const lotteryName = selectedLotteryType.value.name
-  const date = calculatedAt.value ? new Date(calculatedAt.value).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH')
+
+  // สร้างวันที่แบบ dd/mm/yyyy
+  const now = new Date()
+  const day = now.getDate().toString().padStart(2, '0')
+  const month = (now.getMonth() + 1).toString().padStart(2, '0')
+  const year = now.getFullYear()
+  const date = `${day}/${month}/${year}`
 
   let text = `🎯 VIP Lao Insight - ${lotteryName}\n`
   text += `📅 วันที่: ${date}\n`
