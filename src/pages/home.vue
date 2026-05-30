@@ -27,7 +27,7 @@ const totalDays = computed(() => {
 
 const history = ref<string[]>([])
 
-const { hotNumbers, twoDigits, threeDigits, lotteryType, calculatedAt, loadResult } = useVipResult()
+const { hotNumbers, twoDigits, threeDigits, lotteryType, calculatedAt, loadResult, clearResult } = useVipResult()
 const { selectedLotteryType } = useLotteryType()
 const { settings } = useEngineSettings()
 const { accuracyStats } = useAccuracyTracking()
@@ -54,6 +54,48 @@ const loadDataForLotteryType = (lotteryId: string) => {
 const showExpiredModal = () => {
   // ส่ง event ไปยัง main.vue เพื่อแสดง modal
   window.dispatchEvent(new CustomEvent('show-expired-modal'))
+}
+
+// ฟังก์ชันเคลียร์ข้อมูลเก่า
+const showClearModal = ref(false)
+const clearOldData = () => {
+  try {
+    const storageKey = getStorageKey(selectedLotteryType.value.id)
+    const currentLotteryType = selectedLotteryType.value.id
+
+    // ลบประวัติหวยของประเภทนี้
+    localStorage.removeItem(storageKey)
+
+    // ลบ accuracy tracking ของประเภทนี้
+    const accuracyKey = 'accuracy_tracking'
+    const accuracyData = localStorage.getItem(accuracyKey)
+    if (accuracyData) {
+      try {
+        const records = JSON.parse(accuracyData)
+        // กรองเฉพาะ records ที่ไม่ใช่ประเภทหวยปัจจุบัน
+        const filtered = records.filter((r: any) => r.lotteryType !== currentLotteryType)
+        localStorage.setItem(accuracyKey, JSON.stringify(filtered))
+      } catch (e) {
+        console.error('Error filtering accuracy tracking:', e)
+      }
+    }
+
+    // รีเซ็ตค่าในหน้า
+    history.value = []
+
+    // เคลียร์ผลการทำนาย (จะลบ localStorage และ clear reactive state)
+    clearResult()
+
+    // ปิด modal
+    showClearModal.value = false
+
+    // แสดงข้อความสำเร็จ
+    console.log(`✅ เคลียร์ข้อมูล ${selectedLotteryType.value.name} สำเร็จ`)
+    alert('✅ เคลียร์ข้อมูลสำเร็จ! พร้อมใส่เลขและคำนวณใหม่')
+  } catch (err) {
+    console.error('Error clearing data:', err)
+    alert('❌ เกิดข้อผิดพลาดในการเคลียร์ข้อมูล')
+  }
 }
 
 onMounted(async () => {
@@ -332,6 +374,18 @@ const getPlanIcon = computed(() => {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Clear Data Button -->
+      <div class="mb-6">
+        <button
+          @click="showClearModal = true"
+          class="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95"
+        >
+          <span class="text-xl">🗑️</span>
+          <span>เคลียร์ข้อมูลเก่า</span>
+          <div class="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        </button>
       </div>
 
       <!-- Results Display -->
@@ -677,6 +731,87 @@ const getPlanIcon = computed(() => {
           </NuxtLink>
         </div>
       </div>
+
+      <!-- Clear Data Confirmation Modal -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showClearModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          @click.self="showClearModal = false"
+        >
+          <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div
+              v-if="showClearModal"
+              class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 space-y-6"
+            >
+              <!-- Warning Icon -->
+              <div class="flex justify-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                  <span class="text-5xl">⚠️</span>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <div class="text-center space-y-2">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                  ยืนยันการเคลียร์ข้อมูล
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  คุณต้องการลบข้อมูลเก่าทั้งหมดใช่หรือไม่?
+                </p>
+              </div>
+
+              <!-- Warning Message -->
+              <div class="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-700 rounded-2xl p-4">
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl flex-shrink-0">📋</span>
+                  <div class="space-y-1 text-sm text-orange-800 dark:text-orange-200">
+                    <p class="font-bold">ข้อมูลที่จะถูกลบ:</p>
+                    <ul class="list-disc list-inside space-y-1 ml-2">
+                      <li>ประวัติการออกรางวัล {{ selectedLotteryType.name }}</li>
+                      <li>ผลการคำนวณเลขเด่น</li>
+                      <li>การทำนายเลข 2 ตัว และ 3 ตัว</li>
+                    </ul>
+                    <p class="font-bold mt-3 text-red-600 dark:text-red-400">
+                      ⚠️ ข้อมูลที่ลบแล้วจะไม่สามารถกู้คืนได้!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  @click="showClearModal = false"
+                  class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-2xl font-bold shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  @click="clearOldData"
+                  class="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl font-bold shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  ยืนยันลบ
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
     </div>
   </NuxtLayout>
 </template>
