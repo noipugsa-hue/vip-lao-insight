@@ -56,6 +56,77 @@ const showExpiredModal = () => {
   window.dispatchEvent(new CustomEvent('show-expired-modal'))
 }
 
+// ฟังก์ชันแชร์เลข
+const showShareModal = ref(false)
+const copySuccess = ref(false)
+
+// สร้าง text สำหรับแชร์
+const formatShareText = () => {
+  const lotteryName = selectedLotteryType.value.name
+  const date = calculatedAt.value ? new Date(calculatedAt.value).toLocaleDateString('th-TH') : new Date().toLocaleDateString('th-TH')
+
+  let text = `🎯 VIP Lao Insight - ${lotteryName}\n`
+  text += `📅 วันที่: ${date}\n`
+  text += `━━━━━━━━━━━━━━━━━━━━\n\n`
+
+  if (hotNumbers.value.length > 0) {
+    text += `🔥 เลขเด่น (${hotNumbers.value.length} ตัว)\n`
+    text += `${hotNumbers.value.join(', ')}\n\n`
+  }
+
+  if (twoDigits.value.length > 0) {
+    text += `💎 เลข 2 ตัว (${twoDigits.value.length} ตัว)\n`
+    text += `${twoDigits.value.join(', ')}\n\n`
+  }
+
+  if (threeDigits.value.length > 0) {
+    text += `✨ เลข 3 ตัว (${threeDigits.value.length} ตัว)\n`
+    text += `${threeDigits.value.join(', ')}\n\n`
+  }
+
+  text += `━━━━━━━━━━━━━━━━━━━━\n`
+  text += `🤖 สร้างโดย AI Analysis\n`
+  text += `🌐 vip-lao-insight.vercel.app`
+
+  return text
+}
+
+// Copy to clipboard
+const copyToClipboard = async () => {
+  try {
+    const text = formatShareText()
+    await navigator.clipboard.writeText(text)
+    copySuccess.value = true
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy:', err)
+    alert('❌ ไม่สามารถคัดลอกได้')
+  }
+}
+
+// แชร์ไป Line
+const shareToLine = () => {
+  const text = formatShareText()
+  const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`
+  window.open(url, '_blank')
+}
+
+// แชร์ไป Facebook
+const shareToFacebook = () => {
+  const text = formatShareText()
+  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://vip-lao-insight.vercel.app')}&quote=${encodeURIComponent(text)}`
+  window.open(url, '_blank', 'width=600,height=400')
+}
+
+// แชร์ไป WhatsApp
+const shareToWhatsApp = () => {
+  const text = formatShareText()
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+  window.open(url, '_blank')
+}
+
 // ฟังก์ชันเคลียร์ข้อมูลเก่า
 const showClearModal = ref(false)
 const clearOldData = () => {
@@ -376,8 +447,20 @@ const getPlanIcon = computed(() => {
         </div>
       </div>
 
-      <!-- Clear Data Button -->
-      <div class="mb-6">
+      <!-- Action Buttons -->
+      <div class="mb-6 flex flex-wrap gap-3">
+        <!-- Share Button -->
+        <button
+          v-if="hotNumbers.length > 0"
+          @click="showShareModal = true"
+          class="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95"
+        >
+          <span class="text-xl">📤</span>
+          <span>แชร์เลข</span>
+          <div class="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        </button>
+
+        <!-- Clear Data Button -->
         <button
           @click="showClearModal = true"
           class="group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95"
@@ -808,6 +891,107 @@ const getPlanIcon = computed(() => {
                   ยืนยันลบ
                 </button>
               </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+
+      <!-- Share Modal -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showShareModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          @click.self="showShareModal = false"
+        >
+          <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div
+              v-if="showShareModal"
+              class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 space-y-6"
+            >
+              <!-- Share Icon -->
+              <div class="flex justify-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                  <span class="text-5xl">📤</span>
+                </div>
+              </div>
+
+              <!-- Title -->
+              <div class="text-center space-y-2">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">
+                  แชร์เลขที่คำนวณ
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  เลือกช่องทางที่ต้องการแชร์
+                </p>
+              </div>
+
+              <!-- Preview Text -->
+              <div class="bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-4 max-h-40 overflow-y-auto">
+                <pre class="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{{ formatShareText() }}</pre>
+              </div>
+
+              <!-- Share Options -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Copy Button -->
+                <button
+                  @click="copyToClipboard"
+                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  <span class="text-3xl">{{ copySuccess ? '✅' : '📋' }}</span>
+                  <span class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอก' }}
+                  </span>
+                </button>
+
+                <!-- Line Button -->
+                <button
+                  @click="shareToLine"
+                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  <span class="text-3xl">💬</span>
+                  <span class="text-sm font-bold text-white">Line</span>
+                </button>
+
+                <!-- Facebook Button -->
+                <button
+                  @click="shareToFacebook"
+                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  <span class="text-3xl">📘</span>
+                  <span class="text-sm font-bold text-white">Facebook</span>
+                </button>
+
+                <!-- WhatsApp Button -->
+                <button
+                  @click="shareToWhatsApp"
+                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                >
+                  <span class="text-3xl">📱</span>
+                  <span class="text-sm font-bold text-white">WhatsApp</span>
+                </button>
+              </div>
+
+              <!-- Close Button -->
+              <button
+                @click="showShareModal = false"
+                class="w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-2xl font-bold shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+              >
+                ปิด
+              </button>
             </div>
           </Transition>
         </div>
