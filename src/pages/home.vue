@@ -62,7 +62,7 @@ const copySuccess = ref(false)
 
 // สร้าง text สำหรับแชร์
 const formatShareText = () => {
-  const lotteryName = selectedLotteryType.value.name
+  const lotteryName = selectedLotteryType.value.displayName
 
   // สร้างวันที่แบบ dd/mm/yyyy
   const now = new Date()
