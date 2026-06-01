@@ -960,6 +960,11 @@
     methods "^1.1.2"
     path-to-regexp "^6.3.0"
 
+"@kurkle/color@^0.3.0":
+  version "0.3.4"
+  resolved "https://registry.npmjs.org/@kurkle/color/-/color-0.3.4.tgz"
+  integrity sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==
+
 "@kwsites/file-exists@^1.1.1":
   version "1.1.1"
   resolved "https://registry.npmjs.org/@kwsites/file-exists/-/file-exists-1.1.1.tgz"
@@ -2628,6 +2633,13 @@ change-case@^5.4.4:
   version "5.4.4"
   resolved "https://registry.npmjs.org/change-case/-/change-case-5.4.4.tgz"
   integrity sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==
+
+chart.js@^4.5.1:
+  version "4.5.1"
+  resolved "https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz"
+  integrity sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==
+  dependencies:
+    "@kurkle/color" "^0.3.0"
 
 chokidar@^3.6.0:
   version "3.6.0"

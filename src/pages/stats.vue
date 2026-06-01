@@ -1,16 +1,143 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed, ref } from 'vue'
+import { onMounted, onUnmounted, computed, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
-import { useLoginStats } from '../composables/useLoginStats'
+import { useLoginStats, type DailyUserStat } from '../composables/useLoginStats'
+import { Chart, registerables } from 'chart.js'
+
+// Register Chart.js components
+Chart.register(...registerables)
 
 const router = useRouter()
 const { waitForAuth } = useAuth()
 const { isAdmin } = useAdmin()
-const { stats, subscribeToStats } = useLoginStats()
+const { stats, subscribeToStats, getDailyUserStats } = useLoginStats()
 const isLoading = ref(true)
+const dailyStats = ref<DailyUserStat[]>([])
+const selectedDays = ref(7)
 let unsubscribe: (() => void) | null = null
+let chartInstance: Chart | null = null
+
+// สร้างกราฟ
+const createChart = async () => {
+  await nextTick()
+  const canvas = document.getElementById('dailyUsersChart') as HTMLCanvasElement
+  if (!canvas) return
+
+  // ล้างกราฟเก่า
+  if (chartInstance) {
+    chartInstance.destroy()
+  }
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dailyStats.value.map(d => d.date),
+      datasets: [
+        {
+          label: 'จำนวนผู้ใช้ที่ไม่ซ้ำ',
+          data: dailyStats.value.map(d => d.count),
+          borderColor: 'rgb(168, 85, 247)',
+          backgroundColor: 'rgba(168, 85, 247, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: 'rgb(168, 85, 247)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'จำนวน Login ทั้งหมด',
+          data: dailyStats.value.map(d => d.logins),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: 'rgb(59, 130, 246)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointHoverRadius: 5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: {
+              size: 14,
+              weight: 'bold'
+            },
+            padding: 15,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
+          padding: 12,
+          cornerRadius: 8
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            font: {
+              size: 12
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          ticks: {
+            font: {
+              size: 11
+            },
+            maxRotation: 45,
+            minRotation: 45
+          },
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  })
+}
+
+// โหลดข้อมูลกราฟ
+const loadDailyStats = async () => {
+  dailyStats.value = await getDailyUserStats(selectedDays.value)
+  await createChart()
+}
+
+// เปลี่ยนช่วงเวลา
+const changeDays = async (days: number) => {
+  selectedDays.value = days
+  await loadDailyStats()
+}
 
 onMounted(async () => {
   // ตรวจสอบ authentication ก่อน
@@ -29,6 +156,10 @@ onMounted(async () => {
 
   // Subscribe to real-time updates
   unsubscribe = subscribeToStats()
+
+  // โหลดข้อมูลกราฟ
+  await loadDailyStats()
+
   isLoading.value = false
 })
 
@@ -36,6 +167,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (unsubscribe) {
     unsubscribe()
+  }
+  if (chartInstance) {
+    chartInstance.destroy()
   }
 })
 
@@ -146,6 +280,80 @@ const isMobile = (userAgent: string) => {
             </div>
           </div>
           <div class="text-xs opacity-80">จำนวนผู้ใช้ที่ไม่ซ้ำกัน</div>
+        </div>
+      </div>
+
+      <!-- Daily Users Chart -->
+      <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">📈</span>
+            <h2 class="text-2xl font-bold text-gray-800">กราฟจำนวนผู้ใช้ต่อวัน</h2>
+          </div>
+
+          <!-- Time Range Selector -->
+          <div class="flex gap-2">
+            <button
+              @click="changeDays(7)"
+              :class="[
+                'px-4 py-2 rounded-lg font-semibold transition-all',
+                selectedDays === 7
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ]"
+            >
+              7 วัน
+            </button>
+            <button
+              @click="changeDays(14)"
+              :class="[
+                'px-4 py-2 rounded-lg font-semibold transition-all',
+                selectedDays === 14
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ]"
+            >
+              14 วัน
+            </button>
+            <button
+              @click="changeDays(30)"
+              :class="[
+                'px-4 py-2 rounded-lg font-semibold transition-all',
+                selectedDays === 30
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ]"
+            >
+              30 วัน
+            </button>
+          </div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="relative" style="height: 400px;">
+          <canvas id="dailyUsersChart"></canvas>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+          <div class="text-center">
+            <p class="text-sm text-gray-500 mb-1">เฉลี่ยผู้ใช้/วัน</p>
+            <p class="text-2xl font-bold text-purple-600">
+              {{ Math.round(dailyStats.reduce((sum, d) => sum + d.count, 0) / (dailyStats.length || 1)) }}
+            </p>
+          </div>
+          <div class="text-center">
+            <p class="text-sm text-gray-500 mb-1">เฉลี่ย Login/วัน</p>
+            <p class="text-2xl font-bold text-blue-600">
+              {{ Math.round(dailyStats.reduce((sum, d) => sum + d.logins, 0) / (dailyStats.length || 1)) }}
+            </p>
+          </div>
+          <div class="text-center">
+            <p class="text-sm text-gray-500 mb-1">สูงสุด/วัน</p>
+            <p class="text-2xl font-bold text-green-600">
+              {{ Math.max(...dailyStats.map(d => d.count), 0) }}
+            </p>
+          </div>
         </div>
       </div>
 

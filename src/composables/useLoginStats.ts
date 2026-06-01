@@ -16,6 +16,12 @@ export interface LoginStats {
   recentLogins: LoginRecord[]
 }
 
+export interface DailyUserStat {
+  date: string
+  count: number
+  logins: number
+}
+
 export const useLoginStats = () => {
   const nuxtApp = useNuxtApp()
   const db = nuxtApp.$db
@@ -26,14 +32,8 @@ export const useLoginStats = () => {
     recentLogins: []
   })
 
-  // บันทึก login (ปิดชั่วคราวเพื่อหลีกเลี่ยง Error 400)
+  // บันทึก login
   const recordLogin = async (userId: string, email: string) => {
-    // TODO: Enable this after fixing Firestore rules issues
-    console.log('⏸️ Login recording temporarily disabled to avoid Error 400')
-    console.log('📝 Would record login for user:', userId, email)
-    return
-
-    /* COMMENTED OUT TEMPORARILY
     try {
       const loginData = {
         userId,
@@ -43,7 +43,7 @@ export const useLoginStats = () => {
         device: /mobile/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
       }
 
-      console.log('📝 Attempting to record login for user:', userId)
+      console.log('📝 Attempting to record login for user:', userId, email)
       await addDoc(collection(db, 'login_history'), loginData)
       console.log('✅ Login recorded successfully')
     } catch (error: any) {
@@ -52,7 +52,6 @@ export const useLoginStats = () => {
       console.error('❌ Error message:', error?.message)
       // Don't throw - allow login to continue even if logging fails
     }
-    */
   }
 
   // ดึงสถิติการ login
@@ -168,10 +167,97 @@ export const useLoginStats = () => {
     }
   }
 
+  // คำนวณสถิติผู้ใช้รายวัน
+  const getDailyUserStats = async (days: number = 30): Promise<DailyUserStat[]> => {
+    try {
+      const loginCollection = collection(db, 'login_history')
+
+      // คำนวณวันที่เริ่มต้น
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - days)
+      startDate.setHours(0, 0, 0, 0)
+      const startTimestamp = Timestamp.fromDate(startDate)
+
+      // ดึงข้อมูล login ย้อนหลัง N วัน
+      const dailyQuery = query(
+        loginCollection,
+        where('timestamp', '>=', startTimestamp),
+        orderBy('timestamp', 'desc')
+      )
+      const snapshot = await getDocs(dailyQuery)
+
+      console.log('📊 Total login records fetched:', snapshot.size)
+
+      // จัดกลุ่มตามวัน (ใช้ format YYYY-MM-DD เพื่อความแม่นยำ)
+      const dailyData = new Map<string, Set<string>>()
+      const dailyLogins = new Map<string, number>()
+
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        const date = data.timestamp.toDate()
+
+        // ใช้ local time zone และ format เป็น YYYY-MM-DD
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const dateKey = `${year}-${month}-${day}`
+
+        // นับผู้ใช้ที่ไม่ซ้ำในแต่ละวัน
+        if (!dailyData.has(dateKey)) {
+          dailyData.set(dateKey, new Set())
+          dailyLogins.set(dateKey, 0)
+        }
+        dailyData.get(dateKey)!.add(data.email)
+        dailyLogins.set(dateKey, (dailyLogins.get(dateKey) || 0) + 1)
+      })
+
+      console.log('📅 Days with data:', Array.from(dailyData.keys()))
+
+      // สร้าง array สำหรับทุกวัน (รวมวันที่ไม่มีข้อมูล)
+      const result: DailyUserStat[] = []
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date()
+        date.setDate(date.getDate() - i)
+        date.setHours(0, 0, 0, 0)
+
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const dateKey = `${year}-${month}-${day}`
+
+        // แปลงเป็นภาษาไทยสำหรับแสดงผล
+        const displayDate = date.toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short'
+        })
+
+        const userCount = dailyData.get(dateKey)?.size || 0
+        const loginCount = dailyLogins.get(dateKey) || 0
+
+        result.push({
+          date: displayDate,
+          count: userCount,
+          logins: loginCount
+        })
+
+        if (i === 0) {
+          console.log(`📊 Today (${dateKey}): ${userCount} users, ${loginCount} logins`)
+        }
+      }
+
+      console.log('✅ Daily stats calculated for', days, 'days')
+      return result
+    } catch (error) {
+      console.error('❌ Error calculating daily stats:', error)
+      return []
+    }
+  }
+
   return {
     stats,
     recordLogin,
     fetchStats,
-    subscribeToStats
+    subscribeToStats,
+    getDailyUserStats
   }
 }

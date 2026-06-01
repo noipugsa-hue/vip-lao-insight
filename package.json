@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@nuxt/scripts": "^0.13.2",
+    "chart.js": "^4.5.1",
     "chrome-aws-lambda": "^10.1.0",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.8.0",
