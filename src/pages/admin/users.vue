@@ -508,7 +508,7 @@ const confirmExtension = async () => {
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-xl font-black text-gray-900 dark:text-white">🔓 การต่ออายุ VIP (7 วัน)</h3>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">🔓 การต่ออายุ VIP (30 วัน)</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">ติดตามการต่ออายุแบบ Real-time</p>
             </div>
             <div class="relative flex h-3 w-3">
