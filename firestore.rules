@@ -138,6 +138,41 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Reviews Collection (รีวิวจากผู้ใช้งาน)
+    // ========================================
+    match /reviews/{reviewId} {
+      // Anyone authenticated can read all reviews
+      allow read: if isAuthenticated();
+
+      // Users can create their own review
+      // Must include userId field matching their auth.uid
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['userId', 'userEmail', 'rating', 'review', 'createdAt', 'updatedAt']) &&
+                       request.resource.data.rating >= 1 &&
+                       request.resource.data.rating <= 5 &&
+                       request.resource.data.review.size() >= 10 &&
+                       request.resource.data.review.size() <= 1000;
+
+      // Users can update their own review
+      // Can only update rating, review, and updatedAt fields
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.rating >= 1 &&
+                       request.resource.data.rating <= 5 &&
+                       request.resource.data.review.size() >= 10 &&
+                       request.resource.data.review.size() <= 1000;
+
+      // Users can delete their own review
+      allow delete: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Admin can do everything
+      allow read, write: if isAdmin();
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {

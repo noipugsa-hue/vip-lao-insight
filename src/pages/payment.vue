@@ -3,6 +3,7 @@ import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useSubscription, SUBSCRIPTION_PLANS } from '../composables/useSubscription'
+import { useReview } from '../composables/useReview'
 import { useNuxtApp } from '#app'
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore'
 
@@ -11,6 +12,15 @@ const route = useRoute()
 const { waitForAuth, user } = useAuth()
 const { fetchSubscription } = useSubscription()
 const { $db } = useNuxtApp()
+
+// Review System
+const {
+  reviews,
+  loading: reviewLoading,
+  averageRating,
+  totalReviews,
+  getReviews,
+} = useReview()
 
 const loading = ref(false)
 const showFAQ = ref<number | null>(null)
@@ -22,31 +32,6 @@ const countdownInterval = ref<any>(null)
 // Stats for social proof
 const totalUsers = ref(0)
 const activeNow = ref(0)
-
-// Testimonials
-const testimonials = [
-  {
-    name: 'คุณสมชาย',
-    avatar: '👨',
-    rating: 5,
-    text: 'ใช้งานมา 2 เดือน ถูกรางวัล 3 ตัวตรง 2 ครั้งแล้ว คุ้มค่ามาก!',
-    date: '3 วันที่แล้ว'
-  },
-  {
-    name: 'คุณมาลี',
-    avatar: '👩',
-    rating: 5,
-    text: 'วิเคราะห์แม่นมาก แนะนำเลยค่ะ ตัวเลขออกตรงตามที่พยากรณ์',
-    date: '1 สัปดาห์ที่แล้ว'
-  },
-  {
-    name: 'คุณวิชัย',
-    avatar: '👨‍💼',
-    rating: 5,
-    text: 'ลงทุน 599 บาท แต่ได้กำไรกลับมาหลายหมื่น ดีมาก!',
-    date: '2 สัปดาห์ที่แล้ว'
-  }
-]
 
 // FAQs
 const faqs = [
@@ -115,6 +100,9 @@ onMounted(async () => {
 
   // Fetch real user statistics
   await fetchUserStats()
+
+  // Load reviews
+  await getReviews(6) // โหลด 6 รีวิวล่าสุด
 
   // Start countdown timer
   startCountdown()
@@ -312,26 +300,50 @@ const goBack = () => {
             ⭐ รีวิวจากผู้ใช้งานจริง
           </h2>
 
-          <div class="grid md:grid-cols-3 gap-6">
-            <div
-              v-for="(review, index) in testimonials"
-              :key="index"
-              class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all"
-            >
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl">
-                  {{ review.avatar }}
-                </div>
-                <div>
-                  <div class="font-bold text-gray-900 dark:text-white">{{ review.name }}</div>
-                  <div class="flex gap-1">
-                    <span v-for="i in review.rating" :key="i" class="text-yellow-400">⭐</span>
-                  </div>
-                </div>
+          <!-- Rating Summary -->
+          <div v-if="totalReviews > 0" class="flex items-center justify-center gap-6 mb-8">
+            <div class="text-center">
+              <div class="text-5xl font-black text-gray-900 dark:text-white mb-2">
+                {{ averageRating.toFixed(1) }}
               </div>
-              <p class="text-gray-700 dark:text-gray-300 mb-3 italic">"{{ review.text }}"</p>
-              <p class="text-gray-500 dark:text-gray-400 text-sm">{{ review.date }}</p>
+              <StarRating :model-value="averageRating" readonly size="lg" show-value />
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                จาก {{ totalReviews }} รีวิว
+              </p>
             </div>
+          </div>
+
+          <!-- Reviews List -->
+          <div v-if="reviewLoading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <p class="text-gray-600 dark:text-gray-400 mt-4">กำลังโหลดรีวิว...</p>
+          </div>
+
+          <div v-else-if="reviews.length === 0" class="text-center py-12">
+            <div class="text-6xl mb-4">💭</div>
+            <p class="text-gray-600 dark:text-gray-400 text-lg">
+              ยังไม่มีรีวิว
+            </p>
+          </div>
+
+          <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ReviewCard
+              v-for="review in reviews"
+              :key="review.id"
+              :review="review"
+              :is-own-review="false"
+            />
+          </div>
+
+          <!-- View All Reviews Link -->
+          <div v-if="reviews.length > 0" class="text-center mt-8">
+            <NuxtLink
+              to="/home"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl shadow-md transition-all text-purple-600 dark:text-purple-400 font-bold"
+            >
+              <span>ดูรีวิวทั้งหมด</span>
+              <span>→</span>
+            </NuxtLink>
           </div>
         </div>
 

@@ -9,11 +9,32 @@ import { usePatternRecognition } from '../composables/usePatternRecognition'
 import { useAccuracyTracking } from '../composables/useAccuracyTracking'
 import { useSubscription } from '../composables/useSubscription'
 import { useAdmin } from '../composables/useAdmin'
+import { useReview } from '../composables/useReview'
 
 const router = useRouter()
-const { waitForAuth } = useAuth()
+const { waitForAuth, user } = useAuth()
 const { subscription, currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
 const { isAdmin } = useAdmin()
+
+// Review System
+const {
+  reviews,
+  userReview,
+  loading: reviewLoading,
+  error: reviewError,
+  averageRating,
+  totalReviews,
+  addReview,
+  updateReview,
+  deleteReview,
+  getReviews,
+  getUserReview,
+} = useReview()
+
+const showReviewForm = ref(false)
+const reviewMode = ref<'add' | 'edit'>('add')
+const initialRating = ref(5)
+const initialReviewText = ref('')
 
 // คำนวณจำนวนวันทั้งหมดจาก startDate ถึง endDate
 const totalDays = computed(() => {
@@ -60,30 +81,64 @@ const showExpiredModal = () => {
 const showShareModal = ref(false)
 const copySuccess = ref(false)
 
-// Testimonials
-const testimonials = [
-  {
-    name: 'คุณสมชาย',
-    avatar: '👨',
-    rating: 5,
-    text: 'ใช้งานมา 2 เดือน ถูกรางวัล 3 ตัวตรง 2 ครั้งแล้ว คุ้มค่ามาก!',
-    date: '3 วันที่แล้ว'
-  },
-  {
-    name: 'คุณมาลี',
-    avatar: '👩',
-    rating: 5,
-    text: 'วิเคราะห์แม่นมาก แนะนำเลยค่ะ ตัวเลขออกตรงตามที่พยากรณ์',
-    date: '1 สัปดาห์ที่แล้ว'
-  },
-  {
-    name: 'คุณวิชัย',
-    avatar: '👨‍💼',
-    rating: 5,
-    text: 'ลงทุน 599 บาท แต่ได้กำไรกลับมาหลายหมื่น ดีมาก!',
-    date: '2 สัปดาห์ที่แล้ว'
+// Review Functions
+const openAddReviewForm = async () => {
+  // Check if user already has a review
+  await getUserReview()
+  if (userReview.value) {
+    // User already has review, open edit mode
+    reviewMode.value = 'edit'
+    initialRating.value = userReview.value.rating
+    initialReviewText.value = userReview.value.review
+  } else {
+    // New review
+    reviewMode.value = 'add'
+    initialRating.value = 5
+    initialReviewText.value = ''
   }
-]
+  showReviewForm.value = true
+}
+
+const handleReviewSubmit = async (rating: number, reviewText: string) => {
+  if (reviewMode.value === 'edit' && userReview.value) {
+    const success = await updateReview(userReview.value.id, rating, reviewText)
+    if (success) {
+      showReviewForm.value = false
+      alert('✅ แก้ไขรีวิวสำเร็จ!')
+    } else if (reviewError.value) {
+      alert(`❌ ${reviewError.value}`)
+    }
+  } else {
+    const success = await addReview(rating, reviewText)
+    if (success) {
+      showReviewForm.value = false
+      alert('✅ เขียนรีวิวสำเร็จ! ขอบคุณสำหรับความคิดเห็น')
+    } else if (reviewError.value) {
+      alert(`❌ ${reviewError.value}`)
+    }
+  }
+}
+
+const handleEditReview = (reviewId: string) => {
+  const review = reviews.value.find(r => r.id === reviewId)
+  if (review) {
+    reviewMode.value = 'edit'
+    initialRating.value = review.rating
+    initialReviewText.value = review.review
+    showReviewForm.value = true
+  }
+}
+
+const handleDeleteReview = async (reviewId: string) => {
+  if (confirm('คุณต้องการลบรีวิวนี้ใช่หรือไม่?')) {
+    const success = await deleteReview(reviewId)
+    if (success) {
+      alert('✅ ลบรีวิวสำเร็จ')
+    } else if (reviewError.value) {
+      alert(`❌ ${reviewError.value}`)
+    }
+  }
+}
 
 // สร้าง text สำหรับแชร์
 const formatShareText = () => {
@@ -222,6 +277,13 @@ onMounted(async () => {
   // โหลดข้อมูลสำหรับประเภทหวยที่เลือกอยู่
   console.log('🏠 [Home] Loading lottery data...')
   loadDataForLotteryType(selectedLotteryType.value.id)
+
+  // โหลดรีวิว
+  console.log('🏠 [Home] Loading reviews...')
+  await getReviews(20) // โหลด 20 รีวิวล่าสุด
+  await getUserReview() // โหลดรีวิวของ user
+  console.log('🏠 [Home] Reviews loaded:', reviews.value.length)
+
   console.log('🏠 [Home] Home page initialization complete!')
 })
 
@@ -845,35 +907,72 @@ const getPlanIcon = computed(() => {
         </div>
       </div>
 
-      <!-- Testimonials Section -->
+      <!-- Reviews Section -->
       <div class="mt-8 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-3xl p-8 shadow-2xl">
-        <h2 class="text-3xl font-black text-gray-900 dark:text-white text-center mb-8 flex items-center justify-center gap-3">
-          <span class="text-4xl">⭐</span>
-          <span>รีวิวจากผู้ใช้งานจริง</span>
-        </h2>
+        <!-- Header with Stats -->
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-black text-gray-900 dark:text-white flex items-center justify-center gap-3 mb-4">
+            <span class="text-4xl">⭐</span>
+            <span>รีวิวจากผู้ใช้งานจริง</span>
+          </h2>
 
-        <div class="grid md:grid-cols-3 gap-6">
-          <div
-            v-for="(review, index) in testimonials"
-            :key="index"
-            class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all"
-          >
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl shadow-lg">
-                {{ review.avatar }}
+          <!-- Rating Summary -->
+          <div v-if="totalReviews > 0" class="flex items-center justify-center gap-6 mb-6">
+            <div class="text-center">
+              <div class="text-5xl font-black text-gray-900 dark:text-white mb-2">
+                {{ averageRating.toFixed(1) }}
               </div>
-              <div>
-                <div class="font-bold text-gray-900 dark:text-white">{{ review.name }}</div>
-                <div class="flex gap-1">
-                  <span v-for="i in review.rating" :key="i" class="text-yellow-400">⭐</span>
-                </div>
-              </div>
+              <StarRating :model-value="averageRating" readonly size="lg" show-value />
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                จาก {{ totalReviews }} รีวิว
+              </p>
             </div>
-            <p class="text-gray-700 dark:text-gray-300 mb-3 italic leading-relaxed">"{{ review.text }}"</p>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ review.date }}</p>
           </div>
+
+          <!-- Write Review Button -->
+          <button
+            @click="openAddReviewForm"
+            class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 text-white rounded-2xl font-black text-lg shadow-xl hover:shadow-2xl transform transition-all hover:scale-110 active:scale-95"
+          >
+            <span class="text-2xl">✏️</span>
+            <span>{{ userReview ? 'แก้ไขรีวิวของคุณ' : 'เขียนรีวิว' }}</span>
+          </button>
+        </div>
+
+        <!-- Reviews List -->
+        <div v-if="reviewLoading" class="text-center py-12">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <p class="text-gray-600 dark:text-gray-400 mt-4">กำลังโหลดรีวิว...</p>
+        </div>
+
+        <div v-else-if="reviews.length === 0" class="text-center py-12">
+          <div class="text-6xl mb-4">💭</div>
+          <p class="text-gray-600 dark:text-gray-400 text-lg">
+            ยังไม่มีรีวิว เป็นคนแรกที่เขียนรีวิว!
+          </p>
+        </div>
+
+        <div v-else class="grid md:grid-cols-2 gap-6">
+          <ReviewCard
+            v-for="review in reviews"
+            :key="review.id"
+            :review="review"
+            :is-own-review="user?.uid === review.userId"
+            @edit="handleEditReview(review.id)"
+            @delete="handleDeleteReview(review.id)"
+          />
         </div>
       </div>
+
+      <!-- Review Form Modal -->
+      <ReviewForm
+        :is-open="showReviewForm"
+        :mode="reviewMode"
+        :initial-rating="initialRating"
+        :initial-review="initialReviewText"
+        @close="showReviewForm = false"
+        @submit="handleReviewSubmit"
+      />
 
       <!-- Clear Data Confirmation Modal -->
       <Transition
