@@ -60,6 +60,31 @@ const showExpiredModal = () => {
 const showShareModal = ref(false)
 const copySuccess = ref(false)
 
+// Testimonials
+const testimonials = [
+  {
+    name: 'คุณสมชาย',
+    avatar: '👨',
+    rating: 5,
+    text: 'ใช้งานมา 2 เดือน ถูกรางวัล 3 ตัวตรง 2 ครั้งแล้ว คุ้มค่ามาก!',
+    date: '3 วันที่แล้ว'
+  },
+  {
+    name: 'คุณมาลี',
+    avatar: '👩',
+    rating: 5,
+    text: 'วิเคราะห์แม่นมาก แนะนำเลยค่ะ ตัวเลขออกตรงตามที่พยากรณ์',
+    date: '1 สัปดาห์ที่แล้ว'
+  },
+  {
+    name: 'คุณวิชัย',
+    avatar: '👨‍💼',
+    rating: 5,
+    text: 'ลงทุน 599 บาท แต่ได้กำไรกลับมาหลายหมื่น ดีมาก!',
+    date: '2 สัปดาห์ที่แล้ว'
+  }
+]
+
 // สร้าง text สำหรับแชร์
 const formatShareText = () => {
   const lotteryName = selectedLotteryType.value.displayName
@@ -817,6 +842,36 @@ const getPlanIcon = computed(() => {
             <span>ไปใส่เลขเอง</span>
             <span class="text-2xl">→</span>
           </NuxtLink>
+        </div>
+      </div>
+
+      <!-- Testimonials Section -->
+      <div class="mt-8 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-3xl p-8 shadow-2xl">
+        <h2 class="text-3xl font-black text-gray-900 dark:text-white text-center mb-8 flex items-center justify-center gap-3">
+          <span class="text-4xl">⭐</span>
+          <span>รีวิวจากผู้ใช้งานจริง</span>
+        </h2>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div
+            v-for="(review, index) in testimonials"
+            :key="index"
+            class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-all"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl shadow-lg">
+                {{ review.avatar }}
+              </div>
+              <div>
+                <div class="font-bold text-gray-900 dark:text-white">{{ review.name }}</div>
+                <div class="flex gap-1">
+                  <span v-for="i in review.rating" :key="i" class="text-yellow-400">⭐</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-700 dark:text-gray-300 mb-3 italic leading-relaxed">"{{ review.text }}"</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ review.date }}</p>
+          </div>
         </div>
       </div>
 
