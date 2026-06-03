@@ -52,6 +52,20 @@ const daypowerSettings = ref(DEFAULT_SETTINGS.daypowerFormula)
 // History data
 const history = ref<string[]>([])
 
+// Fixed numbers input as text
+const fixedNumbersText = computed({
+  get: () => fixedSettings.value.fixedNumbers.join(','),
+  set: (value: string) => {
+    // รองรับทั้งจุลภาค (,) และช่องว่าง เพื่อความยืดหยุ่น
+    const val = value
+      .replace(/\s+/g, ',') // แปลงช่องว่างเป็นจุลภาค
+      .split(',')
+      .map(n => parseInt(n.trim()))
+      .filter(n => !isNaN(n) && n >= 0)
+    fixedSettings.value.fixedNumbers = val
+  }
+})
+
 // Computed
 const selectedFormula = computed<FormulaConfig | undefined>(() => {
   return FORMULAS.find((f) => f.id === selectedFormulaId.value)
@@ -143,13 +157,6 @@ const selectFormula = (formulaId: string) => {
   selectedFormulaId.value = formulaId
   saveActiveFormula(formulaId)
   calculationResult.value = null
-}
-
-// Handle fixed numbers input
-const handleFixedNumbersInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const val = target.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
-  fixedSettings.value.fixedNumbers = val
 }
 
 // Load saved settings
@@ -338,13 +345,14 @@ onMounted(async () => {
                   เลขคงที่ (คั่นด้วยเครื่องหมายจุลภาค)
                 </label>
                 <input
-                  :value="fixedSettings.fixedNumbers.join(',')"
-                  @input="handleFixedNumbersInput"
+                  v-model="fixedNumbersText"
                   type="text"
-                  placeholder="7,8,3"
+                  placeholder="7,8,3 หรือ 5, 10, 15"
                   class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
-                <p class="text-xs text-gray-500 mt-1">ตัวอย่าง: 7,8,3 หรือ 5,10,15</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  💡 รองรับหลายรูปแบบ: <span class="font-semibold">7,8,3</span> หรือ <span class="font-semibold">5, 10, 15</span> หรือ <span class="font-semibold">7 8 3</span>
+                </p>
               </div>
 
               <div>
