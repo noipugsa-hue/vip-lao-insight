@@ -22,6 +22,9 @@ export const lotteryTypes: LotteryType[] = [
   { id: 'hanoi-chaiyo', name: 'hanoi-chaiyo', displayName: 'ฮานอยไชโย' },
 ]
 
+// Alias สำหรับความเข้ากันได้
+export const LOTTERY_TYPES = lotteryTypes
+
 const STORAGE_KEY = 'selected_lottery_type'
 
 // ประเภทหวยที่เลือกอยู่ (default: ลาวพัฒนา)

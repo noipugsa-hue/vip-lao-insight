@@ -173,6 +173,17 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Winning Numbers Collection (เลขที่ถูกรางวัล)
+    // ========================================
+    match /winningNumbers/{winningId} {
+      // Anyone authenticated can read
+      allow read: if isAuthenticated();
+
+      // Only admin can create, update, delete
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ========================================
     // Default: Block all other access
     // ========================================
     match /{document=**} {

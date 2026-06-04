@@ -438,7 +438,7 @@ const canCloseExpiredModal = computed(() => {
 
 // Determine if content should be blocked (when expired and not admin)
 // หน้าที่อนุญาตให้เข้าถึงได้แม้หมดอายุ
-const allowedPagesWhenExpired = ['/login', '/payment', '/pricing', '/subscription']
+const allowedPagesWhenExpired = ['/login', '/payment', '/pricing', '/subscription', '/winning-numbers', '/admin/winning-numbers']
 const shouldBlockContent = computed(() => {
   // Admin ไม่ถูกบล็อก
   if (isAdmin.value) return false
@@ -524,6 +524,7 @@ const allMenuItemsList = [
   { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
   { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล', adminOnly: false, featureId: 'check_prize' as FeatureId },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false, featureId: 'save_numbers_limited' as FeatureId },
+  { path: '/winning-numbers', icon: '🏆', label: 'เลขที่ถูกจริง', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false, featureId: 'statistics_advanced' as FeatureId },
   { path: '/formula', icon: '🧪', label: 'สูตรหวย', adminOnly: false, featureId: 'lottery_formula' as FeatureId },
   { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
@@ -532,6 +533,7 @@ const allMenuItemsList = [
   { path: '/dream', icon: '💭', label: 'ทำนายฝัน', adminOnly: false, featureId: 'dream_analysis' as FeatureId },
   { path: '/win5', icon: '🏆', label: 'วิน5รวม', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/range', icon: '🎯', label: '00-99', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
+  { path: '/admin/winning-numbers', icon: '👑', label: 'จัดการเลขถูก', adminOnly: true, featureId: null }, // Admin only
   { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/users', icon: '🔓', label: 'จัดการผู้ใช้', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/feature-access', icon: '🔐', label: 'จัดการฟีเจอร์', adminOnly: true, featureId: null }, // Admin only

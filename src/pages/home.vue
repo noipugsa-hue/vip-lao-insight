@@ -35,6 +35,7 @@ const showReviewForm = ref(false)
 const reviewMode = ref<'add' | 'edit'>('add')
 const initialRating = ref(5)
 const initialReviewText = ref('')
+const currentEditingReviewId = ref<string | null>(null)
 
 // คำนวณจำนวนวันทั้งหมดจาก startDate ถึง endDate
 const totalDays = computed(() => {
@@ -90,21 +91,31 @@ const openAddReviewForm = async () => {
     reviewMode.value = 'edit'
     initialRating.value = userReview.value.rating
     initialReviewText.value = userReview.value.review
+    currentEditingReviewId.value = userReview.value.id
   } else {
     // New review
     reviewMode.value = 'add'
     initialRating.value = 5
     initialReviewText.value = ''
+    currentEditingReviewId.value = null
   }
   showReviewForm.value = true
 }
 
 const handleReviewSubmit = async (rating: number, reviewText: string) => {
-  if (reviewMode.value === 'edit' && userReview.value) {
-    const success = await updateReview(userReview.value.id, rating, reviewText)
+  if (reviewMode.value === 'edit' && currentEditingReviewId.value) {
+    const review = reviews.value.find(r => r.id === currentEditingReviewId.value)
+    const isOwnReview = user.value?.uid === review?.userId
+
+    const success = await updateReview(currentEditingReviewId.value, rating, reviewText)
     if (success) {
       showReviewForm.value = false
-      alert('✅ แก้ไขรีวิวสำเร็จ!')
+      currentEditingReviewId.value = null
+
+      const successMessage = isAdmin.value && !isOwnReview
+        ? '✅ (Admin) แก้ไขรีวิวของผู้ใช้งานสำเร็จ!'
+        : '✅ แก้ไขรีวิวสำเร็จ!'
+      alert(successMessage)
     } else if (reviewError.value) {
       alert(`❌ ${reviewError.value}`)
     }
@@ -125,15 +136,28 @@ const handleEditReview = (reviewId: string) => {
     reviewMode.value = 'edit'
     initialRating.value = review.rating
     initialReviewText.value = review.review
+    // เก็บ reviewId ที่กำลังแก้ไขเพื่อใช้ในการ update
+    currentEditingReviewId.value = reviewId
     showReviewForm.value = true
   }
 }
 
 const handleDeleteReview = async (reviewId: string) => {
-  if (confirm('คุณต้องการลบรีวิวนี้ใช่หรือไม่?')) {
+  const review = reviews.value.find(r => r.id === reviewId)
+  const isOwnReview = user.value?.uid === review?.userId
+
+  // แสดงข้อความยืนยันที่แตกต่างกันสำหรับ admin และ user
+  const confirmMessage = isAdmin.value && !isOwnReview
+    ? `👑 (Admin) คุณต้องการลบรีวิวของ "${review?.userName || review?.userEmail}" ใช่หรือไม่?`
+    : 'คุณต้องการลบรีวิวนี้ใช่หรือไม่?'
+
+  if (confirm(confirmMessage)) {
     const success = await deleteReview(reviewId)
     if (success) {
-      alert('✅ ลบรีวิวสำเร็จ')
+      const successMessage = isAdmin.value && !isOwnReview
+        ? '✅ (Admin) ลบรีวิวของผู้ใช้งานสำเร็จ'
+        : '✅ ลบรีวิวสำเร็จ'
+      alert(successMessage)
     } else if (reviewError.value) {
       alert(`❌ ${reviewError.value}`)
     }
@@ -958,6 +982,7 @@ const getPlanIcon = computed(() => {
             :key="review.id"
             :review="review"
             :is-own-review="user?.uid === review.userId"
+            :is-admin="isAdmin"
             @edit="handleEditReview(review.id)"
             @delete="handleDeleteReview(review.id)"
           />

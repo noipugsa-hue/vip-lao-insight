@@ -26,19 +26,24 @@
         </div>
       </div>
 
-      <!-- Action buttons (edit/delete) for own review ONLY -->
-      <div v-if="isOwnReview" class="flex gap-2 flex-shrink-0 ml-2">
+      <!-- Action buttons (edit/delete) for own review OR admin -->
+      <div v-if="isOwnReview || isAdmin" class="flex gap-2 flex-shrink-0 ml-2">
+        <!-- Admin Badge (แสดงเมื่อ admin กำลังจัดการรีวิวของคนอื่น) -->
+        <div v-if="isAdmin && !isOwnReview" class="flex items-center px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg mr-1">
+          <span class="text-xs font-bold text-white">👑 ADMIN</span>
+        </div>
+
         <button
           @click="$emit('edit')"
           class="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-          title="แก้ไขรีวิว"
+          :title="isAdmin && !isOwnReview ? '(Admin) แก้ไขรีวิว' : 'แก้ไขรีวิว'"
         >
           <span class="text-lg">✏️</span>
         </button>
         <button
           @click="$emit('delete')"
           class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-          title="ลบรีวิว"
+          :title="isAdmin && !isOwnReview ? '(Admin) ลบรีวิว' : 'ลบรีวิว'"
         >
           <span class="text-lg">🗑️</span>
         </button>
@@ -67,6 +72,7 @@ import type { Review } from '~/composables/useReview'
 interface Props {
   review: Review
   isOwnReview?: boolean
+  isAdmin?: boolean
 }
 
 defineProps<Props>()
