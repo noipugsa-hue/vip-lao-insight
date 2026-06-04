@@ -1,2 +1,27 @@
-User-Agent: *
-Disallow:
+# robots.txt for VIP Lao Insight
+# ระบบทำนายและวิเคราะห์หวยอัจฉริยะ
+
+User-agent: *
+Allow: /
+Allow: /home
+Allow: /lottery-history
+Allow: /check-prize
+Allow: /my-numbers
+Allow: /statistics
+Allow: /formula
+Allow: /manual
+Allow: /two-digit
+Allow: /three-digit
+Allow: /dream
+Allow: /win5
+Allow: /range
+Allow: /pricing
+Allow: /winning-numbers
+
+# Disallow admin and private pages
+Disallow: /admin/
+Disallow: /stats
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://vip-lao-insight.vercel.app/sitemap.xml

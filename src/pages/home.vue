@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHead } from '#app'
 import { useAuth } from '../composables/useAuth'
 import { useVipResult } from '../composables/useVipResult'
 import { useLotteryType } from '../composables/useLotteryType'
@@ -30,6 +31,60 @@ const {
   getReviews,
   getUserReview,
 } = useReview()
+
+// SEO: Structured Data (JSON-LD)
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'VIP Lao Insight',
+        applicationCategory: 'UtilityApplication',
+        description: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน สูตรหวย พร้อมสถิติเลขที่ถูกรางวัลจริง',
+        url: 'https://vip-lao-insight.vercel.app',
+        offers: {
+          '@type': 'Offer',
+          category: 'VIP Membership',
+          description: 'สมาชิก VIP เข้าถึงฟีเจอร์พิเศษ เลขเด่นคุณภาพสูง และเครื่องมือวิเคราะห์ขั้นสูง',
+        },
+        aggregateRating: computed(() => ({
+          '@type': 'AggregateRating',
+          ratingValue: averageRating.value.toFixed(1),
+          reviewCount: totalReviews.value,
+          bestRating: 5,
+          worstRating: 1,
+        })),
+        review: computed(() =>
+          reviews.value.slice(0, 5).map(review => ({
+            '@type': 'Review',
+            author: {
+              '@type': 'Person',
+              name: review.userEmail.split('@')[0],
+            },
+            datePublished: new Date(review.createdAt).toISOString(),
+            reviewBody: review.review,
+            reviewRating: {
+              '@type': 'Rating',
+              ratingValue: review.rating,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          }))
+        ),
+        featureList: [
+          'ทำนายเลขเด่นอัจฉริยะ',
+          'วิเคราะห์เลข 2 ตัว 3 ตัว',
+          'ทำนายฝันเป็นเลข',
+          'สถิติเลขที่ถูกรางวัลจริง',
+          'ตรวจหวยและผลหวย',
+          'สูตรหวยหลากหลาย',
+        ],
+      }),
+    },
+  ],
+})
 
 const showReviewForm = ref(false)
 const reviewMode = ref<'add' | 'edit'>('add')
