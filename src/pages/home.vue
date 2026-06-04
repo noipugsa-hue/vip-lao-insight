@@ -37,7 +37,7 @@ useHead({
   script: [
     {
       type: 'application/ld+json',
-      children: JSON.stringify({
+      children: computed(() => JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'VIP Lao Insight',
@@ -49,30 +49,28 @@ useHead({
           category: 'VIP Membership',
           description: 'สมาชิก VIP เข้าถึงฟีเจอร์พิเศษ เลขเด่นคุณภาพสูง และเครื่องมือวิเคราะห์ขั้นสูง',
         },
-        aggregateRating: computed(() => ({
+        aggregateRating: {
           '@type': 'AggregateRating',
           ratingValue: averageRating.value.toFixed(1),
           reviewCount: totalReviews.value,
           bestRating: 5,
           worstRating: 1,
+        },
+        review: reviews.value.slice(0, 5).map(review => ({
+          '@type': 'Review',
+          author: {
+            '@type': 'Person',
+            name: review.userEmail.split('@')[0],
+          },
+          datePublished: new Date(review.createdAt).toISOString(),
+          reviewBody: review.review,
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: review.rating,
+            bestRating: 5,
+            worstRating: 1,
+          },
         })),
-        review: computed(() =>
-          reviews.value.slice(0, 5).map(review => ({
-            '@type': 'Review',
-            author: {
-              '@type': 'Person',
-              name: review.userEmail.split('@')[0],
-            },
-            datePublished: new Date(review.createdAt).toISOString(),
-            reviewBody: review.review,
-            reviewRating: {
-              '@type': 'Rating',
-              ratingValue: review.rating,
-              bestRating: 5,
-              worstRating: 1,
-            },
-          }))
-        ),
         featureList: [
           'ทำนายเลขเด่นอัจฉริยะ',
           'วิเคราะห์เลข 2 ตัว 3 ตัว',
@@ -81,7 +79,7 @@ useHead({
           'ตรวจหวยและผลหวย',
           'สูตรหวยหลากหลาย',
         ],
-      }),
+      })),
     },
   ],
 })
