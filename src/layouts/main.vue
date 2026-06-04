@@ -556,10 +556,10 @@ const allMenuItems = computed(() => {
 // Bottom Tab Bar (Mobile - most important pages)
 const bottomTabsAll = [
   { path: '/home', icon: '🏠', label: 'หลัก' },
-  { path: '/lottery-history', icon: '🎫', label: 'ผลหวย' },
-  { path: '/check-prize', icon: '🎯', label: 'ตรวจรางวัล' },
-  { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ' },
-  { path: '/statistics', icon: '📊', label: 'สถิติ' },
+  { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว' },
+  { path: '/three-digit', icon: '🔢', label: 'เลข 3 ตัว' },
+  { path: '/dream', icon: '💭', label: 'ทำนายฝัน' },
+  { path: '/winning-numbers', icon: '🏆', label: 'เลขที่ถูก' },
 ]
 
 const bottomTabs = computed(() => bottomTabsAll)
