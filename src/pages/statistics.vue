@@ -169,7 +169,7 @@ onMounted(async () => {
         <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
           📊 สถิติและกราฟ
         </h1>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">วิเคราะห์สถิติหวยแบบละเอียด {{ displayLimit }} งวดล่าสุด</p>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">วิเคราะห์สถิติหวยแบบละเอียด {{ displayLimit }} งวดย้อนหลัง</p>
       </div>
 
       <!-- Loading -->
@@ -355,9 +355,9 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- ผลหวยล่าสุด -->
+        <!-- ผลหวยย้อนหลัง -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">📋 ผลหวย {{ Math.min(10, lotteryResults.length) }} งวดล่าสุด</h2>
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">📋 ผลหวย {{ Math.min(10, lotteryResults.length) }} งวดย้อนหลัง</h2>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div
               v-for="(result, index) in lotteryResults.slice(0, 10)"

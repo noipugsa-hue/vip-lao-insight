@@ -32,7 +32,7 @@ const betAmount = ref(100)
 const hasChecked = ref(false)
 const showAddForm = ref(true)
 
-// โหลดผลหวยล่าสุด
+// โหลดผลหวยงวดใหม่
 const loadLatestDraw = async () => {
   isLoadingDraw.value = true
   try {
@@ -165,7 +165,7 @@ onMounted(async () => {
     return
   }
 
-  // โหลดผลหวยล่าสุดอัตโนมัติ
+  // โหลดผลหวยอัตโนมัติ
   await loadLatestDraw()
 })
 </script>
@@ -181,10 +181,10 @@ onMounted(async () => {
         <p class="text-gray-600 dark:text-gray-300 mt-2">ตรวจสอบเลขที่ซื้อว่าถูกรางวัลหรือไม่</p>
       </div>
 
-      <!-- ผลหวยล่าสุด -->
+      <!-- ผลหวยงวดใหม่ -->
       <div class="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg p-6">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">📊 ผลหวยงวดล่าสุด</h2>
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">📊 ผลหวยงวดใหม่</h2>
           <button
             @click="loadLatestDraw"
             :disabled="isLoadingDraw"

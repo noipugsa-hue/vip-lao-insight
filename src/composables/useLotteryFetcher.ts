@@ -186,7 +186,7 @@ export const useLotteryFetcher = () => {
 
   /**
    * getLatestFromFirestore
-   * ดึงผลหวยล่าสุดจาก Firestore (กรองตามประเภทหวย)
+   * ดึงผลหวยงวดใหม่จาก Firestore (กรองตามประเภทหวย)
    */
   const getLatestFromFirestore = async (lotteryType?: string): Promise<LotteryResult | null> => {
     try {

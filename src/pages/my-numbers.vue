@@ -97,7 +97,7 @@ const savePurchase = async () => {
 // ตรวจรางวัลรายการเดียว
 const checkSinglePurchase = async (purchase: PurchaseEntry) => {
   try {
-    // ดึงผลหวยล่าสุด
+    // ดึงผลหวยงวดใหม่
     const result = await fetchFromRachaLotto()
     if (!result) {
       alert('ไม่สามารถดึงผลหวยได้ กรุณาลองอีกครั้ง')
