@@ -11,6 +11,7 @@ import { useAccuracyTracking } from '../composables/useAccuracyTracking'
 import { useSubscription } from '../composables/useSubscription'
 import { useAdmin } from '../composables/useAdmin'
 import { useReview } from '../composables/useReview'
+import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
 
 const router = useRouter()
 const { waitForAuth, user } = useAuth()
@@ -101,11 +102,15 @@ const totalDays = computed(() => {
 })
 
 const history = ref<string[]>([])
+const input = ref('')
+const isCalculating = ref(false)
+const showInputSection = ref(true)
 
-const { hotNumbers, twoDigits, threeDigits, lotteryType, calculatedAt, loadResult, clearResult } = useVipResult()
+const { hotNumbers, twoDigits, threeDigits, calculatedAt, loadResult, clearResult, setResult } = useVipResult()
 const { selectedLotteryType } = useLotteryType()
 const { settings } = useEngineSettings()
 const { accuracyStats } = useAccuracyTracking()
+const { calculateAdvanced } = useLaoFormulaAdvanced()
 
 // สร้าง storage key แบบ dynamic ตามประเภทหวย
 const getStorageKey = (lotteryId: string) => `vip_lao_history_${lotteryId}`
@@ -123,6 +128,63 @@ const loadDataForLotteryType = (lotteryId: string) => {
 
   // โหลดผลลัพธ์การคำนวณสำหรับประเภทหวยนี้
   loadResult(lotteryId)
+}
+
+// ฟังก์ชันเพิ่มเลขย้อนหลัง
+const addHistory = () => {
+  const value = input.value.trim()
+
+  // ตรวจสอบความยาว 3-6 หลัก
+  if (!/^\d{3,6}$/.test(value)) {
+    alert('⚠️ กรุณาใส่เลข 3-6 หลักเท่านั้น')
+    return
+  }
+
+  // เพิ่มเข้า history
+  history.value.unshift(value)
+  input.value = ''
+
+  // บันทึกลง localStorage
+  const storageKey = getStorageKey(selectedLotteryType.value.id)
+  localStorage.setItem(storageKey, JSON.stringify(history.value))
+}
+
+// ฟังก์ชันคำนวณด้วยสูตร 9 แบบ 🎯
+const calculateNumbers = async () => {
+  // ปุ่มจะ disable อยู่แล้วถ้าใส่เลขไม่ครบ 3 งวด ไม่ต้อง alert
+  if (history.value.length < 3) return
+
+  isCalculating.value = true
+
+  try {
+    // คำนวณด้วยสูตรขั้นสูง 9 แบบ 🚀
+    const result = calculateAdvanced(history.value)
+
+    // บันทึกผลลัพธ์
+    setResult(
+      result.hot,
+      result.twoDigits,
+      result.threeDigits,
+      selectedLotteryType.value.id
+    )
+
+    // ไม่ต้องแสดง alert แล้ว - ผลลัพธ์จะแสดงในหน้าโดยอัตโนมัติ
+
+  } catch (error) {
+    console.error('Error calculating:', error)
+    // แสดง error ใน console แทน alert
+  } finally {
+    isCalculating.value = false
+  }
+}
+
+// ฟังก์ชันลบเลขออกจาก history
+const removeHistory = (index: number) => {
+  history.value.splice(index, 1)
+
+  // บันทึกลง localStorage
+  const storageKey = getStorageKey(selectedLotteryType.value.id)
+  localStorage.setItem(storageKey, JSON.stringify(history.value))
 }
 
 // ฟังก์ชันแสดง Expired Modal
@@ -457,7 +519,7 @@ const getPlanIcon = computed(() => {
       <!-- Lottery Type & Date Header -->
       <div class="text-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-          เลือกประเภทหวย แล้วใส่เลข 3-6 หลัก
+          💎 ใส่เลขและคำนวณด้วย 9 สูตร 💎
         </h1>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           {{ selectedLotteryType.displayName }} · {{ todayStr }}
@@ -611,6 +673,106 @@ const getPlanIcon = computed(() => {
                   <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Section: ใส่เลขและคำนวณ 🎯 -->
+      <div class="mb-6">
+        <!-- Toggle Button -->
+        <button
+          @click="showInputSection = !showInputSection"
+          class="w-full mb-4 px-6 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 text-white rounded-2xl font-black text-lg shadow-xl hover:shadow-2xl transform transition-all hover:scale-105 active:scale-95 flex items-center justify-between"
+        >
+          <span class="flex items-center gap-3">
+            <span class="text-2xl">{{ showInputSection ? '🔽' : '▶️' }}</span>
+            <span>ใส่เลขและคำนวณ (9 สูตร)</span>
+          </span>
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">{{ history.length }} งวด</span>
+        </button>
+
+        <!-- Input Form (Collapsible) -->
+        <div v-if="showInputSection" class="relative group">
+          <!-- Animated Border -->
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur-sm"></div>
+
+          <div class="relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+            <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4">
+              📊 ใส่เลขย้อนหลัง
+            </h2>
+
+            <!-- Input + Add Button -->
+            <div class="flex gap-3 mb-4">
+              <div class="relative flex-1">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-purple-600 text-xl pointer-events-none">🔢</span>
+                <input
+                  v-model="input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="6"
+                  placeholder="เลข 3-6 หลัก"
+                  @keyup.enter="addHistory"
+                  class="w-full pl-12 pr-4 py-4 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-center text-2xl font-bold"
+                />
+              </div>
+              <button
+                @click="addHistory"
+                :disabled="!input.trim()"
+                class="px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                <span class="text-xl">➕</span>
+              </button>
+            </div>
+
+            <!-- History List -->
+            <div v-if="history.length > 0" class="mb-4">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">เลขย้อนหลัง {{ history.length }} งวด:</p>
+              <div class="max-h-60 overflow-y-auto space-y-2 pr-2">
+                <div
+                  v-for="(num, index) in history"
+                  :key="index"
+                  class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <span class="font-mono text-2xl font-bold text-purple-600 dark:text-purple-400">{{ num }}</span>
+                  <button
+                    @click="removeHistory(index)"
+                    class="text-red-500 hover:text-red-700 dark:hover:text-red-400 text-xl transition-colors"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calculate Button -->
+            <button
+              @click="calculateNumbers"
+              :disabled="history.length < 3 || isCalculating"
+              class="w-full px-6 py-5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white rounded-2xl font-black text-xl shadow-2xl hover:shadow-3xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group/btn"
+            >
+              <div v-if="!isCalculating" class="flex items-center justify-center gap-3">
+                <span class="text-3xl">🚀</span>
+                <span>คำนวณด้วย 9 สูตร</span>
+                <span class="text-3xl">✨</span>
+              </div>
+              <div v-else class="flex items-center justify-center gap-3">
+                <span class="animate-spin text-2xl">⚙️</span>
+                <span>กำลังคำนวณ...</span>
+              </div>
+              <!-- Shine Effect -->
+              <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
+            </button>
+
+            <!-- Info Badge -->
+            <div class="mt-4 flex flex-wrap gap-2 justify-center text-xs">
+              <span class="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">🔥 Hot/Cold</span>
+              <span class="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-bold">📈 Gap</span>
+              <span class="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full font-bold">🔗 Pairs</span>
+              <span class="px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full font-bold">🪞 Mirror</span>
+              <span class="px-3 py-1.5 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-full font-bold">🔁 Repeating</span>
+              <span class="px-3 py-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full font-bold">🎯 Triple</span>
             </div>
           </div>
         </div>
@@ -957,31 +1119,15 @@ const getPlanIcon = computed(() => {
         </div>
       </div>
 
-      <!-- No Results -->
-      <div v-else class="relative group">
-        <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-pink-600 rounded-3xl opacity-30 group-hover:opacity-50 transition duration-300 blur-md"></div>
-
-        <div class="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl p-12 shadow-2xl text-center">
-          <div class="mb-6">
-            <div class="inline-block animate-bounce">
-              <span class="text-8xl">🎲</span>
-            </div>
-          </div>
-          <h3 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 mb-3">
-            ยังไม่มีผลการคำนวณ
-          </h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-            ไปที่หน้า "ใส่เลขเอง" เพื่อเริ่มคำนวณเลขหวย
-          </p>
-          <NuxtLink
-            to="/manual"
-            class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl hover:shadow-2xl transform transition-all hover:scale-110 active:scale-95"
-          >
-            <span class="text-2xl">✏️</span>
-            <span>ไปใส่เลขเอง</span>
-            <span class="text-2xl">→</span>
-          </NuxtLink>
+      <!-- Empty State: Simple Guide for New Users -->
+      <div v-else class="text-center py-12">
+        <div class="mb-4">
+          <span class="text-6xl">🎯</span>
         </div>
+        <p class="text-gray-600 dark:text-gray-400 text-lg">
+          กดปุ่มด้านบนเพื่อใส่เลขย้อนหลัง ≥3 งวด<br>
+          แล้วคำนวณด้วย <span class="font-bold text-purple-600 dark:text-purple-400">9 สูตร AI</span>
+        </p>
       </div>
 
       <!-- Reviews Section -->

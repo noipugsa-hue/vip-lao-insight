@@ -60,13 +60,98 @@ export const useLaoFormulaAdvanced = () => {
         if (!positionCount[digit]) {
           positionCount[digit] = [0, 0, 0] // 3 ตำแหน่ง
         }
-        if (position < 3) {
+        if (position < 3 && positionCount[digit]) {
           positionCount[digit][position] += weight
         }
       })
     })
 
     return positionCount
+  }
+
+  /**
+   * วิเคราะห์เลขกลับกัน (Mirror Numbers)
+   * เช่น 123 ↔ 321, 456 ↔ 654
+   */
+  const analyzeMirrorNumbers = (history: string[]) => {
+    const mirrorCount: Record<string, number> = {}
+
+    history.forEach((num, index) => {
+      const weight = Math.pow(1.4, history.length - index - 1)
+      const reversed = num.split('').reverse().join('')
+
+      // ถ้าเลขออกแล้ว เลขกลับกันมีโอกาสออกตาม
+      if (!mirrorCount[reversed]) {
+        mirrorCount[reversed] = 0
+      }
+      mirrorCount[reversed] += weight
+    })
+
+    return mirrorCount
+  }
+
+  /**
+   * วิเคราะห์เลขซ้ำ (Repeating Numbers)
+   * เช่น 111, 222, 333 (all same), 112, 223, 445 (double digits)
+   */
+  const analyzeRepeatingNumbers = (history: string[]) => {
+    const repeatingPatterns = {
+      allSame: [] as string[], // 111, 222, 333
+      doubleSame: [] as string[], // 112, 223, 445, 001, 122
+      frequency: {} as Record<string, number>
+    }
+
+    // สร้างรายการเลขซ้ำที่เป็นไปได้
+    for (let i = 0; i < 10; i++) {
+      // All same: 000, 111, 222, ..., 999
+      const allSame = i.toString().repeat(3)
+      repeatingPatterns.allSame.push(allSame)
+
+      // Double same: xx0-xx9, x0x-x9x, 0xx-9xx
+      for (let j = 0; j < 10; j++) {
+        if (i !== j) {
+          repeatingPatterns.doubleSame.push(`${i}${i}${j}`)
+          repeatingPatterns.doubleSame.push(`${i}${j}${i}`)
+          repeatingPatterns.doubleSame.push(`${j}${i}${i}`)
+        }
+      }
+    }
+
+    // นับความถี่ของเลขซ้ำที่เคยออก
+    history.forEach((num, index) => {
+      const weight = Math.pow(1.3, history.length - index - 1)
+      const digits = num.split('')
+
+      // Check if it's a repeating number
+      const uniqueDigits = new Set(digits).size
+
+      if (uniqueDigits === 1) {
+        // All same (111, 222)
+        repeatingPatterns.frequency[num] = (repeatingPatterns.frequency[num] || 0) + weight * 2
+      } else if (uniqueDigits === 2) {
+        // Double same (112, 223)
+        repeatingPatterns.frequency[num] = (repeatingPatterns.frequency[num] || 0) + weight * 1.5
+      }
+    })
+
+    return repeatingPatterns
+  }
+
+  /**
+   * วิเคราะห์ชุด 3 ตัวเลขที่มักออกด้วยกัน (Triple Analysis)
+   * เช่น 1-2-3, 4-5-6 (ไม่สนใจลำดับ)
+   */
+  const analyzeTriples = (history: string[]) => {
+    const tripleCount: Record<string, number> = {}
+
+    history.forEach((num, index) => {
+      const weight = Math.pow(1.3, history.length - index - 1)
+      const digits = num.split('').sort().join('') // เรียงเพื่อไม่สนใจลำดับ
+
+      tripleCount[digits] = (tripleCount[digits] || 0) + weight
+    })
+
+    return tripleCount
   }
 
   /**
@@ -103,6 +188,102 @@ export const useLaoFormulaAdvanced = () => {
     }
 
     return gapScores
+  }
+
+  /**
+   * สร้างเลข 3 ตัวจาก Mirror Numbers (เลขกลับกัน)
+   */
+  const generateMirrorNumbers = (history: string[], count: number): string[] => {
+    const mirrorScores = analyzeMirrorNumbers(history)
+
+    return Object.entries(mirrorScores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, count)
+      .map(([num]) => num)
+  }
+
+  /**
+   * สร้างเลข 3 ตัวจาก Repeating Numbers (เลขซ้ำ)
+   */
+  const generateRepeatingNumbers = (history: string[], count: number): string[] => {
+    const repeatingData = analyzeRepeatingNumbers(history)
+    const results: string[] = []
+
+    // เอาเลขซ้ำที่เคยออกมาแล้ว เรียงตาม frequency
+    const sortedByFreq = Object.entries(repeatingData.frequency)
+      .sort((a, b) => b[1] - a[1])
+      .map(([num]) => num)
+
+    // เพิ่มเลขที่เคยออก
+    sortedByFreq.forEach(num => {
+      if (results.length < count && !results.includes(num)) {
+        results.push(num)
+      }
+    })
+
+    // ถ้ายังไม่ครบ สุ่มจาก all same (000, 111, 222, ...)
+    if (results.length < count) {
+      repeatingData.allSame
+        .sort(() => Math.random() - 0.5)
+        .forEach(num => {
+          if (results.length < count && !results.includes(num)) {
+            results.push(num)
+          }
+        })
+    }
+
+    // ถ้ายังไม่ครบ สุ่มจาก double same (112, 223, ...)
+    if (results.length < count) {
+      repeatingData.doubleSame
+        .sort(() => Math.random() - 0.5)
+        .forEach(num => {
+          if (results.length < count && !results.includes(num)) {
+            results.push(num)
+          }
+        })
+    }
+
+    return results
+  }
+
+  /**
+   * สร้างเลข 3 ตัวจาก Triple Analysis (ชุด 3 ตัวเลขที่ออกด้วยกัน)
+   */
+  const generateFromTriples = (history: string[], count: number): string[] => {
+    const tripleScores = analyzeTriples(history)
+
+    // เอาชุดที่มี score สูงสุด แล้วสร้างเลขจากชุดนั้น
+    const topTriples = Object.entries(tripleScores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, count * 2) // เอามาเยอะหน่อยเพื่อจะได้มีตัวเลือก
+
+    const results: string[] = []
+
+    topTriples.forEach(([sortedDigits]) => {
+      if (results.length < count) {
+        // สร้างเลขจากชุดตัวเลขนี้ (permutation)
+        const digits = sortedDigits.split('')
+
+        // สร้างทุก permutation ที่เป็นไปได้
+        const permutations = [
+          digits.join(''),
+          [digits[0], digits[2], digits[1]].join(''),
+          [digits[1], digits[0], digits[2]].join(''),
+          [digits[1], digits[2], digits[0]].join(''),
+          [digits[2], digits[0], digits[1]].join(''),
+          [digits[2], digits[1], digits[0]].join(''),
+        ]
+
+        // เอาตัวที่ยังไม่เคยใช้
+        permutations.forEach(perm => {
+          if (results.length < count && !results.includes(perm)) {
+            results.push(perm)
+          }
+        })
+      }
+    })
+
+    return results
   }
 
   /**
@@ -351,20 +532,22 @@ export const useLaoFormulaAdvanced = () => {
   }
 
   /**
-   * สร้างเลข 3 ตัวแบบอัจฉริยะ (ปรับปรุงใหม่)
-   * ใช้การวิเคราะห์หลายมิติ
+   * สร้างเลข 3 ตัวแบบอัจฉริยะ (ปรับปรุงใหม่ - รวม 9 สูตร)
+   * ใช้การวิเคราะห์หลายมิติรวม Mirror, Repeating, Triple Analysis
    */
   const generateSmartThreeDigits = (history: string[], hot: string[]) => {
     const gapScores = analyzeThreeDigitGap(history)
-    const sequential = generateSequentialThreeDigits(history, 10)
+    const sequential = generateSequentialThreeDigits(history, 5)
+    const mirrorNumbers = generateMirrorNumbers(history, 3)
+    const repeatingNumbers = generateRepeatingNumbers(history, 3)
+    const tripleNumbers = generateFromTriples(history, 3)
     const results: string[] = []
     const usedNumbers = new Set<string>()
 
     // 1. Gap Numbers - เลขที่ไม่ได้ออกนาน 3-8 งวด (2 ชุด)
     const highGapNumbers = Object.entries(gapScores)
-      .filter(([_num, score]) => score === 5) // เฉพาะที่มี gap 3-8 งวด
+      .filter(([_num, score]) => score === 5)
       .sort((a, b) => {
-        // เรียงตาม gap score และ random เพื่อความหลากหลาย
         if (b[1] === a[1]) {
           return Math.random() - 0.5
         }
@@ -374,39 +557,49 @@ export const useLaoFormulaAdvanced = () => {
       .map(([num]) => num)
 
     highGapNumbers.forEach(num => {
-      if (!usedNumbers.has(num) && results.length < 6) {
+      if (!usedNumbers.has(num) && results.length < 12) {
         results.push(num)
         usedNumbers.add(num)
       }
     })
 
-    // 2. Sequential Numbers - เลขติดกับงวดล่าสุด (2 ชุด)
+    // 2. Sequential Numbers - เลขติดกับงวดล่าสุด (1 ชุด)
     sequential.forEach(num => {
-      if (!usedNumbers.has(num) && results.length < 6) {
+      if (!usedNumbers.has(num) && results.length < 12 && results.filter(r => sequential.includes(r)).length < 1) {
         results.push(num)
         usedNumbers.add(num)
       }
     })
 
-    // 3. Medium Gap Numbers - เลขที่ไม่ได้ออก 9-15 งวด (1 ชุด)
-    const mediumGapNumbers = Object.entries(gapScores)
-      .filter(([_num, score]) => score === 3) // gap 9-15 งวด
-      .sort(() => Math.random() - 0.5) // random
-      .slice(0, 1)
-      .map(([num]) => num)
-
-    mediumGapNumbers.forEach(num => {
-      if (!usedNumbers.has(num) && results.length < 6) {
+    // 3. Mirror Numbers - เลขกลับกัน (2 ชุด) 🪞
+    mirrorNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 12 && results.filter(r => mirrorNumbers.includes(r)).length < 2) {
         results.push(num)
         usedNumbers.add(num)
       }
     })
 
-    // 4. Position-based - จาก hot numbers (1 ชุด)
+    // 4. Repeating Numbers - เลขซ้ำ (2 ชุด) 🔁
+    repeatingNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 12 && results.filter(r => repeatingNumbers.includes(r)).length < 2) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 5. Triple Analysis - ชุด 3 ตัวเลขที่ออกด้วยกัน (2 ชุด) 🎯
+    tripleNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 12 && results.filter(r => tripleNumbers.includes(r)).length < 2) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 6. Position-based - จาก hot numbers (1 ชุด)
     let positionCount = 0
-    for (let i = 0; i < hot.length && positionCount < 1 && results.length < 6; i++) {
-      for (let j = 0; j < hot.length && positionCount < 1 && results.length < 6; j++) {
-        for (let k = 0; k < hot.length && positionCount < 1 && results.length < 6; k++) {
+    for (let i = 0; i < hot.length && positionCount < 1 && results.length < 12; i++) {
+      for (let j = 0; j < hot.length && positionCount < 1 && results.length < 12; j++) {
+        for (let k = 0; k < hot.length && positionCount < 1 && results.length < 12; k++) {
           const digit1 = hot[i]
           const digit2 = hot[j]
           const digit3 = hot[k]
@@ -424,39 +617,53 @@ export const useLaoFormulaAdvanced = () => {
       }
     }
 
-    // 5. เติมเลขเพิ่มจาก gap numbers อื่นๆ ถ้ายังไม่ครบ 6
-    if (results.length < 6) {
+    // 7. Medium Gap Numbers - เลขที่ไม่ได้ออก 9-15 งวด (1 ชุด)
+    const mediumGapNumbers = Object.entries(gapScores)
+      .filter(([_num, score]) => score === 3)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 1)
+      .map(([num]) => num)
+
+    mediumGapNumbers.forEach(num => {
+      if (!usedNumbers.has(num) && results.length < 12) {
+        results.push(num)
+        usedNumbers.add(num)
+      }
+    })
+
+    // 8. เติมเลขเพิ่มจาก gap numbers อื่นๆ ถ้ายังไม่ครบ 12
+    if (results.length < 12) {
       const remainingGaps = Object.entries(gapScores)
         .filter(([num]) => !usedNumbers.has(num))
-        .filter(([_num, score]) => score >= 2) // เอาที่มี gap score อย่างน้อย 2
-        .sort(() => Math.random() - 0.5) // random เพื่อความหลากหลาย
-        .slice(0, 6 - results.length)
+        .filter(([_num, score]) => score >= 2)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 12 - results.length)
         .map(([num]) => num)
 
       remainingGaps.forEach(num => {
-        if (results.length < 6) {
+        if (results.length < 12) {
           results.push(num)
           usedNumbers.add(num)
         }
       })
     }
 
-    // 6. ถ้ายังไม่ครบ 6 ให้สุ่มเลขที่ยังไม่เคยใช้
-    if (results.length < 6) {
+    // 9. ถ้ายังไม่ครบ 12 ให้สุ่มเลขที่ยังไม่เคยใช้
+    if (results.length < 12) {
       const allPossible = Array.from({ length: 1000 }, (_, i) => i.toString().padStart(3, '0'))
         .filter(num => !usedNumbers.has(num))
         .sort(() => Math.random() - 0.5)
-        .slice(0, 6 - results.length)
+        .slice(0, 12 - results.length)
 
       allPossible.forEach(num => {
-        if (results.length < 6) {
+        if (results.length < 12) {
           results.push(num)
           usedNumbers.add(num)
         }
       })
     }
 
-    return results.slice(0, 6)
+    return results.slice(0, 12)
   }
 
   /**
@@ -490,16 +697,19 @@ export const useLaoFormulaAdvanced = () => {
   }
 
   /**
-   * Main function: คำนวณเลขทั้งหมดด้วยสูตรขั้นสูง
+   * Main function: คำนวณเลขทั้งหมดด้วยสูตรขั้นสูง (รวม 9 สูตร)
    */
   const calculateAdvanced = (history: string[]) => {
-    // ต้องมีข้อมูลอย่างน้อย 5 งวด
-    if (history.length < 5) {
+    // ต้องมีข้อมูลอย่างน้อย 3 งวด
+    if (history.length < 3) {
       return {
         hot: [],
         twoDigits: [],
         threeDigits: [],
         cold: [],
+        mirror: [],
+        repeating: [],
+        triples: [],
         confidence: 0
       }
     }
@@ -509,6 +719,11 @@ export const useLaoFormulaAdvanced = () => {
     const twoDigits = generateSmartTwoDigits(history, hot)
     const threeDigits = generateSmartThreeDigits(history, hot)
 
+    // สูตรใหม่ 🎯
+    const mirror = generateMirrorNumbers(history, 5)
+    const repeating = generateRepeatingNumbers(history, 5)
+    const triples = generateFromTriples(history, 5)
+
     // คำนวณความมั่นใจ (ยิ่งมีข้อมูลเยอะ ยิ่งแม่น)
     const confidence = Math.min(95, 50 + (history.length * 3))
 
@@ -517,6 +732,9 @@ export const useLaoFormulaAdvanced = () => {
       twoDigits,
       threeDigits,
       cold,
+      mirror,
+      repeating,
+      triples,
       confidence
     }
   }
@@ -533,6 +751,13 @@ export const useLaoFormulaAdvanced = () => {
     analyzeGaps,
     analyzeThreeDigitGap,
     generateSequentialThreeDigits,
-    analyzeTwoDigitGap
+    analyzeTwoDigitGap,
+    // สูตรใหม่ 🎯
+    analyzeMirrorNumbers,
+    analyzeRepeatingNumbers,
+    analyzeTriples,
+    generateMirrorNumbers,
+    generateRepeatingNumbers,
+    generateFromTriples
   }
 }

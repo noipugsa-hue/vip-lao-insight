@@ -3,11 +3,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useLotteryType } from '../composables/useLotteryType'
+import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 
 const router = useRouter()
 const { waitForAuth } = useAuth()
 const { selectedLotteryType } = useLotteryType()
+const { analyzeMirrorNumbers, analyzeRepeatingNumbers, analyzeTriples } = useLaoFormulaAdvanced()
 const db = useNuxtApp().$db
 
 // ข้อมูลผลหวยทั้งหมด
@@ -138,6 +140,39 @@ const highLowStats = computed(() => {
   }
 })
 
+// วิเคราะห์เลขกลับกัน (Mirror Numbers) 🪞
+const mirrorAnalysis = computed(() => {
+  const history = lotteryResults.value.map(r => r.threeDigit)
+  const mirrorScores = analyzeMirrorNumbers(history)
+
+  return Object.entries(mirrorScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([number, score]) => ({ number, score: Math.round(score) }))
+})
+
+// วิเคราะห์เลขซ้ำ (Repeating Numbers) 🔁
+const repeatingAnalysis = computed(() => {
+  const history = lotteryResults.value.map(r => r.threeDigit)
+  const repeatingData = analyzeRepeatingNumbers(history)
+
+  return Object.entries(repeatingData.frequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([number, score]) => ({ number, score: Math.round(score) }))
+})
+
+// วิเคราะห์ชุด 3 ตัวเลข (Triple Analysis) 🎯
+const tripleAnalysis = computed(() => {
+  const history = lotteryResults.value.map(r => r.threeDigit)
+  const tripleScores = analyzeTriples(history)
+
+  return Object.entries(tripleScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([sortedDigits, score]) => ({ sortedDigits, score: Math.round(score) }))
+})
+
 // คำนวณค่า max สำหรับ scale bar chart
 const maxFrequency = computed(() => {
   if (digitFrequency.value.length === 0) return 0
@@ -167,9 +202,17 @@ onMounted(async () => {
       <!-- Header -->
       <div class="text-center">
         <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          📊 สถิติและกราฟ
+          📊 สถิติและกราฟ - 9 สูตรวิเคราะห์
         </h1>
         <p class="text-gray-600 dark:text-gray-300 mt-2">วิเคราะห์สถิติหวยแบบละเอียด {{ displayLimit }} งวดย้อนหลัง</p>
+        <div class="mt-3 flex flex-wrap justify-center gap-2 text-sm">
+          <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">🔥 Hot/Cold</span>
+          <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">📈 Gap Analysis</span>
+          <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">🔗 Pairs</span>
+          <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full">🪞 Mirror</span>
+          <span class="px-3 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-full">🔁 Repeating</span>
+          <span class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full">🎯 Triple</span>
+        </div>
       </div>
 
       <!-- Loading -->
@@ -351,6 +394,54 @@ onMounted(async () => {
                   ></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- สูตรใหม่: Mirror Numbers 🪞 -->
+        <div v-if="mirrorAnalysis.length > 0" class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">🪞 เลขกลับกัน (Mirror Numbers)</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">เลขที่มีแนวโน้มออกเป็นเลขกลับกัน เช่น 123 → 321</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div
+              v-for="item in mirrorAnalysis"
+              :key="item.number"
+              class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center"
+            >
+              <div class="text-3xl font-bold text-indigo-600 mb-1">{{ item.number }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Score: {{ item.score }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- สูตรใหม่: Repeating Numbers 🔁 -->
+        <div v-if="repeatingAnalysis.length > 0" class="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">🔁 เลขซ้ำ (Repeating Numbers)</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">เลขที่มีตัวเลขซ้ำกัน เช่น 111, 222, 112, 223</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div
+              v-for="item in repeatingAnalysis"
+              :key="item.number"
+              class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center"
+            >
+              <div class="text-3xl font-bold text-teal-600 mb-1">{{ item.number }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Score: {{ item.score }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- สูตรใหม่: Triple Analysis 🎯 -->
+        <div v-if="tripleAnalysis.length > 0" class="bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">🎯 ชุด 3 ตัวเลข (Triple Analysis)</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">ชุดตัวเลข 3 ตัวที่มักออกด้วยกัน (ไม่สนใจลำดับ)</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div
+              v-for="item in tripleAnalysis"
+              :key="item.sortedDigits"
+              class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center"
+            >
+              <div class="text-3xl font-bold text-orange-600 mb-1">{{ item.sortedDigits }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Score: {{ item.score }}</div>
             </div>
           </div>
         </div>
