@@ -20,10 +20,10 @@
       <!-- Sidebar Header -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-4">
-          <!-- LOTTOAI: Always show in sidebar -->
+          <!-- Numora Lotto AI: Always show in sidebar -->
           <div v-if="isSidebarExpanded">
             <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
-              LOTTOAI
+              Numora Lotto AI
             </h1>
             <p class="text-xs text-gray-600 dark:text-gray-400">แนวทางสำหรับหวยออนไลน์</p>
           </div>
@@ -259,7 +259,7 @@
 
           <!-- Logo -->
           <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400">
-            LOTTOAI
+            Numora Lotto AI
           </h1>
 
           <!-- Dark Mode Toggle -->

@@ -172,7 +172,7 @@ const switchMode = () => {
               <div class="relative text-6xl animate-bounce-slow">🎰</div>
             </div>
             <h1 class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-red-500 to-amber-600 drop-shadow-lg mb-2 animate-gradient">
-              LOTTOAI
+              Numora Lotto AI
             </h1>
           </div>
 
