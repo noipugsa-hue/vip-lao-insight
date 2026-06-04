@@ -559,6 +559,7 @@ const bottomTabsAll = [
   { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว' },
   { path: '/three-digit', icon: '🔢', label: 'เลข 3 ตัว' },
   { path: '/dream', icon: '💭', label: 'ทำนายฝัน' },
+  { path: '/formula', icon: '🧪', label: 'สูตรหวย' },
   { path: '/winning-numbers', icon: '🏆', label: 'เลขที่ถูก' },
 ]
 
