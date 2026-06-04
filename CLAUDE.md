@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VIP Lao Insight is a Nuxt 4 (Vue 3) lottery analysis and prediction application for Thai government lottery. It uses Firebase for authentication and data storage, with server-side API endpoints for web scraping lottery results. The app features AI-powered predictions using gap analysis, frequency weighting, dream interpretation, and accuracy tracking.
+Numora Lotto AI is a Nuxt 4 (Vue 3) lottery analysis and prediction application for Thai government lottery. It uses Firebase for authentication and data storage, with server-side API endpoints for web scraping lottery results. The app features AI-powered predictions using gap analysis, frequency weighting, dream interpretation, and accuracy tracking.
 
 **⚠️ Note:** VIP subscription payment system is currently in testing phase and NOT yet active for real transactions.
 

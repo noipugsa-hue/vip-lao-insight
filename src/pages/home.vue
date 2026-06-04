@@ -40,7 +40,7 @@ useHead({
       children: computed(() => JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
-        name: 'VIP Lao Insight',
+        name: 'Numora Lotto AI',
         applicationCategory: 'UtilityApplication',
         description: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน สูตรหวย พร้อมสถิติเลขที่ถูกรางวัลจริง',
         url: 'https://vip-lao-insight.vercel.app',
@@ -228,7 +228,7 @@ const formatShareText = () => {
   const year = now.getFullYear()
   const date = `${day}/${month}/${year}`
 
-  let text = `🎯 VIP Lao Insight - ${lotteryName}\n`
+  let text = `🎯 Numora Lotto AI - ${lotteryName}\n`
   text += `📅 วันที่: ${date}\n`
   text += `━━━━━━━━━━━━━━━━━━━━\n\n`
 

@@ -20,7 +20,7 @@ Firebase Authentication ต้องการให้ระบุ domain ที
 
 ### ขั้นตอนที่ 1: เข้า Firebase Console
 1. เปิดเบราว์เซอร์ไปที่: https://console.firebase.google.com/
-2. เลือก Project: **VIP Lao Insight** (หรือชื่อ project ของคุณ)
+2. เลือก Project: **Numora Lotto AI** (หรือชื่อ project ของคุณ)
 3. ถ้ามี popup ให้เลือก project ให้คลิกเลือกจาก dropdown
 
 ### ขั้นตอนที่ 2: ไปที่หน้า Authentication Settings
@@ -53,7 +53,7 @@ Firebase Authentication ต้องการให้ระบุ domain ที
 
 ```
 Firebase Console
-├── [เลือก Project: VIP Lao Insight]
+├── [เลือก Project: Numora Lotto AI]
 │
 ├── Authentication (เมนูซ้าย)
 │   ├── Users

@@ -1,4 +1,4 @@
-# robots.txt for VIP Lao Insight
+# robots.txt for Numora Lotto AI
 # ระบบทำนายและวิเคราะห์หวยอัจฉริยะ
 
 User-agent: *

@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   // SEO และ Meta Tags
   app: {
     head: {
-      title: 'VIP Lao Insight - ทำนายหวย วิเคราะห์หวยลาว หวยรัฐบาล',
+      title: 'Numora Lotto AI - ทำนายหวย วิเคราะห์หวยลาว หวยรัฐบาล',
       htmlAttrs: {
         lang: 'th',
       },
@@ -24,12 +24,12 @@ export default defineNuxtConfig({
           name: 'keywords',
           content: 'ทำนายหวย, เลขเด่น, หวยลาว, หวยรัฐบาล, หวยฮานอย, วิเคราะห์หวย, เลข 2 ตัว, เลข 3 ตัว, ทำนายฝัน, สูตรหวย, ตรวจหวย, ผลหวย, หวยออนไลน์'
         },
-        { name: 'author', content: 'VIP Lao Insight' },
+        { name: 'author', content: 'Numora Lotto AI' },
         { name: 'robots', content: 'index, follow' },
         // Open Graph / Facebook
         { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: 'VIP Lao Insight' },
-        { property: 'og:title', content: 'VIP Lao Insight - ทำนายหวย วิเคราะห์หวยลาว หวยรัฐบาล' },
+        { property: 'og:site_name', content: 'Numora Lotto AI' },
+        { property: 'og:title', content: 'Numora Lotto AI - ทำนายหวย วิเคราะห์หวยลาว หวยรัฐบาล' },
         {
           property: 'og:description',
           content: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน พร้อมสถิติเลขที่ถูกรางวัลจริง'
@@ -37,7 +37,7 @@ export default defineNuxtConfig({
         { property: 'og:locale', content: 'th_TH' },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'VIP Lao Insight - ทำนายหวย วิเคราะห์หวยลาว' },
+        { name: 'twitter:title', content: 'Numora Lotto AI - ทำนายหวย วิเคราะห์หวยลาว' },
         {
           name: 'twitter:description',
           content: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว'

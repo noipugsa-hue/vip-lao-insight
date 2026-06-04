@@ -230,7 +230,7 @@ const isMobile = (userAgent: string) => {
           <!-- Main Header Card -->
           <div class="relative bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 rounded-3xl p-8 shadow-2xl text-center">
             <h1 class="text-4xl font-black text-white mb-3 drop-shadow-lg">📊 สถิติการเข้าใช้งาน</h1>
-            <p class="text-white/90 mb-6 text-lg font-semibold">ข้อมูลการ Login เข้าสู่ระบบ VIP Lao Insight</p>
+            <p class="text-white/90 mb-6 text-lg font-semibold">ข้อมูลการ Login เข้าสู่ระบบ Numora Lotto AI</p>
 
             <!-- Real-time Badge -->
             <div class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-md rounded-full shadow-xl border border-white/30">

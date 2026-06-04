@@ -15,7 +15,7 @@
 
 ## ภาพรวม
 
-ระบบสมาชิก VIP จ่ายรายเดือนสำหรับ VIP Lao Insight ใช้ Omise Payment Gateway รองรับการชำระเงินผ่าน PromptPay, บัตรเครดิต/เดบิต และ TrueMoney Wallet
+ระบบสมาชิก VIP จ่ายรายเดือนสำหรับ Numora Lotto AI ใช้ Omise Payment Gateway รองรับการชำระเงินผ่าน PromptPay, บัตรเครดิต/เดบิต และ TrueMoney Wallet
 
 ## แพ็กเกจสมาชิก
 

@@ -15,7 +15,7 @@
 
 ### ขั้นตอนที่ 1: เปิด Firebase Console
 1. ไปที่ [Firebase Console](https://console.firebase.google.com/)
-2. เลือก Project: **VIP Lao Insight**
+2. เลือก Project: **Numora Lotto AI**
 
 ### ขั้นตอนที่ 2: เปิดใช้งาน Google Sign-In
 1. ไปที่เมนู **Authentication** (ซ้ายมือ)
@@ -23,7 +23,7 @@
 3. หา **Google** ในรายการ Providers
 4. คลิก **Google** แล้วคลิก **Enable**
 5. ใส่ข้อมูล:
-   - **Project public-facing name**: VIP Lao Insight
+   - **Project public-facing name**: Numora Lotto AI
    - **Project support email**: อีเมลของคุณ (เลือกจาก dropdown)
 6. คลิก **Save**
 

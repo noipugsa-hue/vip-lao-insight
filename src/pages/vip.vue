@@ -89,7 +89,7 @@ const todayStr = computed(() => {
 
     <!-- Header -->
     <h1 class="text-3xl font-extrabold text-yellow-400 mb-2 text-center drop-shadow-lg">
-      VIP Lao Insight
+      Numora Lotto AI
       <span
         class="text-white text-lg font-bold block mt-1 text-center animate-rainbow-glow"
       >

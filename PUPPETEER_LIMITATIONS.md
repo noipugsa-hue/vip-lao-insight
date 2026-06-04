@@ -121,7 +121,7 @@ chrome-extension/
 
 **ตัวอย่าง architecture:**
 ```
-VIP Lao Insight (Vercel)
+Numora Lotto AI (Vercel)
     ↓ HTTP Request
 Scraping Server (Railway/DO)
     ↓ Puppeteer
@@ -129,7 +129,7 @@ racha-lotto.net
     ↓ Response
 Scraping Server
     ↓ HTTP Response
-VIP Lao Insight
+Numora Lotto AI
     ↓ Save
 Firebase Firestore
 ```

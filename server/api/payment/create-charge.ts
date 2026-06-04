@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
 
     const amount = PLAN_PRICES[plan]
     const currency = 'THB'
-    const description = `VIP Lao Insight - ${plan.toUpperCase()} Plan`
+    const description = `Numora Lotto AI - ${plan.toUpperCase()} Plan`
 
     // Create charge based on payment method
     let chargeResult: any
