@@ -220,7 +220,7 @@ onMounted(async () => {
 
         <!-- ใส่ผลหวยเอง -->
         <details class="mt-4">
-          <summary class="cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-semibold">
+          <summary class="cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-semibold px-4 py-2 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800 inline-block transition">
             ✏️ ใส่ผลหวยเอง (กรณี API ไม่ได้)
           </summary>
           <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3">
@@ -328,7 +328,7 @@ onMounted(async () => {
               </div>
               <button
                 @click="removeNumber(index)"
-                class="text-red-500 hover:text-red-700 transition"
+                class="px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 rounded-lg border border-red-200 dark:border-red-800 transition"
               >
                 🗑️
               </button>

@@ -288,21 +288,23 @@ const getLotteryName = (type: string) => {
                   {{ record.verifiedBy }}
                 </td>
                 <td class="px-6 py-4 text-center">
-                  <div class="flex items-center justify-center gap-2">
-                    <button
-                      @click="openEditDialog(record)"
-                      class="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                      title="แก้ไข"
-                    >
-                      <span class="text-lg">✏️</span>
-                    </button>
-                    <button
-                      @click="handleDelete(record.id)"
-                      class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-                      title="ลบ"
-                    >
-                      <span class="text-lg">🗑️</span>
-                    </button>
+                  <div class="flex items-center justify-center">
+                    <div class="inline-flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                      <button
+                        @click="openEditDialog(record)"
+                        class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border-r border-gray-200 dark:border-gray-600"
+                        title="แก้ไข"
+                      >
+                        <span class="text-lg">✏️</span>
+                      </button>
+                      <button
+                        @click="handleDelete(record.id)"
+                        class="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        title="ลบ"
+                      >
+                        <span class="text-lg">🗑️</span>
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>

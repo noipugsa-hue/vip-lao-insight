@@ -311,7 +311,7 @@ onMounted(async () => {
               </div>
               <button
                 @click="removeNumberFromForm(index)"
-                class="text-red-500 hover:text-red-700"
+                class="px-3 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 rounded-lg border border-red-200 dark:border-red-800 transition"
               >
                 🗑️
               </button>

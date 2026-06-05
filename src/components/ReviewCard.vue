@@ -3,50 +3,55 @@
     class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-100 dark:border-gray-700 h-full flex flex-col"
   >
     <!-- Header: User info and rating -->
-    <div class="flex items-start justify-between mb-4">
-      <div class="flex items-center gap-3 flex-1">
-        <!-- User Avatar -->
-        <div
-          class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg flex-shrink-0"
-        >
-          {{ getUserInitial(review.userName || review.userEmail) }}
-        </div>
+    <div class="flex flex-col gap-3 mb-4">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <!-- User Avatar -->
+          <div
+            class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-lg flex-shrink-0"
+          >
+            {{ getUserInitial(review.userName || review.userEmail) }}
+          </div>
 
-        <!-- User info -->
-        <div class="flex-1 min-w-0">
-          <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate">
-            {{ review.userName || getEmailUsername(review.userEmail) }}
-          </h3>
-          <div class="flex items-center gap-2 mt-1">
-            <StarRating :model-value="review.rating" readonly size="sm" />
-            <span class="text-xs text-gray-500 dark:text-gray-400">
-              {{ formatDate(review.createdAt) }}
-            </span>
+          <!-- User info -->
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate">
+              {{ review.userName || getEmailUsername(review.userEmail) }}
+            </h3>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+              <StarRating :model-value="review.rating" readonly size="sm" />
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatDate(review.createdAt) }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Action buttons (edit/delete) for own review OR admin -->
-      <div v-if="isOwnReview || isAdmin" class="flex gap-2 flex-shrink-0 ml-2">
-        <!-- Admin Badge (แสดงเมื่อ admin กำลังจัดการรีวิวของคนอื่น) -->
-        <div v-if="isAdmin && !isOwnReview" class="flex items-center px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg mr-1">
-          <span class="text-xs font-bold text-white">👑 ADMIN</span>
+        <!-- Action buttons (edit/delete) for own review OR admin -->
+        <div v-if="isOwnReview || isAdmin" class="flex flex-col gap-2 flex-shrink-0 ml-2">
+          <!-- Admin Badge (แสดงเมื่อ admin กำลังจัดการรีวิวของคนอื่น) -->
+          <div v-if="isAdmin && !isOwnReview" class="flex items-center justify-center px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+            <span class="text-xs font-bold text-white whitespace-nowrap">👑 ADMIN</span>
+          </div>
+
+          <!-- Button Group -->
+          <div class="inline-flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+            <button
+              @click="$emit('edit')"
+              class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border-r border-gray-200 dark:border-gray-600"
+              :title="isAdmin && !isOwnReview ? '(Admin) แก้ไขรีวิว' : 'แก้ไขรีวิว'"
+            >
+              <span class="text-lg">✏️</span>
+            </button>
+            <button
+              @click="$emit('delete')"
+              class="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              :title="isAdmin && !isOwnReview ? '(Admin) ลบรีวิว' : 'ลบรีวิว'"
+            >
+              <span class="text-lg">🗑️</span>
+            </button>
+          </div>
         </div>
-
-        <button
-          @click="$emit('edit')"
-          class="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-          :title="isAdmin && !isOwnReview ? '(Admin) แก้ไขรีวิว' : 'แก้ไขรีวิว'"
-        >
-          <span class="text-lg">✏️</span>
-        </button>
-        <button
-          @click="$emit('delete')"
-          class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-          :title="isAdmin && !isOwnReview ? '(Admin) ลบรีวิว' : 'ลบรีวิว'"
-        >
-          <span class="text-lg">🗑️</span>
-        </button>
       </div>
     </div>
 
