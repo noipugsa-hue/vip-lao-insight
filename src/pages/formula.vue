@@ -308,7 +308,7 @@ onMounted(async () => {
                   type="number"
                   min="5"
                   max="30"
-                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
                 <p class="text-xs text-gray-500 mt-1">แนะนำ: 10-15 งวด</p>
               </div>
@@ -348,7 +348,7 @@ onMounted(async () => {
                   v-model="fixedNumbersText"
                   type="text"
                   placeholder="7,8,3 หรือ 5, 10, 15"
-                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   💡 รองรับหลายรูปแบบ: <span class="font-semibold">7,8,3</span> หรือ <span class="font-semibold">5, 10, 15</span> หรือ <span class="font-semibold">7 8 3</span>
@@ -449,7 +449,7 @@ onMounted(async () => {
                   min="0"
                   max="9"
                   placeholder="ไม่ระบุ (ใช้อัตโนมัติ)"
-                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
             </div>

@@ -24,7 +24,7 @@ const filledResults = computed(() => {
       <div class="space-y-4">
         <div v-for="type in lotteryTypes" :key="type.id" class="bg-white/90 rounded-2xl shadow-lg p-4">
           <label class="block font-semibold text-gray-700 mb-2">{{ type.displayName }}</label>
-          <input v-model="results[type.id]" type="text" maxlength="3" placeholder="000" class="w-full px-4 py-2 border-2 border-gray-300 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" style="color: #111827 !important;" />
+          <input v-model="results[type.id]" type="text" maxlength="3" placeholder="000" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
       </div>
 
