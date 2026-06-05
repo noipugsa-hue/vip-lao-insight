@@ -38,35 +38,60 @@ onMounted(() => {
 
   // รอรับ beforeinstallprompt event (Android Chrome)
   window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('📱 [PWA] beforeinstallprompt event received')
     e.preventDefault()
     deferredPrompt.value = e
     showPrompt.value = true
   })
+
+  // Debug: ตรวจสอบว่า PWA พร้อมติดตั้งหรือไม่
+  console.log('📱 [PWA] Component mounted:', {
+    isIOS: isIOS.value,
+    isStandalone: isStandalone.value,
+    hasDeferredPrompt: !!deferredPrompt.value,
+  })
 })
 
 const installApp = async () => {
+  console.log('📱 [PWA] Install button clicked')
+
   if (!deferredPrompt.value) {
+    console.log('❌ [PWA] No deferredPrompt available')
+
     // ถ้าเป็น iOS แสดงคำแนะนำ
     if (isIOS.value) {
+      console.log('ℹ️ [PWA] iOS detected - showing manual instructions')
       return
     }
+
+    // Browser ไม่รองรับ PWA install
+    alert('เบราว์เซอร์ของคุณไม่รองรับการติดตั้ง PWA โดยตรง\n\nลองใช้ Chrome หรือ Edge แทนครับ')
     return
   }
 
-  // แสดง install prompt
-  deferredPrompt.value.prompt()
+  try {
+    console.log('📱 [PWA] Showing install prompt...')
 
-  // รอผลลัพธ์
-  const { outcome } = await deferredPrompt.value.userChoice
+    // แสดง install prompt
+    deferredPrompt.value.prompt()
 
-  if (outcome === 'accepted') {
-    console.log('User accepted PWA install')
-  } else {
-    console.log('User dismissed PWA install')
+    // รอผลลัพธ์
+    const { outcome } = await deferredPrompt.value.userChoice
+
+    console.log('📱 [PWA] User choice:', outcome)
+
+    if (outcome === 'accepted') {
+      console.log('✅ [PWA] User accepted PWA install')
+    } else {
+      console.log('❌ [PWA] User dismissed PWA install')
+    }
+
+    deferredPrompt.value = null
+    showPrompt.value = false
+  } catch (err) {
+    console.error('❌ [PWA] Install error:', err)
+    alert('เกิดข้อผิดพลาดในการติดตั้ง\nกรุณาลองใหม่อีกครั้ง')
   }
-
-  deferredPrompt.value = null
-  showPrompt.value = false
 }
 
 const dismissPrompt = () => {
@@ -155,13 +180,13 @@ const dismissPrompt = () => {
             <div class="flex gap-2">
               <button
                 @click="installApp"
-                class="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-lg transition-shadow"
+                class="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-lg transition-shadow transition-transform active:scale-95"
               >
                 📥 ติดตั้งเลย
               </button>
               <button
                 @click="dismissPrompt"
-                class="py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                class="py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors transition-transform active:scale-95"
               >
                 ภายหลัง
               </button>
@@ -196,9 +221,3 @@ const dismissPrompt = () => {
     </div>
   </Transition>
 </template>
-
-<style scoped>
-button {
-  @apply transition-transform active:scale-95;
-}
-</style>
