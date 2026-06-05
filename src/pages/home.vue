@@ -109,6 +109,7 @@ const history = ref<string[]>([])
 const input = ref('')
 const isCalculating = ref(false)
 const showInputSection = ref(true)
+const showLotterySelector = ref(false)
 
 const { hotNumbers, twoDigits, threeDigits, calculatedAt, loadResult, clearResult, setResult } = useVipResult()
 const { selectedLotteryType } = useLotteryType()
@@ -559,6 +560,12 @@ const getPlanIcon = computed(() => {
 
 <template>
   <NuxtLayout name="main">
+    <!-- Lottery Type Selector Modal -->
+    <LotteryTypeSelector
+      :show="showLotterySelector"
+      @close="showLotterySelector = false"
+    />
+
     <div class="max-w-2xl mx-auto">
       <!-- Lottery Type & Date Header -->
       <div class="text-center mb-6">
@@ -721,6 +728,16 @@ const getPlanIcon = computed(() => {
           </div>
         </div>
       </div>
+
+      <!-- Lottery Type Selector Button -->
+      <button
+        @click="showLotterySelector = true"
+        class="w-full mb-4 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow-lg font-semibold text-lg transition-all flex items-center justify-center gap-2"
+      >
+        <span class="text-xl">🎲</span>
+        <span>{{ selectedLotteryType.displayName }}</span>
+        <span class="text-sm opacity-80">(คลิกเพื่อเปลี่ยน)</span>
+      </button>
 
       <!-- Input Section: ใส่เลขและคำนวณ 🎯 -->
       <div class="mb-6">
@@ -1168,10 +1185,16 @@ const getPlanIcon = computed(() => {
         <div class="mb-4">
           <span class="text-6xl">🎯</span>
         </div>
-        <p class="text-gray-600 dark:text-gray-400 text-lg">
-          กดปุ่มด้านบนเพื่อใส่เลขย้อนหลัง ≥3 งวด<br>
-          แล้วคำนวณด้วย <span class="font-bold text-purple-600 dark:text-purple-400">9 สูตร AI</span>
-        </p>
+        <div class="space-y-3">
+          <p class="text-gray-700 dark:text-gray-300 text-lg font-semibold">
+            เริ่มต้นใช้งานใน 3 ขั้นตอน
+          </p>
+          <div class="max-w-md mx-auto space-y-2 text-gray-600 dark:text-gray-400">
+            <p>1️⃣ เลือกประเภทหวย ({{ selectedLotteryType.displayName }})</p>
+            <p>2️⃣ กรอกเลขย้อนหลัง ≥3 งวด</p>
+            <p>3️⃣ คำนวณด้วย <span class="font-bold text-purple-600 dark:text-purple-400">9 สูตร AI</span></p>
+          </div>
+        </div>
       </div>
 
       <!-- Reviews Section -->
