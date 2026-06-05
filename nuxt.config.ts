@@ -157,6 +157,7 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB (เพิ่มจาก default 2 MB)
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
