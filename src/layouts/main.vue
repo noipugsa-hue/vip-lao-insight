@@ -211,6 +211,19 @@
 
       <!-- Sidebar Footer -->
       <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <!-- Help/Tutorial Button -->
+        <button
+          @click="showTutorialAgain"
+          :class="[
+            'w-full flex items-center rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30',
+            isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3'
+          ]"
+          title="ดูวิธีใช้งาน"
+        >
+          <span class="text-2xl">❓</span>
+          <span v-if="isSidebarExpanded" class="text-sm">วิธีใช้งาน</span>
+        </button>
+
         <!-- Dark Mode Toggle -->
         <button
           @click="toggleDarkMode"
@@ -389,6 +402,9 @@
       :can-close="canCloseExpiredModal"
       @close="showExpiredModal = false"
     />
+
+    <!-- Onboarding Tutorial -->
+    <OnboardingTutorial />
   </div>
 </template>
 
@@ -516,6 +532,14 @@ const handleSignOut = async () => {
     await logout()
     await router.push('/login')
   }
+}
+
+// Show tutorial again
+const showTutorialAgain = () => {
+  // ลบ flag ที่เคยดูแล้ว
+  localStorage.removeItem('has_seen_tutorial')
+  // Reload หน้า เพื่อให้ tutorial แสดงอีกครั้ง
+  window.location.reload()
 }
 
 // All menu items (for sidebar) with feature access control
