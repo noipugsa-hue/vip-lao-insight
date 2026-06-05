@@ -3,7 +3,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss','@nuxt/eslint','@nuxtjs/sitemap',],
+  modules: ['@nuxtjs/tailwindcss','@nuxt/eslint','@nuxtjs/sitemap','@vite-pwa/nuxt',],
   css: ['~/assets/css/main.css'],
 
   // SEO และ Meta Tags
@@ -35,8 +35,14 @@ export default defineNuxtConfig({
           content: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน พร้อมสถิติเลขที่ถูกรางวัลจริง'
         },
         { property: 'og:locale', content: 'th_TH' },
+        { property: 'og:url', content: 'https://vip-lao-insight.vercel.app' },
+        { property: 'og:image', content: 'https://vip-lao-insight.vercel.app/og-image.svg' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: 'Numora Lotto AI - ทำนายหวยด้วย AI · วิเคราะห์แม่นยำ' },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:image', content: 'https://vip-lao-insight.vercel.app/og-image.svg' },
         { name: 'twitter:title', content: 'Numora Lotto AI - ทำนายหวย วิเคราะห์หวยลาว' },
         {
           name: 'twitter:description',
@@ -50,6 +56,8 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'canonical', href: 'https://vip-lao-insight.vercel.app' },
+        { rel: 'manifest', href: '/manifest.json' },
+        { rel: 'apple-touch-icon', href: '/icon-192x192.png' },
       ],
     },
   },
@@ -58,11 +66,13 @@ export default defineNuxtConfig({
   // Pages จะ render เป็น SPA ตาม routeRules
   ssr: true,
 
-  // ตั้งค่า route rules: pages เป็น client-side (SPA), API endpoints เป็น server-side
+  // ตั้งค่า route rules: landing page เป็น SSR (SEO), pages อื่นเป็น client-side (SPA)
   routeRules: {
     // API endpoints ทำงานบน server
     '/api/**': { cors: true },
-    // Pages ทั้งหมด render แบบ client-side (SPA)
+    // Landing page render แบบ SSR สำหรับ SEO
+    '/': { ssr: true },
+    // Pages อื่นๆ render แบบ client-side (SPA)
     '/**': { ssr: false },
   },
 
@@ -97,6 +107,7 @@ export default defineNuxtConfig({
       '/check-prize',
       '/my-numbers',
       '/statistics',
+      '/referral',
       '/formula',
       '/manual',
       '/two-digit',
@@ -113,5 +124,99 @@ export default defineNuxtConfig({
       '/admin/**',
       '/stats',
     ],
+  },
+
+  // PWA configuration
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'Numora Lotto AI - ทำนายหวย วิเคราะห์หวยลาว',
+      short_name: 'Numora Lotto',
+      description: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะ เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน',
+      theme_color: '#9333ea',
+      background_color: '#ffffff',
+      display: 'standalone',
+      orientation: 'portrait',
+      scope: '/',
+      start_url: '/',
+      icons: [
+        {
+          src: '/icon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+        {
+          src: '/icon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+      ],
+    },
+    workbox: {
+      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'google-fonts-cache',
+            expiration: {
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'gstatic-fonts-cache',
+            expiration: {
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/.*\.firebaseio\.com\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'firebase-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+            },
+          },
+        },
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'images-cache',
+            expiration: {
+              maxEntries: 60,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+          },
+        },
+      ],
+    },
+    client: {
+      installPrompt: true,
+      periodicSyncForUpdates: 3600, // Check for updates every hour
+    },
+    devOptions: {
+      enabled: true,
+      type: 'module',
+    },
   },
 })

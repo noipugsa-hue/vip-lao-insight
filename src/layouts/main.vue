@@ -389,6 +389,9 @@
       :can-close="canCloseExpiredModal"
       @close="showExpiredModal = false"
     />
+
+    <!-- PWA Install Prompt -->
+    <PWAInstallPrompt />
   </div>
 </template>
 
@@ -526,6 +529,7 @@ const allMenuItemsList = [
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false, featureId: 'save_numbers_limited' as FeatureId },
   { path: '/winning-numbers', icon: '🏆', label: 'เลขที่ถูกจริง', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
   { path: '/statistics', icon: '📊', label: 'กราฟสถิติ', adminOnly: false, featureId: 'statistics_advanced' as FeatureId },
+  { path: '/referral', icon: '🎁', label: 'แนะนำเพื่อน', adminOnly: false, featureId: null },
   { path: '/formula', icon: '🧪', label: 'สูตรหวย', adminOnly: false, featureId: 'lottery_formula' as FeatureId },
   { path: '/manual', icon: '✏️', label: 'ใส่เลขเอง', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/two-digit', icon: '🎲', label: 'เลข 2 ตัว', adminOnly: false, featureId: 'two_digit_advanced' as FeatureId },
@@ -535,6 +539,7 @@ const allMenuItemsList = [
   { path: '/range', icon: '🎯', label: '00-99', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
   { path: '/admin/winning-numbers', icon: '👑', label: 'จัดการเลขถูก', adminOnly: true, featureId: null }, // Admin only
   { path: '/stats', icon: '👥', label: 'สถิติผู้ใช้', adminOnly: true, featureId: null }, // Admin only
+  { path: '/admin/referrals', icon: '🎁', label: 'Referral Stats', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/users', icon: '🔓', label: 'จัดการผู้ใช้', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin/feature-access', icon: '🔐', label: 'จัดการฟีเจอร์', adminOnly: true, featureId: null }, // Admin only
   { path: '/admin', icon: '⚙️', label: 'จัดการระบบ', adminOnly: true, featureId: null }, // Admin only

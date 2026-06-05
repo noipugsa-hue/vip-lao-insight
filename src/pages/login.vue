@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useLoginStats } from '../composables/useLoginStats'
+import { useReferral } from '../composables/useReferral'
 import { useLotteryHistory, type GovernmentLotteryResult } from '../composables/useLotteryHistory'
 
 definePageMeta({
@@ -11,6 +12,7 @@ definePageMeta({
 
 const { login, register, loginWithGoogle } = useAuth()
 const { recordLogin } = useLoginStats()
+const { applyReferralCode } = useReferral()
 const router = useRouter()
 
 const email = ref('')
@@ -74,6 +76,9 @@ const registerUser = async () => {
   try {
     const userCredential = await register(email.value, password.value)
 
+    // Apply referral code if exists (ใช้รหัสแนะนำถ้ามี)
+    await applyReferralCode(userCredential.uid)
+
     // บันทึกสถิติการ register (นับเป็น login ครั้งแรก)
     await recordLogin(userCredential.uid, email.value)
 
@@ -91,6 +96,9 @@ const registerUser = async () => {
 const loginWithGoogleAccount = async () => {
   try {
     const userCredential = await loginWithGoogle()
+
+    // Apply referral code if exists (สำหรับผู้ใช้ Google ที่สมัครครั้งแรก)
+    await applyReferralCode(userCredential.uid)
 
     // บันทึกสถิติการ login
     await recordLogin(userCredential.uid, userCredential.email || 'google-user')
@@ -296,19 +304,6 @@ const switchMode = () => {
               <span class="text-xl animate-pulse">👑</span>
               <span class="text-white font-black text-sm tracking-wide">VIP EXCLUSIVE ACCESS</span>
             </div>
-          </div>
-
-          <!-- View Lottery Results (No Login Required) -->
-          <div class="mt-6 text-center">
-            <button
-              @click="openLotteryPopup"
-              class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 hover:from-orange-600 hover:via-red-600 hover:to-amber-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 relative overflow-hidden group"
-            >
-              <span class="absolute inset-0 bg-gradient-to-r from-orange-400/30 to-amber-400/30 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              <span class="text-xl relative z-10">🎫</span>
-              <span class="relative z-10">ดูผลหวยย้อนหลัง</span>
-            </button>
-            <p class="text-xs text-gray-500 mt-2 font-medium">ไม่ต้อง Login</p>
           </div>
         </div>
       </div>

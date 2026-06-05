@@ -12,11 +12,15 @@ import { useSubscription } from '../composables/useSubscription'
 import { useAdmin } from '../composables/useAdmin'
 import { useReview } from '../composables/useReview'
 import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
+import ShareImageGenerator from '../components/ShareImageGenerator.vue'
 
 const router = useRouter()
 const { waitForAuth, user } = useAuth()
 const { subscription, currentPlan, daysRemaining, isExpiringSoon, urgencyLevel, fetchSubscription } = useSubscription()
 const { isAdmin } = useAdmin()
+
+// Share Image Generator ref
+const shareImageGeneratorRef = ref<InstanceType<typeof ShareImageGenerator>>()
 
 // Review System
 const {
@@ -196,6 +200,7 @@ const showExpiredModal = () => {
 // ฟังก์ชันแชร์เลข
 const showShareModal = ref(false)
 const copySuccess = ref(false)
+const isGeneratingImage = ref(false)
 
 // Review Functions
 const openAddReviewForm = async () => {
@@ -349,6 +354,45 @@ const shareToWhatsApp = () => {
   const text = formatShareText()
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`
   window.open(url, '_blank')
+}
+
+// Share as Image
+const shareAsImage = async () => {
+  if (!shareImageGeneratorRef.value) {
+    alert('❌ ไม่สามารถสร้างภาพได้')
+    return
+  }
+
+  isGeneratingImage.value = true
+
+  try {
+    await shareImageGeneratorRef.value.shareImage()
+  } catch (error) {
+    console.error('Failed to share image:', error)
+    alert('❌ ไม่สามารถแชร์ภาพได้')
+  } finally {
+    isGeneratingImage.value = false
+  }
+}
+
+// Download Image
+const downloadImage = async () => {
+  if (!shareImageGeneratorRef.value) {
+    alert('❌ ไม่สามารถสร้างภาพได้')
+    return
+  }
+
+  isGeneratingImage.value = true
+
+  try {
+    await shareImageGeneratorRef.value.downloadImage()
+    alert('✅ บันทึกภาพสำเร็จ!')
+  } catch (error) {
+    console.error('Failed to download image:', error)
+    alert('❌ ไม่สามารถบันทึกภาพได้')
+  } finally {
+    isGeneratingImage.value = false
+  }
 }
 
 // ฟังก์ชันเคลียร์ข้อมูลเก่า
@@ -1328,44 +1372,82 @@ const getPlanIcon = computed(() => {
               </div>
 
               <!-- Share Options -->
-              <div class="grid grid-cols-2 gap-3">
-                <!-- Copy Button -->
-                <button
-                  @click="copyToClipboard"
-                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
-                >
-                  <span class="text-3xl">{{ copySuccess ? '✅' : '📋' }}</span>
-                  <span class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอก' }}
-                  </span>
-                </button>
+              <div class="space-y-4">
+                <!-- Share as Image (NEW!) -->
+                <div class="grid grid-cols-2 gap-3">
+                  <button
+                    @click="shareAsImage"
+                    :disabled="isGeneratingImage"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span class="text-3xl">{{ isGeneratingImage ? '⏳' : '🖼️' }}</span>
+                    <span class="text-sm font-bold text-white">
+                      {{ isGeneratingImage ? 'กำลังสร้าง...' : 'แชร์เป็นรูป' }}
+                    </span>
+                  </button>
 
-                <!-- Line Button -->
-                <button
-                  @click="shareToLine"
-                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
-                >
-                  <span class="text-3xl">💬</span>
-                  <span class="text-sm font-bold text-white">Line</span>
-                </button>
+                  <button
+                    @click="downloadImage"
+                    :disabled="isGeneratingImage"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span class="text-3xl">{{ isGeneratingImage ? '⏳' : '💾' }}</span>
+                    <span class="text-sm font-bold text-white">
+                      {{ isGeneratingImage ? 'กำลังสร้าง...' : 'บันทึกรูป' }}
+                    </span>
+                  </button>
+                </div>
 
-                <!-- Facebook Button -->
-                <button
-                  @click="shareToFacebook"
-                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
-                >
-                  <span class="text-3xl">📘</span>
-                  <span class="text-sm font-bold text-white">Facebook</span>
-                </button>
+                <!-- Divider -->
+                <div class="relative">
+                  <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                  </div>
+                  <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white dark:bg-gray-800 text-gray-500">หรือ</span>
+                  </div>
+                </div>
 
-                <!-- WhatsApp Button -->
-                <button
-                  @click="shareToWhatsApp"
-                  class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
-                >
-                  <span class="text-3xl">📱</span>
-                  <span class="text-sm font-bold text-white">WhatsApp</span>
-                </button>
+                <!-- Text Share Options -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Copy Button -->
+                  <button
+                    @click="copyToClipboard"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span class="text-3xl">{{ copySuccess ? '✅' : '📋' }}</span>
+                    <span class="text-sm font-bold text-gray-900 dark:text-white">
+                      {{ copySuccess ? 'คัดลอกแล้ว!' : 'คัดลอกข้อความ' }}
+                    </span>
+                  </button>
+
+                  <!-- Line Button -->
+                  <button
+                    @click="shareToLine"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span class="text-3xl">💬</span>
+                    <span class="text-sm font-bold text-white">Line</span>
+                  </button>
+
+                  <!-- Facebook Button -->
+                  <button
+                    @click="shareToFacebook"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span class="text-3xl">📘</span>
+                    <span class="text-sm font-bold text-white">Facebook</span>
+                  </button>
+
+                  <!-- WhatsApp Button -->
+                  <button
+                    @click="shareToWhatsApp"
+                    class="group relative flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-md hover:shadow-lg transform transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span class="text-3xl">📱</span>
+                    <span class="text-sm font-bold text-white">WhatsApp</span>
+                  </button>
+                </div>
               </div>
 
               <!-- Close Button -->
@@ -1379,6 +1461,16 @@ const getPlanIcon = computed(() => {
           </Transition>
         </div>
       </Transition>
+
+      <!-- Share Image Generator (Hidden) -->
+      <ShareImageGenerator
+        ref="shareImageGeneratorRef"
+        :hot-numbers="hotNumbers"
+        :two-digits="twoDigits"
+        :three-digits="threeDigits"
+        :lottery-type="selectedLotteryType.displayName"
+        :date="todayStr"
+      />
     </div>
   </NuxtLayout>
 </template>

@@ -1,0 +1,64 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9333ea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ec4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+
+  <!-- Decorative Circles -->
+  <circle cx="100" cy="100" r="150" fill="#fff" opacity="0.1"/>
+  <circle cx="1100" cy="530" r="200" fill="#fff" opacity="0.1"/>
+  <circle cx="600" cy="315" r="250" fill="#fff" opacity="0.05"/>
+
+  <!-- Main Title -->
+  <text x="600" y="220" font-family="Arial, sans-serif" font-size="80" font-weight="900" fill="white" text-anchor="middle">
+    Numora Lotto AI
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="290" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="white" text-anchor="middle" opacity="0.9">
+    ทำนายหวยด้วย AI · วิเคราะห์แม่นยำ
+  </text>
+
+  <!-- Features -->
+  <g transform="translate(300, 360)">
+    <text font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="white" opacity="0.85">
+      🔥 เลขเด่น AI
+    </text>
+  </g>
+
+  <g transform="translate(550, 360)">
+    <text font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="white" opacity="0.85">
+      🎲 เลข 2-3 ตัว
+    </text>
+  </g>
+
+  <g transform="translate(300, 420)">
+    <text font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="white" opacity="0.85">
+      💭 ทำนายฝัน
+    </text>
+  </g>
+
+  <g transform="translate(550, 420)">
+    <text font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="white" opacity="0.85">
+      📊 สถิติย้อนหลัง
+    </text>
+  </g>
+
+  <!-- CTA -->
+  <rect x="450" y="490" width="300" height="70" rx="35" fill="white" opacity="0.9"/>
+  <text x="600" y="535" font-family="Arial, sans-serif" font-size="32" font-weight="800" fill="#9333ea" text-anchor="middle">
+    ทดลองใช้ฟรี 30 วัน
+  </text>
+
+  <!-- URL -->
+  <text x="600" y="590" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="white" text-anchor="middle" opacity="0.8">
+    vip-lao-insight.vercel.app
+  </text>
+</svg>
