@@ -389,9 +389,6 @@
       :can-close="canCloseExpiredModal"
       @close="showExpiredModal = false"
     />
-
-    <!-- PWA Install Prompt -->
-    <PWAInstallPrompt />
   </div>
 </template>
 
