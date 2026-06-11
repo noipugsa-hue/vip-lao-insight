@@ -5,6 +5,8 @@ import { useLotteryType } from '../composables/useLotteryType'
 import { useAuth } from '../composables/useAuth'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
+import { useShare } from '../composables/useShare'
+import ShareModal from '../components/ShareModal.vue'
 
 /* @ts-ignore - Nuxt auto-imported compiler macro */
 definePageMeta({
@@ -16,6 +18,7 @@ const router = useRouter()
 const { selectedLotteryType } = useLotteryType()
 const { isDark, toggleDarkMode } = useDarkMode()
 const showLotterySelector = ref(false)
+const { showShareModal, openShareModal, closeShareModal } = useShare()
 
 // Open mobile menu by triggering event to main layout
 const openMobileMenu = () => {
@@ -92,6 +95,25 @@ const confidenceColor = computed(() => {
   if (conf >= 80) return 'green'
   if (conf >= 60) return 'yellow'
   return 'gray'
+})
+
+// สร้างข้อมูลสำหรับแชร์
+const shareData = computed(() => {
+  if (!calculationResult.value) {
+    return {
+      twoDigits: [],
+      threeDigits: [],
+      lotteryType: selectedLotteryType.value.displayName,
+      formulaName: selectedFormula.value?.displayName || 'สูตรหวย',
+    }
+  }
+
+  return {
+    twoDigits: calculationResult.value.predictions.twoDigits || [],
+    threeDigits: calculationResult.value.predictions.threeDigits || [],
+    lotteryType: selectedLotteryType.value.displayName,
+    formulaName: selectedFormula.value?.displayName || 'สูตรหวย',
+  }
 })
 
 // Load history from localStorage
@@ -508,16 +530,25 @@ onMounted(async () => {
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
                   🎯 ผลการคำนวณ
                 </h2>
-                <span
-                  class="px-4 py-2 rounded-full font-bold text-sm"
-                  :class="{
-                    'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300': confidenceColor === 'green',
-                    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300': confidenceColor === 'yellow',
-                    'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300': confidenceColor === 'gray'
-                  }"
-                >
-                  ความมั่นใจ {{ calculationResult.confidence }}%
-                </span>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="px-4 py-2 rounded-full font-bold text-sm"
+                    :class="{
+                      'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300': confidenceColor === 'green',
+                      'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300': confidenceColor === 'yellow',
+                      'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300': confidenceColor === 'gray'
+                    }"
+                  >
+                    ความมั่นใจ {{ calculationResult.confidence }}%
+                  </span>
+                  <button
+                    @click="openShareModal"
+                    class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                  >
+                    <span class="text-lg">📤</span>
+                    <span class="hidden sm:inline">แชร์</span>
+                  </button>
+                </div>
               </div>
 
               <!-- 2-Digit Predictions -->
@@ -601,6 +632,13 @@ onMounted(async () => {
           </div> <!-- Close empty state -->
         </div> <!-- Close Results container -->
       </div> <!-- Close Main Content Grid -->
+
+      <!-- Share Modal -->
+      <ShareModal
+        :show="showShareModal"
+        :share-data="shareData"
+        @close="closeShareModal"
+      />
     </div> <!-- Close max-w-7xl container -->
   </div> <!-- Close min-h-screen wrapper -->
 </template>

@@ -2,9 +2,12 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useTwoDigitPrediction } from '../composables/useTwoDigitPrediction'
 import { useLotteryType } from '../composables/useLotteryType'
+import { useShare } from '../composables/useShare'
+import ShareModal from '../components/ShareModal.vue'
 
 const { selectedLotteryType } = useLotteryType()
 const showLotterySelector = ref(false)
+const { showShareModal, openShareModal, closeShareModal } = useShare()
 
 const history = ref<string[]>([])
 const input = ref('')
@@ -129,6 +132,13 @@ const confidenceColor = computed(() => {
   if (conf >= 50) return 'yellow'
   return 'orange'
 })
+
+// สร้างข้อมูลสำหรับแชร์
+const shareData = computed(() => ({
+  predictions: predictions.value?.predictions || [],
+  lotteryType: selectedLotteryType.value.displayName,
+  formulaName: 'เลข 2 ตัว',
+}))
 </script>
 
 <template>
@@ -264,19 +274,30 @@ const confidenceColor = computed(() => {
         <div class="space-y-4">
           <!-- Predictions -->
           <div v-if="predictions" class="bg-white/90 backdrop-blur rounded-2xl shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center justify-between">
-              <span>🎯 เลขทำนายงวดถัดไป</span>
-              <span
-                class="text-sm px-3 py-1 rounded-full font-semibold"
-                :class="{
-                  'bg-green-100 text-green-700': confidenceColor === 'green',
-                  'bg-yellow-100 text-yellow-700': confidenceColor === 'yellow',
-                  'bg-orange-100 text-orange-700': confidenceColor === 'orange'
-                }"
-              >
-                {{ predictions.confidence }}%
-              </span>
-            </h2>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span>🎯 เลขทำนายงวดถัดไป</span>
+              </h2>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-sm px-3 py-1 rounded-full font-semibold"
+                  :class="{
+                    'bg-green-100 text-green-700': confidenceColor === 'green',
+                    'bg-yellow-100 text-yellow-700': confidenceColor === 'yellow',
+                    'bg-orange-100 text-orange-700': confidenceColor === 'orange'
+                  }"
+                >
+                  {{ predictions.confidence }}%
+                </span>
+                <button
+                  @click="openShareModal"
+                  class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                >
+                  <span class="text-lg">📤</span>
+                  <span class="hidden sm:inline">แชร์</span>
+                </button>
+              </div>
+            </div>
 
             <div v-if="predictions.predictions.length > 0" class="grid grid-cols-4 gap-3 mb-4">
               <div
@@ -378,6 +399,13 @@ const confidenceColor = computed(() => {
           </div>
         </div>
       </div>
+
+      <!-- Share Modal -->
+      <ShareModal
+        :show="showShareModal"
+        :share-data="shareData"
+        @close="closeShareModal"
+      />
     </div>
   </NuxtLayout>
 </template>
