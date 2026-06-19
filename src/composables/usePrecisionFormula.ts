@@ -194,23 +194,21 @@ export const usePrecisionFormula = () => {
 
       const confidence = calculateOverallConfidence(gapScore, freqScore, pairScore, patternScore)
 
-      if (confidence >= 60) { // เอาเฉพาะที่ confidence > 60%
-        digitScores.push({
-          number: digit,
-          confidence,
-          reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
-          gapScore,
-          freqScore,
-          pairScore,
-          patternScore
-        })
-      }
+      digitScores.push({
+        number: digit,
+        confidence,
+        reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
+        gapScore,
+        freqScore,
+        pairScore,
+        patternScore
+      })
     }
 
-    // เรียงตาม confidence และเอา TOP 3
-    return digitScores
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 3)
+    // เรียงตาม confidence และเอา TOP 3 (ลบ threshold ออก เอาอันดับแรกไปเลย)
+    const sorted = digitScores.sort((a, b) => b.confidence - a.confidence)
+    console.log('Hot numbers scores:', sorted.slice(0, 5).map(s => ({ number: s.number, confidence: s.confidence })))
+    return sorted.slice(0, 3)
   }
 
   /**
@@ -295,23 +293,21 @@ export const usePrecisionFormula = () => {
 
       const confidence = calculateOverallConfidence(gapScore, freqScore, pairScore, patternScore)
 
-      if (confidence >= 70) { // threshold สูงขึ้น
-        twoDigitScores.push({
-          number: num,
-          confidence,
-          reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
-          gapScore,
-          freqScore,
-          pairScore,
-          patternScore
-        })
-      }
+      twoDigitScores.push({
+        number: num,
+        confidence,
+        reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
+        gapScore,
+        freqScore,
+        pairScore,
+        patternScore
+      })
     })
 
-    // เรียงตาม confidence และเอา TOP 5
-    return twoDigitScores
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 5)
+    // เรียงตาม confidence และเอา TOP 5 (ลบ threshold ออก)
+    const sorted = twoDigitScores.sort((a, b) => b.confidence - a.confidence)
+    console.log('2-digit scores:', sorted.slice(0, 5).map(s => ({ number: s.number, confidence: s.confidence })))
+    return sorted.slice(0, 5)
   }
 
   /**
@@ -400,23 +396,21 @@ export const usePrecisionFormula = () => {
 
       const confidence = calculateOverallConfidence(gapScore, freqScore, pairScore, patternScore)
 
-      if (confidence >= 70) { // threshold สูงขึ้น
-        threeDigitScores.push({
-          number: num,
-          confidence,
-          reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
-          gapScore,
-          freqScore,
-          pairScore,
-          patternScore
-        })
-      }
+      threeDigitScores.push({
+        number: num,
+        confidence,
+        reason: generateReason({ gapScore, freqScore, pairScore, patternScore }),
+        gapScore,
+        freqScore,
+        pairScore,
+        patternScore
+      })
     })
 
-    // เรียงตาม confidence และเอา TOP 5
-    return threeDigitScores
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 5)
+    // เรียงตาม confidence และเอา TOP 5 (ลบ threshold ออก)
+    const sorted = threeDigitScores.sort((a, b) => b.confidence - a.confidence)
+    console.log('3-digit scores:', sorted.slice(0, 5).map(s => ({ number: s.number, confidence: s.confidence })))
+    return sorted.slice(0, 5)
   }
 
   /**
