@@ -19,6 +19,7 @@ Numora Lotto AI is a Nuxt 4 (Vue 3) lottery analysis and prediction application 
 
 ### Development
 ```bash
+npm install              # Install dependencies (required first time)
 npm run dev              # Start dev server at localhost:3000
 npm run build            # Build for production
 npm run preview          # Preview production build locally
@@ -33,10 +34,43 @@ firebase deploy --only firestore:rules    # Deploy Firestore rules
 firebase deploy --only firestore:indexes  # Deploy Firestore indexes
 ```
 
+### Vercel Deployment
+The project is configured for automatic deployment to Vercel:
+- Push to `main` branch → auto-deploy to production
+- Region: sin1 (Singapore)
+- Node version: 20
+- See `vercel.json` for configuration
+
+## Environment Setup
+
+### Required Environment Variables
+Create a `.env` file (see `.env.example`):
+
+```bash
+# Firebase Configuration (required)
+# Get these from Firebase Console > Project Settings
+NUXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NUXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NUXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# Omise Payment Gateway (optional - testing phase)
+OMISE_PUBLIC_KEY=pkey_test_xxxxxxxxxxxxx
+OMISE_SECRET_KEY=skey_test_xxxxxxxxxxxxx
+
+# Firebase Admin SDK (optional - for server-side operations)
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+```
+
+**Note**: Payment system is in testing phase and not required for development.
+
 ## Architecture
 
 ### Rendering Strategy (SSR/SPA Hybrid)
 - **SSR Mode**: Enabled at root level (`ssr: true` in nuxt.config.ts)
+- **Landing Page (`/`)**: SSR enabled for SEO optimization
 - **Client-side Rendering**: All pages (`/**`) render client-side via route rule `{ ssr: false }`
 - **API Routes**: Server-side at `/api/**` with CORS enabled, run as Vercel serverless functions
 
@@ -44,6 +78,7 @@ firebase deploy --only firestore:indexes  # Deploy Firestore indexes
 - Server API endpoints bypass CORS for web scraping racha-lotto.net and glo.or.th
 - Pages work as pure SPA with client-side routing and Firebase authentication
 - Firebase auth state management requires client-side hydration
+- Landing page gets SEO benefits from SSR
 
 ### Directory Structure
 
@@ -79,17 +114,19 @@ app/
 ```
 
 ### Key Pages
+- `/` (index.vue) - Landing page with SSR for SEO
 - `/login` - Firebase authentication (Email/Password + Google OAuth) with modern purple-blue-pink gradient theme
 - `/home` - Main lottery analysis dashboard with hot/cold numbers, 2-digit, 3-digit predictions
 - `/lottery-history` - Government lottery results history with period selection and prize checker
 - `/check-prize` - Prize checking tool for purchased tickets
 - `/my-numbers` - User's purchased lottery numbers tracking
 - `/two-digit` - Two-digit (00-99) prediction system
+- `/formula` - Formula-based lottery prediction with shareable results
 - `/dream` - Dream interpretation to lottery numbers
 - `/statistics` - Statistical analysis and charts
 - `/accuracy` - Prediction accuracy tracking dashboard
-- `/pricing` - VIP subscription plans
-- `/payment` - VIP payment processing (testing phase)
+- `/pricing` - VIP subscription plans (testing phase - not yet active)
+- `/payment` - VIP payment processing (testing phase - not yet active)
 - `/subscription` - Subscription management
 - `/admin` - Admin dashboard for lottery data management (admin only)
 - `/stats` - Login statistics and user analytics (admin only)
@@ -286,11 +323,15 @@ const { $db, $auth } = useNuxtApp()
 | `login_history` | User login tracking | Admin only | Authenticated users |
 | `lotteryResults` | Lottery draw results | Authenticated users | Authenticated users |
 | `governmentLottery` | Government lottery history | Public | Admin + auto-save |
+| `subscriptions` | VIP membership data | User owns document | User owns document |
+| `payments` | Payment transaction history | User owns document | System only |
 
 **Security** (firestore.rules):
 - Admin email: `noipugsa@gmail.com` has full access
 - Authenticated users: read/write to `lotteryResults`
 - Public: read-only to `governmentLottery`
+- Users can only access their own `subscriptions` and `payments` documents
+- Helper functions: `isAdmin()`, `isAuthenticated()`, `isOwner(userId)`
 
 ### localStorage Strategy
 
@@ -384,10 +425,15 @@ Auth: Firebase (required, no fallback)
 
 - **Framework**: Tailwind CSS utility classes exclusively
 - **Theme**: Modern purple-blue-pink gradient theme (updated from green-yellow)
-- **Dark mode**: `dark:` prefixed classes, state in localStorage
+  - Primary gradient: `from-purple-600 via-pink-500 to-blue-600`
+  - Theme color (mobile): `#9333ea` (purple-600)
+- **Dark mode**: `dark:` prefixed classes, state in localStorage via `useDarkMode`
 - **Mobile-first**: Base styles for mobile, `lg:` breakpoints for desktop
 - **UI Language**: Thai with emoji icons for visual hierarchy
 - **Animations**: Custom keyframes for float, pulse, bounce effects
+- **Layout**:
+  - Desktop: 72px fixed left sidebar
+  - Mobile: Hamburger menu + bottom tab bar (5 key pages)
 
 ### Development Workflow
 
@@ -429,6 +475,26 @@ Auth: Firebase (required, no fallback)
    - Thai language UI with emoji icons
    - Consistent spacing: `p-4`, `gap-4`, `space-y-4`
 
+## PWA & SEO
+
+### Progressive Web App (PWA)
+Configured via `@vite-pwa/nuxt` module:
+- **Auto-update**: Enabled with service worker auto-registration
+- **Install prompt**: Native install prompt for mobile devices
+- **Offline support**: Caching strategy for fonts, images, and Firebase APIs
+- **Icons**: 192x192 and 512x512 maskable icons
+- **Manifest**: `/manifest.json` with Thai app name and descriptions
+- **Cache size limit**: 5MB (increased from default 2MB)
+- **Update check**: Every hour via periodic sync
+
+### SEO Configuration
+- **Landing page SSR**: `/` renders server-side for search engines
+- **Sitemap**: Auto-generated at `/sitemap.xml` with all public routes
+- **Meta tags**: Comprehensive Open Graph, Twitter Card, and mobile tags
+- **Thai language**: `lang="th"` with Thai keywords and descriptions
+- **Canonical URLs**: Set to production domain (vip-lao-insight.vercel.app)
+- **Excluded routes**: Admin pages (`/admin/**`, `/stats`) excluded from sitemap
+
 ## Deployment
 
 - **Platform:** Vercel
@@ -454,13 +520,16 @@ Auth: Firebase (required, no fallback)
 
 ## Important Files
 
-- `nuxt.config.ts` - Nuxt configuration with SSR/SPA routing rules
-- `vercel.json` - Vercel deployment config
+- `nuxt.config.ts` - Nuxt configuration with SSR/SPA routing rules, SEO meta tags, PWA settings, sitemap
+- `vercel.json` - Vercel deployment config (region: sin1, Node 20)
 - `firebase.json` - Firebase configuration
-- `firestore.rules` - Firestore security rules
+- `firestore.rules` - Firestore security rules with helper functions
 - `firestore.indexes.json` - Firestore composite indexes
-- `tailwind.config.js` - Tailwind CSS configuration
+- `tailwind.config.ts` - Tailwind CSS configuration with custom theme
 - `package.json` - Dependencies and scripts
+- `app/app.vue` - Root component with PWA integration
+- `src/layouts/main.vue` - Main layout with sidebar navigation and VIP warnings
+- `src/plugins/firebase.ts` - Firebase initialization plugin
 
 ## Documentation Reference
 

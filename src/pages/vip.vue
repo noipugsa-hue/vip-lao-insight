@@ -145,31 +145,116 @@ const todayStr = computed(() => {
         </span>
       </div>
 
-      <!-- ปุ่มสมัครซื้อเลข -->
-      <div class="mt-8 p-6 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-2xl shadow-2xl">
-        <div class="text-center mb-4">
-          <h3 class="text-2xl font-black text-white mb-2 drop-shadow-lg">
-            🎰 พร้อมลุ้นรางวัลใหญ่?
-          </h3>
-          <p class="text-white/90 text-sm font-semibold">
-            สมัครซื้อเลขออนไลน์ได้แล้ววันนี้!
-          </p>
+      <!-- ปุ่มสมัครซื้อเลข - Enhanced Version -->
+      <div class="mt-8 p-8 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 rounded-3xl shadow-2xl relative overflow-hidden">
+        <!-- Animated Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+          <div class="absolute top-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse-slow"></div>
+          <div class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse-slow-delayed"></div>
         </div>
 
-        <a
-          href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block w-full py-4 px-6 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 font-black text-xl rounded-xl shadow-2xl transform transition-all hover:scale-105 active:scale-95 text-center animate-pulse-button"
-        >
-          <span class="mr-2">🚀</span>
-          คลิกสมัครซื้อเลขที่นี่
-          <span class="ml-2">💰</span>
-        </a>
+        <div class="relative z-10">
+          <!-- Social Proof Counter -->
+          <div class="flex justify-center gap-6 mb-6">
+            <div class="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 text-center">
+              <div class="text-3xl font-black text-white drop-shadow-lg animate-count-up">12,847</div>
+              <div class="text-xs text-white/80 font-semibold">คนสมัครแล้ว</div>
+            </div>
+            <div class="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 text-center">
+              <div class="text-3xl font-black text-yellow-300 drop-shadow-lg">4.8⭐</div>
+              <div class="text-xs text-white/80 font-semibold">คะแนนรีวิว</div>
+            </div>
+          </div>
 
-        <div class="mt-4 flex items-center justify-center gap-2 text-white/80 text-xs">
-          <span>✅</span>
-          <span>ปลอดภัย | รวดเร็ว | ถอนง่าย</span>
+          <!-- Main Heading -->
+          <div class="text-center mb-5">
+            <h3 class="text-3xl md:text-4xl font-black text-white mb-3 drop-shadow-2xl animate-text-glow">
+              🎰 พร้อมลุ้นรางวัลใหญ่?
+            </h3>
+            <p class="text-white text-lg font-bold mb-2">
+              💎 สมัครซื้อเลขออนไลน์วันนี้
+            </p>
+            <p class="text-yellow-300 text-sm font-semibold animate-pulse">
+              🎁 โบนัสต้อนรับ 100 บาท สำหรับสมาชิกใหม่!
+            </p>
+          </div>
+
+          <!-- Benefits Grid -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center transform hover:scale-105 transition-all">
+              <div class="text-2xl mb-1">💸</div>
+              <div class="text-xs text-white font-bold">ถอนขั้นต่ำ 1 บาท</div>
+            </div>
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center transform hover:scale-105 transition-all">
+              <div class="text-2xl mb-1">⚡</div>
+              <div class="text-xs text-white font-bold">โอนไว 1 นาที</div>
+            </div>
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center transform hover:scale-105 transition-all">
+              <div class="text-2xl mb-1">🔒</div>
+              <div class="text-xs text-white font-bold">ปลอดภัย 100%</div>
+            </div>
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center transform hover:scale-105 transition-all">
+              <div class="text-2xl mb-1">💯</div>
+              <div class="text-xs text-white font-bold">จ่ายจริง ไม่โกง</div>
+            </div>
+          </div>
+
+          <!-- Main CTA Button -->
+          <a
+            href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block w-full py-5 px-8 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-gray-900 font-black text-2xl rounded-2xl shadow-2xl transform transition-all hover:scale-105 hover:shadow-3xl active:scale-95 text-center relative overflow-hidden group animate-pulse-button-strong"
+          >
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+            <span class="relative z-10 flex items-center justify-center gap-3">
+              <span class="text-3xl animate-bounce-slow">🚀</span>
+              <span>คลิกสมัครเลย!</span>
+              <span class="text-3xl">💰</span>
+            </span>
+          </a>
+
+          <!-- Secondary CTA -->
+          <div class="mt-3 text-center">
+            <a
+              href="https://af1.racha-lottoaf.com/?openExternalBrowser=1#/register?af=f8b877b2-23c2-3382-b460-3599780c1bc9"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 text-white text-sm font-bold hover:text-yellow-300 transition-colors underline"
+            >
+              <span>📱</span>
+              <span>ดูวิธีการสมัครและซื้อเลข</span>
+            </a>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="mt-6 flex flex-wrap items-center justify-center gap-4 text-white/90 text-sm">
+            <div class="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
+              <span class="text-lg">✅</span>
+              <span class="font-semibold">รองรับทุกธนาคาร</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
+              <span class="text-lg">⚡</span>
+              <span class="font-semibold">ฝาก-ถอนออโต้</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
+              <span class="text-lg">🎁</span>
+              <span class="font-semibold">โปรโมชั่นเพียบ</span>
+            </div>
+          </div>
+
+          <!-- Success Story Ticker -->
+          <div class="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <div class="flex items-center gap-3 text-sm">
+              <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-xl">🎉</span>
+              </div>
+              <div class="flex-1">
+                <p class="text-white font-bold text-xs">คุณ นัท*** ถูกรางวัลที่ 1 เมื่อ 2 ชม. ที่แล้ว</p>
+                <p class="text-yellow-300 text-lg font-black">ชนะ 500,000 บาท! 💰</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -215,5 +300,97 @@ const todayStr = computed(() => {
 }
 .animate-pulse-button {
   animation: pulse-button 2s ease-in-out infinite;
+}
+
+/* === NEW ENHANCED ANIMATIONS === */
+
+/* Pulse animation ช้าสำหรับ background blobs */
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.1; }
+  50% { transform: scale(1.2); opacity: 0.2; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+/* Pulse animation ช้าแบบ delayed */
+.animate-pulse-slow-delayed {
+  animation: pulse-slow 4s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+/* Count up number animation */
+@keyframes count-up {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-count-up {
+  animation: count-up 1.5s ease-out;
+}
+
+/* Text glow effect */
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.5),
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 0 30px rgba(255, 255, 0, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(255, 255, 255, 0.8),
+      0 0 30px rgba(255, 255, 255, 0.5),
+      0 0 40px rgba(255, 255, 0, 0.5);
+  }
+}
+.animate-text-glow {
+  animation: text-glow 2s ease-in-out infinite;
+}
+
+/* Strong pulse for main CTA button */
+@keyframes pulse-button-strong {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 50px rgba(234, 179, 8, 0.6);
+  }
+  25% {
+    transform: scale(1.03);
+    box-shadow: 0 15px 70px rgba(234, 179, 8, 0.8);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 20px 90px rgba(234, 179, 8, 1);
+  }
+  75% {
+    transform: scale(1.03);
+    box-shadow: 0 15px 70px rgba(234, 179, 8, 0.8);
+  }
+}
+.animate-pulse-button-strong {
+  animation: pulse-button-strong 2s ease-in-out infinite;
+}
+
+/* Shimmer effect for button */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Slow bounce for emoji */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 1.5s ease-in-out infinite;
+}
+
+/* Hover shadow expansion */
+.hover\:shadow-3xl:hover {
+  box-shadow: 0 25px 100px -10px rgba(234, 179, 8, 0.8);
 }
 </style>
