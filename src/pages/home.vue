@@ -12,7 +12,9 @@ import { useSubscription } from '../composables/useSubscription'
 import { useAdmin } from '../composables/useAdmin'
 import { useReview } from '../composables/useReview'
 import { useLaoFormulaAdvanced } from '../composables/useLaoFormulaAdvanced'
+import { usePrecisionFormula, type PrecisionResult } from '../composables/usePrecisionFormula'
 import ShareImageGenerator from '../components/ShareImageGenerator.vue'
+import PrecisionModeResults from '../components/PrecisionModeResults.vue'
 
 const router = useRouter()
 const { waitForAuth, user } = useAuth()
@@ -116,6 +118,11 @@ const { selectedLotteryType } = useLotteryType()
 const { settings } = useEngineSettings()
 const { accuracyStats } = useAccuracyTracking()
 const { calculateAdvanced } = useLaoFormulaAdvanced()
+const { calculatePrecision } = usePrecisionFormula()
+
+// Precision Mode State
+const isPrecisionMode = ref(false)
+const precisionResult = ref<PrecisionResult | null>(null)
 
 // สร้าง storage key แบบ dynamic ตามประเภทหวย
 const getStorageKey = (lotteryId: string) => `vip_lao_history_${lotteryId}`
@@ -162,16 +169,22 @@ const calculateNumbers = async () => {
   isCalculating.value = true
 
   try {
-    // คำนวณด้วยสูตรขั้นสูง 9 แบบ 🚀
-    const result = calculateAdvanced(history.value)
+    if (isPrecisionMode.value) {
+      // คำนวณด้วยสูตร Precision Mode 🎯
+      const result = calculatePrecision(history.value)
+      precisionResult.value = result
+    } else {
+      // คำนวณด้วยสูตรขั้นสูง 9 แบบ 🚀
+      const result = calculateAdvanced(history.value)
 
-    // บันทึกผลลัพธ์
-    setResult(
-      result.hot,
-      result.twoDigits,
-      result.threeDigits,
-      selectedLotteryType.value.id
-    )
+      // บันทึกผลลัพธ์
+      setResult(
+        result.hot,
+        result.twoDigits,
+        result.threeDigits,
+        selectedLotteryType.value.id
+      )
+    }
 
     // ไม่ต้องแสดง alert แล้ว - ผลลัพธ์จะแสดงในหน้าโดยอัตโนมัติ
 
@@ -570,18 +583,48 @@ const getPlanIcon = computed(() => {
       <!-- Lottery Type & Date Header -->
       <div class="text-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-          💎 ใส่เลขและคำนวณด้วย 9 สูตร 💎
+          {{ isPrecisionMode ? '🎯 Precision Mode - เลขน้อยแต่แม่น' : '💎 ใส่เลขและคำนวณด้วย 9 สูตร 💎' }}
         </h1>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           {{ selectedLotteryType.displayName }} · {{ todayStr }}
         </p>
-        <div class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm text-xs text-gray-600 dark:text-gray-400">
+
+        <!-- Mode Toggle -->
+        <div class="mt-4 flex items-center justify-center gap-2">
+          <button
+            @click="isPrecisionMode = false"
+            :class="[
+              'px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg',
+              !isPrecisionMode
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white scale-105'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:scale-105'
+            ]"
+          >
+            💎 โหมดปกติ
+          </button>
+          <button
+            @click="isPrecisionMode = true"
+            :class="[
+              'px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg',
+              isPrecisionMode
+                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-blue-600 text-white scale-105'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:scale-105'
+            ]"
+          >
+            🎯 Precision Mode
+          </button>
+        </div>
+
+        <div v-if="!isPrecisionMode" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm text-xs text-gray-600 dark:text-gray-400">
           <span>Engine: <strong>{{ settings.calculationMode }}</strong></span>
           <span>·</span>
           <span>Level: <strong class="text-green-600">{{ settings.accuracyLevel }}/10</strong></span>
         </div>
-        <div v-if="accuracyStats.total > 0" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full shadow-sm text-xs">
+        <div v-if="!isPrecisionMode && accuracyStats.total > 0" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full shadow-sm text-xs">
           <span class="text-purple-700 dark:text-purple-300">ความแม่นโดยรวม: <strong>{{ accuracyStats.accuracy }}%</strong></span>
+        </div>
+        <div v-if="isPrecisionMode" class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full shadow-sm text-xs">
+          <span class="text-purple-700 dark:text-purple-300">เลขน้อย (TOP 3-5) แต่แม่นสูง (>70%) พร้อมแสดง % โอกาส</span>
         </div>
       </div>
 
@@ -814,9 +857,9 @@ const getPlanIcon = computed(() => {
               class="w-full px-6 py-5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white rounded-2xl font-black text-xl shadow-2xl hover:shadow-3xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group/btn"
             >
               <div v-if="!isCalculating" class="flex items-center justify-center gap-3">
-                <span class="text-3xl">🚀</span>
-                <span>คำนวณด้วย 9 สูตร</span>
-                <span class="text-3xl">✨</span>
+                <span class="text-3xl">{{ isPrecisionMode ? '🎯' : '🚀' }}</span>
+                <span>{{ isPrecisionMode ? 'คำนวณแบบแม่นยำสูง' : 'คำนวณด้วย 9 สูตร' }}</span>
+                <span class="text-3xl">{{ isPrecisionMode ? '🎯' : '✨' }}</span>
               </div>
               <div v-else class="flex items-center justify-center gap-3">
                 <span class="animate-spin text-2xl">⚙️</span>
@@ -864,7 +907,13 @@ const getPlanIcon = computed(() => {
       </div>
 
       <!-- Results Display -->
-      <div v-if="hotNumbers.length" class="space-y-6">
+      <!-- Precision Mode Results -->
+      <div v-if="isPrecisionMode && precisionResult && precisionResult.hotNumbers.length > 0">
+        <PrecisionModeResults :result="precisionResult" />
+      </div>
+
+      <!-- Standard Mode Results -->
+      <div v-else-if="!isPrecisionMode && hotNumbers.length" class="space-y-6">
         <!-- Hot Numbers -->
         <div class="relative group">
           <!-- Glow Effect -->
@@ -1252,16 +1301,18 @@ const getPlanIcon = computed(() => {
       <!-- Empty State: Simple Guide for New Users -->
       <div v-else class="text-center py-12">
         <div class="mb-4">
-          <span class="text-6xl">🎯</span>
+          <span class="text-6xl">{{ isPrecisionMode ? '🎯' : '🎯' }}</span>
         </div>
         <div class="space-y-3">
           <p class="text-gray-700 dark:text-gray-300 text-lg font-semibold">
-            เริ่มต้นใช้งานใน 3 ขั้นตอน
+            {{ isPrecisionMode ? 'พร้อมคำนวณเลขแม่นยำสูง' : 'เริ่มต้นใช้งานใน 3 ขั้นตอน' }}
           </p>
           <div class="max-w-md mx-auto space-y-2 text-gray-600 dark:text-gray-400">
-            <p>1️⃣ เลือกประเภทหวย ({{ selectedLotteryType.displayName }})</p>
-            <p>2️⃣ กรอกเลขย้อนหลัง ≥3 งวด</p>
-            <p>3️⃣ คำนวณด้วย <span class="font-bold text-purple-600 dark:text-purple-400">9 สูตร AI</span></p>
+            <p v-if="!isPrecisionMode">1️⃣ เลือกประเภทหวย ({{ selectedLotteryType.displayName }})</p>
+            <p v-if="!isPrecisionMode">2️⃣ กรอกเลขย้อนหลัง ≥3 งวด</p>
+            <p v-if="!isPrecisionMode">3️⃣ คำนวณด้วย <span class="font-bold text-purple-600 dark:text-purple-400">9 สูตร AI</span></p>
+            <p v-if="isPrecisionMode">ใส่เลขย้อนหลังอย่างน้อย 3 งวด แล้วกดคำนวณ</p>
+            <p v-if="isPrecisionMode" class="text-sm">✓ เลขน้อย · ✓ แม่นสูง · ✓ แสดง %</p>
           </div>
         </div>
       </div>
