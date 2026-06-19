@@ -545,7 +545,7 @@ const showTutorialAgain = () => {
 // All menu items (for sidebar) with feature access control
 const allMenuItemsList = [
   { path: '/home', icon: '🏠', label: 'หลัก', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
-  { path: '/precision', icon: '🎯', label: 'Precision Mode', adminOnly: false, featureId: 'advanced_prediction' as FeatureId },
+  { path: '/precision', icon: '🎯', label: 'Precision Mode', adminOnly: false, featureId: null }, // เปิดให้ทุกคนใช้ได้
   // { path: '/lottery-history', icon: '🎫', label: 'ผลหวยล่าสุด', adminOnly: false, featureId: 'basic_prediction' as FeatureId },
   { path: '/check-prize', icon: '✓', label: 'ตรวจรางวัล', adminOnly: false, featureId: 'check_prize' as FeatureId },
   { path: '/my-numbers', icon: '📝', label: 'เลขที่ซื้อ', adminOnly: false, featureId: 'save_numbers_limited' as FeatureId },
