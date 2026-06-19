@@ -243,7 +243,7 @@ onMounted(async () => {
             </h2>
 
             <!-- Input + Add Button -->
-            <div class="flex gap-3 mb-4">
+            <div class="flex gap-2 mb-4">
               <input
                 v-model="input"
                 type="text"
@@ -252,12 +252,12 @@ onMounted(async () => {
                 maxlength="6"
                 placeholder="เลข 3-6 หลัก"
                 @keyup.enter="addHistory"
-                class="flex-1 px-4 py-4 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-center text-2xl font-bold"
+                class="flex-1 px-3 py-3 md:px-4 md:py-4 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-center text-xl md:text-2xl font-bold"
               />
               <button
                 @click="addHistory"
                 :disabled="!input.trim()"
-                class="px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="flex-shrink-0 px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span class="text-xl">➕</span>
               </button>
