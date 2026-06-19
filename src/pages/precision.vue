@@ -188,15 +188,24 @@ onMounted(async () => {
                 <span class="text-lg mr-2">🎲</span>
                 {{ selectedLotteryType.displayName }}
               </button>
-
-              <button
-                @click="router.push('/home')"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl font-bold shadow-md hover:shadow-lg transform transition-all hover:scale-105"
-              >
-                <span class="text-lg mr-2">↩️</span>
-                โหมดปกติ
-              </button>
             </div>
+          </div>
+
+          <!-- Mode Selector -->
+          <div class="mt-6 flex items-center justify-center gap-2">
+            <button
+              @click="router.push('/home')"
+              class="px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:scale-105 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-600 hover:text-white"
+            >
+              💎 โหมดปกติ
+            </button>
+            <div class="px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-purple-500 via-pink-500 to-blue-600 text-white shadow-lg">
+              🎯 Precision Mode
+            </div>
+          </div>
+
+          <div class="mt-4 inline-flex w-full items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full shadow-sm text-xs">
+            <span class="text-purple-700 dark:text-purple-300">เลขน้อย (TOP 3-5) แต่แม่นสูง (>70%) พร้อมแสดง % โอกาส</span>
           </div>
 
           <!-- Info Banner -->
