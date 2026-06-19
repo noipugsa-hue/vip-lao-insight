@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useHead } from '@unhead/vue'
 import { useAuth } from '../composables/useAuth'
 import { useVipResult } from '../composables/useVipResult'
 import { useLotteryType } from '../composables/useLotteryType'

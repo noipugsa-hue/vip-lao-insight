@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useHead } from '@unhead/vue'
 import { useAuth } from '../composables/useAuth'
 import { useGuestMode } from '../composables/useGuestMode'
 import { useReview } from '../composables/useReview'
