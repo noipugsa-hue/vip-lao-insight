@@ -299,7 +299,7 @@ onMounted(async () => {
                 :disabled="history.length === 0"
                 class="px-6 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                🗑️
+                🗑️ เคลียร์
               </button>
             </div>
           </div>
