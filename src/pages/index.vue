@@ -98,8 +98,8 @@ onMounted(async () => {
   // Check if user already logged in
   const currentUser = await waitForAuth()
   if (currentUser) {
-    // Redirect to home if already logged in
-    await router.push('/home')
+    // Redirect to precision if already logged in
+    await router.push('/precision')
     return
   }
 

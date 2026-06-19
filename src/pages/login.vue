@@ -58,7 +58,7 @@ const loginUser = async () => {
     await recordLogin(userCredential.uid, email.value)
 
     showAlert('เข้าสู่ระบบสำเร็จ 🎉', 'success')
-    setTimeout(() => router.push('/home'), 1000)
+    setTimeout(() => router.push('/precision'), 1000)
   } catch (e: any) {
     showAlert('Email หรือ Password ไม่ถูกต้อง', 'error')
   }
@@ -83,7 +83,7 @@ const registerUser = async () => {
     await recordLogin(userCredential.uid, email.value)
 
     showAlert('สมัครสมาชิกสำเร็จ 🎉 กำลังเข้าสู่ระบบ...', 'success')
-    setTimeout(() => router.push('/home'), 1500)
+    setTimeout(() => router.push('/precision'), 1500)
   } catch (e: any) {
     if (e.code === 'auth/email-already-in-use') {
       showAlert('อีเมลนี้ถูกใช้งานแล้ว', 'error')
@@ -104,7 +104,7 @@ const loginWithGoogleAccount = async () => {
     await recordLogin(userCredential.uid, userCredential.email || 'google-user')
 
     showAlert('เข้าสู่ระบบด้วย Google สำเร็จ 🎉', 'success')
-    setTimeout(() => router.push('/home'), 1000)
+    setTimeout(() => router.push('/precision'), 1000)
   } catch (e: any) {
     if (e.code === 'auth/popup-closed-by-user') {
       showAlert('คุณได้ปิดหน้าต่าง Google Sign-In', 'error')
