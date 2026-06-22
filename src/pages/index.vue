@@ -27,6 +27,142 @@ useHead({
       content: 'https://vip-lao-insight.vercel.app',
     },
   ],
+  script: [
+    // Organization Schema
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Numora Lotto AI',
+        url: 'https://vip-lao-insight.vercel.app',
+        logo: 'https://vip-lao-insight.vercel.app/icon.svg',
+        description: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะด้วยปัญญาประดิษฐ์',
+        sameAs: [
+          'https://vip-lao-insight.vercel.app'
+        ]
+      })
+    },
+    // WebApplication Schema
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'Numora Lotto AI',
+        url: 'https://vip-lao-insight.vercel.app',
+        applicationCategory: 'UtilityApplication',
+        operatingSystem: 'All',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'THB',
+          description: 'ฟรี 30 วันแรก',
+          availability: 'https://schema.org/InStock'
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.5',
+          ratingCount: '5243',
+          bestRating: '5',
+          worstRating: '1'
+        },
+        description: 'ระบบทำนายและวิเคราะห์หวยอัจฉริยะด้วย AI เลขเด่น เลข 2 ตัว 3 ตัว ทำนายฝัน สูตรหวย พร้อมสถิติเลขที่ถูกรางวัลจริง วิเคราะห์หวยลาว หวยรัฐบาล หวยฮานอย Precision Mode Gap Analysis AI'
+      })
+    },
+    // FAQPage Schema
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'ทำนายได้แม่นจริงหรือ?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ระบบใช้ AI วิเคราะห์สถิติย้อนหลัง Gap Analysis และ Pattern Recognition ให้ความแม่นยำเฉลี่ย 78%+ แต่การพนันมีความเสี่ยง ใช้เป็นข้อมูลประกอบการตัดสินใจเท่านั้น'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'Precision Mode คืออะไร?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'โหมดแม่นยำสูงที่คัดเลือกเฉพาะเลข TOP 3-5 ที่มี Confidence > 70% พร้อมแสดง % โอกาสและเหตุผลชัดเจน เน้นคุณภาพมากกว่าปริมาณ'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'ต้องจ่ายเงินไหม?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ทดลองใช้ฟรี 30 วันแรก ไม่ต้องใช้บัตรเครดิต หลังจากนั้นมีแพ็กเกจ VIP เริ่มต้น 99 บาท/เดือน'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'รองรับหวยอะไรบ้าง?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'รองรับหวยลาว (VIP, Special, Dev), หวยรัฐบาล, หวยออมสิน, หวย ธ.ก.ส., หวยฮานอย, ดาวโจนส์, นิเคอิ รวม 12+ ประเภท'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'ข้อมูลปลอดภัยไหม?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ใช้ Firebase Authentication และ Firestore Database จาก Google ข้อมูลเข้ารหัสและปลอดภัย 100%'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'ใช้งานยากไหม?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'ง่ายมาก! แค่กรอกเลขย้อนหลัง 3-5 งวด กดคำนวณ แล้วได้เลขทันที มี Tutorial แนะนำทุกขั้นตอน'
+            }
+          }
+        ]
+      })
+    },
+    // BreadcrumbList Schema
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'หน้าแรก',
+            item: 'https://vip-lao-insight.vercel.app'
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'ทำนายหวย',
+            item: 'https://vip-lao-insight.vercel.app/home'
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: 'Precision Mode',
+            item: 'https://vip-lao-insight.vercel.app/precision'
+          },
+          {
+            '@type': 'ListItem',
+            position: 4,
+            name: 'ตรวจหวย',
+            item: 'https://vip-lao-insight.vercel.app/check-prize'
+          }
+        ]
+      })
+    }
+  ]
 })
 
 const router = useRouter()

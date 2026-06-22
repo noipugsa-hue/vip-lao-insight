@@ -22,7 +22,7 @@ export default defineNuxtConfig({
         },
         {
           name: 'keywords',
-          content: 'ทำนายหวย, เลขเด่น, หวยลาว, หวยรัฐบาล, หวยฮานอย, วิเคราะห์หวย, เลข 2 ตัว, เลข 3 ตัว, ทำนายฝัน, สูตรหวย, ตรวจหวย, ผลหวย, หวยออนไลน์'
+          content: 'ทำนายหวย, ทำนายหวยด้วย AI, เลขเด่น, หวยลาว, หวยรัฐบาล, หวยฮานอย, วิเคราะห์หวย, เลข 2 ตัว, เลข 3 ตัว, ทำนายฝัน, สูตรหวย, ตรวจหวย, ผลหวย, หวยออนไลน์, เลขเด็ด, เลขดัง, โปรแกรมวิเคราะห์หวย, ทายฝัน, ตรวจผลหวย, ตรวจรางวัล, หวยออมสิน, หวย ธกส, ดาวโจนส์, นิเคอิ, precision mode, AI lottery prediction, หวยแม่นๆ, วิเคราะห์หวยฟรี, ทำนายหวยฟรี, แอพทำนายหวย, เลขงวดนี้, เลขเด่นประจำวัน, สถิติหวย, กราฟหวย, gap analysis หวย'
         },
         { name: 'author', content: 'Numora Lotto AI' },
         { name: 'robots', content: 'index, follow' },
@@ -102,11 +102,13 @@ export default defineNuxtConfig({
     routes: [
       '/',
       '/home',
+      '/precision',
       '/login',
       '/lottery-history',
       '/check-prize',
       '/my-numbers',
       '/statistics',
+      '/accuracy',
       '/referral',
       '/formula',
       '/manual',
