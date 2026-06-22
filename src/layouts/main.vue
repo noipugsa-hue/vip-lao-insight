@@ -224,13 +224,27 @@
           <span v-if="isSidebarExpanded" class="text-sm">วิธีใช้งาน</span>
         </button>
 
-        <!-- Dark Mode Toggle -->
+        <!-- Theme Settings Button -->
+        <button
+          @click="showThemeSettings = true"
+          :class="[
+            'w-full flex items-center rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/30 dark:hover:to-pink-900/30',
+            isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3'
+          ]"
+          title="การตั้งค่าธีม"
+        >
+          <span class="text-2xl">🎨</span>
+          <span v-if="isSidebarExpanded" class="text-sm">ธีมและสี</span>
+        </button>
+
+        <!-- Dark Mode Toggle (Quick Toggle) -->
         <button
           @click="toggleDarkMode"
           :class="[
             'w-full flex items-center rounded-xl font-semibold transition-all text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
             isSidebarExpanded ? 'gap-3 px-4 py-3' : 'justify-center p-3'
           ]"
+          title="สลับโหมดมืด/สว่างเร็ว"
         >
           <span class="text-2xl">{{ isDark ? '☀️' : '🌙' }}</span>
           <span v-if="isSidebarExpanded" class="text-sm">{{ isDark ? 'โหมดกลางวัน' : 'โหมดกลางคืน' }}</span>
@@ -403,6 +417,31 @@
       @close="showExpiredModal = false"
     />
 
+    <!-- Theme Settings Modal -->
+    <transition name="fade">
+      <div
+        v-if="showThemeSettings"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+        @click="showThemeSettings = false"
+      >
+        <div
+          @click.stop
+          class="max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        >
+          <div class="relative">
+            <button
+              @click="showThemeSettings = false"
+              class="absolute -top-2 -right-2 z-10 w-10 h-10 rounded-full bg-red-600 text-white hover:bg-red-700 transition shadow-lg flex items-center justify-center"
+              title="ปิด"
+            >
+              ✕
+            </button>
+            <ThemeSettings />
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- Onboarding Tutorial -->
     <OnboardingTutorial />
   </div>
@@ -418,6 +457,7 @@ import { useSubscription } from '../composables/useSubscription'
 import { useFeatureAccess, type FeatureId } from '../composables/useFeatureAccess'
 // @ts-ignore - Vetur doesn't support Vue 3 SFC default exports, use Volar instead
 import ExpiredModal from '../components/ExpiredModal.vue'
+import ThemeSettings from '../components/ThemeSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -437,6 +477,9 @@ const isSidebarExpanded = ref(true)
 
 // Expired modal state
 const showExpiredModal = ref(false)
+
+// Theme settings modal state
+const showThemeSettings = ref(false)
 
 // Determine if expired modal can be closed
 // ถ้าหมดอายุจริงๆ (และไม่ใช่ admin) จะปิดไม่ได้ ต้องจ่ายเงินก่อน

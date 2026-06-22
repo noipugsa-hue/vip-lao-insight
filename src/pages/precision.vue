@@ -6,6 +6,7 @@ import { useLotteryType } from '../composables/useLotteryType'
 import { usePrecisionFormula, type PrecisionResult } from '../composables/usePrecisionFormula'
 import { useAccuracyTracking } from '../composables/useAccuracyTracking'
 import PrecisionModeResults from '../components/PrecisionModeResults.vue'
+import FavoriteNumbersQuickAccess from '../components/FavoriteNumbersQuickAccess.vue'
 
 const router = useRouter()
 const { waitForAuth, user } = useAuth()
@@ -220,6 +221,9 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+
+      <!-- Favorite Numbers Quick Access -->
+      <FavoriteNumbersQuickAccess />
 
       <!-- Input Section -->
       <div class="relative group">
